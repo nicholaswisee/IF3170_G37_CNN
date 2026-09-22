@@ -69,7 +69,7 @@ docs/           Project documentation
 output/         Generated experiment output mount
 ```
 
-## API scaffold
+## API
 
 - `GET /api/health` reports backend availability.
 - `GET /api/experiments` returns an empty experiment list.
