@@ -46,7 +46,6 @@ Open:
 From `src/backend`:
 
 ```bash
-pytest
 ruff check .
 ruff format --check .
 mypy app
