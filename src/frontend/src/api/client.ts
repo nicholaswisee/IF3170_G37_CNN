@@ -4,6 +4,7 @@ import type {
   HealthResponse,
   RunExperimentRequest,
 } from '../types/experiment'
+import { isExperimentResult } from './validation'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
 
@@ -26,9 +27,15 @@ export function listExperiments(): Promise<ExperimentListResponse> {
 }
 
 export function runExperiment(requestBody: RunExperimentRequest): Promise<ExperimentResult> {
-  return request<ExperimentResult>('/api/experiments/run', {
+  return request<unknown>('/api/experiments/run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(requestBody),
+  }).then((result) => {
+    if (!isExperimentResult(result)) {
+      throw new Error('Invalid experiment response')
+    }
+
+    return result
   })
 }

@@ -39,15 +39,15 @@ export interface OptimizationState {
 export interface ExperimentResult {
   id: string
   algorithm: Algorithm
-  seed?: number
-  initial_state?: OptimizationState | null
-  final_state?: OptimizationState | null
+  seed: number
+  initial_state: OptimizationState
+  final_state: OptimizationState
   initial_score: number
   final_score: number
   runtime_ms: number
-  iterations?: number
+  iterations: number
   history: SearchEvent[]
-  metadata?: Record<string, unknown>
+  metadata: Record<string, unknown>
 }
 
 export interface RunExperimentRequest {
