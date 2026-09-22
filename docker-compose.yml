@@ -1,0 +1,35 @@
+services:
+  backend:
+    build:
+      context: ./src/backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src/backend:/app
+      - ./output:/workspace/output
+      - ./data:/workspace/data
+    environment:
+      APP_ENV: development
+      FRONTEND_ORIGIN: http://localhost:5173
+      OUTPUT_DIR: /workspace/output
+      DATA_DIR: /workspace/data
+    healthcheck:
+      test:
+        ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./src/frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src/frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:8000
+    depends_on:
+      backend:
+        condition: service_healthy
