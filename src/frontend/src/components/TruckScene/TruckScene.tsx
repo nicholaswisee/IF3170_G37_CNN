@@ -1,6 +1,5 @@
 import { Grid, OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { useState } from 'react'
 import { sceneColors } from '../../theme'
 import { ContainerBox } from './ContainerBox'
 import { PackageBox } from './PackageBox'
@@ -14,10 +13,8 @@ const dummyPackages = [
 ]
 
 export function TruckScene() {
-  const [selectedPackage, setSelectedPackage] = useState(dummyPackages[0].id)
-
   return (
-    <div className="truck-scene" aria-label="Interactive 3D truck container preview">
+    <div className="truck-scene" aria-label="3D truck container preview">
       <Canvas camera={{ position: [17, 13, 18], fov: 42 }}>
         <color attach="background" args={[sceneColors.canvas]} />
         <ambientLight intensity={0.65} />
@@ -28,14 +25,13 @@ export function TruckScene() {
           <PackageBox
             key={packageItem.id}
             {...packageItem}
-            selected={packageItem.id === selectedPackage}
-            onSelect={setSelectedPackage}
+            selected={false}
           />
         ))}
         <Grid args={[40, 40]} cellColor={sceneColors.grid} sectionColor={sceneColors.gridMajor} fadeDistance={28} position={[0, 0, 0]} />
         <OrbitControls makeDefault minDistance={12} maxDistance={34} target={[0, 2, 0]} />
       </Canvas>
-      <p className="scene-caption">Cargo bay / select a package to inspect</p>
+      <p className="scene-caption">Cargo bay / orbit to inspect</p>
     </div>
   )
 }

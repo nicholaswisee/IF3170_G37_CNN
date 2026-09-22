@@ -6,12 +6,11 @@ interface PackageBoxProps {
   dimensions: [number, number, number]
   isFragile: boolean
   selected: boolean
-  onSelect: (id: string) => void
 }
 
-export function PackageBox({ id, position, dimensions, isFragile, selected, onSelect }: PackageBoxProps) {
+export function PackageBox({ position, dimensions, isFragile, selected }: PackageBoxProps) {
   return (
-    <mesh position={position} onClick={() => onSelect(id)}>
+    <mesh position={position}>
       <boxGeometry args={dimensions} />
       <meshStandardMaterial color={selected ? sceneColors.accent : isFragile ? sceneColors.fragile : sceneColors.package} metalness={0.28} roughness={0.58} />
     </mesh>
