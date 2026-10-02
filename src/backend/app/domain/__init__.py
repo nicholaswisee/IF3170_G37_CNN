@@ -6,7 +6,7 @@ from app.domain.package import (
     get_unique_orientations,
 )
 from app.domain.state import State
-from app.domain.truck import PackagePlacement, Position, Truck
+from app.domain.truck import PackagePlacement, Position, TruckSpec
 
 __all__ = [
     "Move",
@@ -16,7 +16,7 @@ __all__ = [
     "PackageSpec",
     "Position",
     "State",
-    "Truck",
+    "TruckSpec",
     "get_oriented_dimensions",
     "get_unique_orientations",
 ]
