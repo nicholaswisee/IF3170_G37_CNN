@@ -5,6 +5,7 @@ from app.domain.package import (
     get_oriented_dimensions,
     get_unique_orientations,
 )
+from app.domain.problem import Problem
 from app.domain.state import State
 from app.domain.truck import PackagePlacement, Position, TruckSpec
 
@@ -15,6 +16,7 @@ __all__ = [
     "PackagePlacement",
     "PackageSpec",
     "Position",
+    "Problem",
     "State",
     "TruckSpec",
     "get_oriented_dimensions",
