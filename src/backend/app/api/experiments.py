@@ -17,8 +17,8 @@ def list_experiments() -> ExperimentListResponse:
 
 @router.post("/run", response_model=ExperimentResult)
 def run_experiment(request: RunExperimentRequest) -> ExperimentResult:
-    initial_state = State(placements=[], objective_value=100.0, total_weight=0.0)
-    final_state = State(placements=[], objective_value=120.0, total_weight=0.0)
+    initial_state = State(placements=[])
+    final_state = State(placements=[])
 
     return ExperimentResult(
         id="scaffold-demo",
