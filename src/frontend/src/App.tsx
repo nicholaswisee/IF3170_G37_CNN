@@ -33,7 +33,7 @@ export default function App() {
     <main className="app-shell">
       <header className="app-header">
         <div>
-          <p className="eyebrow">Mejiro Express / terminal 01</p>
+          <p className="eyebrow">mejirowise / terminal 01</p>
           <h1>Container optimization visualizer</h1>
         </div>
         <p className={`connection connection--${connection}`} aria-live="polite">
