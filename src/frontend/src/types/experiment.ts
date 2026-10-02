@@ -1,5 +1,31 @@
 export type Algorithm = 'hill_climbing' | 'simulated_annealing' | 'genetic_algorithm'
 
+export type Orientation = 0 | 1 | 2 | 3 | 4 | 5
+
+export interface PackageSpec {
+  id: string
+  width: number
+  length: number
+  height: number
+  value: number
+  weight: number
+  is_fragile: boolean
+  eta: number
+}
+
+export interface TruckSpec {
+  id: string
+  width: number
+  length: number
+  height: number
+  max_capacity: number
+}
+
+export interface Problem {
+  packages: PackageSpec[]
+  trucks: TruckSpec[]
+}
+
 export interface Position {
   x: number
   y: number
@@ -8,9 +34,9 @@ export interface Position {
 
 export interface PackagePlacement {
   package_id: string
-  position: Position
-  orientation: 'horizontal' | 'vertical'
-  inside: boolean
+  truck_id: string | null
+  position: Position | null
+  orientation: Orientation
 }
 
 export interface Move {
@@ -32,8 +58,6 @@ export interface SearchEvent {
 
 export interface OptimizationState {
   placements: PackagePlacement[]
-  objective_value: number
-  total_weight: number
 }
 
 export interface ExperimentResult {

@@ -1,4 +1,4 @@
-import type { ExperimentResult, Move, OptimizationState, Position, SearchEvent } from '../types/experiment'
+import type { ExperimentResult, Move, OptimizationState, PackagePlacement, Position, SearchEvent } from '../types/experiment'
 
 const algorithms = new Set(['hill_climbing', 'simulated_annealing', 'genetic_algorithm'])
 const moveTypes = new Set(['SWAP', 'RELOCATE', 'ROTATE'])
@@ -8,14 +8,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isPosition(value: unknown): value is Position {
-  return isRecord(value) && typeof value.x === 'number' && typeof value.y === 'number' && typeof value.z === 'number'
+  return isRecord(value) && Number.isInteger(value.x) && Number.isInteger(value.y) && Number.isInteger(value.z)
+}
+
+function isPackagePlacement(value: unknown): value is PackagePlacement {
+  return isRecord(value)
+    && typeof value.package_id === 'string'
+    && ((value.truck_id === null && value.position === null)
+      || (typeof value.truck_id === 'string' && isPosition(value.position)))
+    && typeof value.orientation === 'number'
+    && Number.isInteger(value.orientation)
+    && value.orientation >= 0 && value.orientation <= 5
 }
 
 function isOptimizationState(value: unknown): value is OptimizationState {
   return isRecord(value)
     && Array.isArray(value.placements)
-    && typeof value.objective_value === 'number'
-    && typeof value.total_weight === 'number'
+    && value.placements.every(isPackagePlacement)
 }
 
 function isMove(value: unknown): value is Move {
