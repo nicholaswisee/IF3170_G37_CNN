@@ -1,7 +1,7 @@
 [project]
-name = "mejiro-express-backend"
+name = "mejirowise-backend"
 version = "0.1.0"
-description = "FastAPI scaffold for the Mejiro Express optimization project."
+description = "FastAPI scaffold for the mejirowise optimization project."
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi==0.141.1",

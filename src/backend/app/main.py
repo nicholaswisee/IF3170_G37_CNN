@@ -5,7 +5,7 @@ from app.api.experiments import router as experiments_router
 from app.api.health import router as health_router
 from app.config import settings
 
-app = FastAPI(title="Mejiro Express Optimization API", version="0.1.0")
+app = FastAPI(title="mejirowise Optimization API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_origin],
