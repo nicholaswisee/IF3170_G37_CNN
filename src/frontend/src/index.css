@@ -124,9 +124,15 @@ h2 { font-size: var(--space-5); }
 .control-error { margin: var(--space-3) 0 0; color: var(--color-danger); font-size: var(--space-3); }
 .transport-controls { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-2); margin-top: var(--space-4); }
 
+.truck-selector { display: flex; flex-wrap: wrap; gap: var(--space-2); border-bottom: var(--border-width) solid var(--color-rule); padding: var(--space-3) var(--space-4); }
+.truck-selector button { min-height: auto; padding: var(--space-1) var(--space-3); font-family: var(--font-data); font-size: var(--space-3); text-transform: uppercase; }
+.truck-selector button[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent); }
 .truck-scene { position: relative; width: 100%; height: var(--scene-height); }
 .truck-scene canvas { display: block; }
 .scene-caption { position: absolute; left: var(--space-4); bottom: var(--space-3); margin: 0; pointer-events: none; }
+.scene-legend { position: absolute; top: var(--space-3); right: var(--space-4); display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; color: var(--color-ink-muted); font-family: var(--font-data); font-size: var(--space-3); letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none; }
+.scene-legend li { display: flex; align-items: center; gap: var(--space-2); }
+.scene-legend span { width: var(--space-3); height: var(--space-3); border: var(--border-width) solid var(--color-rule); }
 
 dl { display: grid; gap: var(--space-3); margin: 0; }
 dl div { display: flex; justify-content: space-between; gap: var(--space-3); border-bottom: var(--border-width) solid var(--color-grid); padding-bottom: var(--space-2); }
