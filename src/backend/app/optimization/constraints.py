@@ -1,10 +1,17 @@
-"""Placeholder boundary for future state-constraint validation."""
+"""Shared state-validation contract for every search algorithm."""
 
-from app.domain.package import PackageSpec
+from pydantic import BaseModel
+
+from app.domain.problem import Problem
 from app.domain.state import State
-from app.domain.truck import TruckSpec
 
 
-def validate_state(state: State, truck: TruckSpec, packages: list[PackageSpec]) -> bool:
-    # TODO: Validate physical and assignment constraints in a later milestone.
-    raise NotImplementedError("Constraint validation not implemented yet.")
+class ValidationResult(BaseModel):
+    valid: bool
+    errors: list[str]
+    truck_weights: dict[str, float]
+
+
+def validate_state(problem: Problem, state: State) -> ValidationResult:
+    """Validate a complete fleet state using the frozen global constraint rules."""
+    raise NotImplementedError("Global constraint validation is not implemented yet.")
