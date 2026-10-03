@@ -42,8 +42,8 @@ export interface PackagePlacement {
 export interface Move {
   type: 'SWAP' | 'RELOCATE' | 'ROTATE'
   package_ids: string[]
-  source?: Position | null
-  destination?: Position | null
+  before: PackagePlacement[]
+  after: PackagePlacement[]
   metadata: Record<string, unknown>
 }
 
