@@ -60,14 +60,18 @@ def test_placement_requires_truck_and_position_together() -> None:
         PackagePlacement(package_id="base", position=Position(x=0, y=0, z=0))
 
 
-# Remove this marker when implementing the validator in the next schedule block.
-# strict=True makes an unexpected pass visible instead of silently leaving stale markers.
-@pytest.mark.xfail(
-    raises=NotImplementedError,
-    strict=True,
-    reason="global validator is scheduled for afternoon–day 2",
-)
 class TestGlobalValidator:
+    def test_all_outside_has_zero_weight(self, multi_truck_problem: Problem) -> None:
+        assert_valid(
+            multi_truck_problem,
+            state_with(multi_truck_problem),
+            {"truck-a": 0.0, "truck-b": 0.0},
+        )
+
+    def test_empty_package_list_is_valid(self, multi_truck_problem: Problem) -> None:
+        problem = Problem(packages=[], trucks=multi_truck_problem.trucks)
+        assert_valid(problem, State(placements=[]), {"truck-a": 0.0, "truck-b": 0.0})
+
     def test_valid_state_and_outside_package(
         self, single_truck_problem: Problem
     ) -> None:
@@ -100,7 +104,7 @@ class TestGlobalValidator:
 
     @pytest.mark.parametrize(
         "coordinates",
-        [(-1, 0, 0), (3, 0, 0), (0, 3, 0), (0, 0, 3)],
+        [(-1, 0, 0), (0, -1, 0), (0, 0, -1), (3, 0, 0), (0, 3, 0), (0, 0, 3)],
     )
     def test_out_of_bounds_is_invalid(
         self, single_truck_problem: Problem, coordinates: tuple[int, int, int]
@@ -141,13 +145,91 @@ class TestGlobalValidator:
             placed("base", "truck-a", (0, 0, 0)),
             placed("top", "truck-a", (3, 3, 0)),
         )
-        assert_invalid(multi_truck_problem, state)
+        result = validate_state(multi_truck_problem, state)
+        assert result.valid is False
+        assert len(result.errors) == 1
+        assert "capacity" in result.errors[0]
+        assert result.truck_weights == {"truck-a": 5.0, "truck-b": 0.0}
+
+    def test_capacity_equality_is_valid(self, multi_truck_problem: Problem) -> None:
+        state = state_with(
+            multi_truck_problem,
+            placed("base", "truck-a", (0, 0, 0)),
+            placed("fragile", "truck-a", (3, 3, 0)),
+        )
+        assert_valid(multi_truck_problem, state, {"truck-a": 4.0, "truck-b": 0.0})
+
+    def test_boundary_uses_assigned_truck_size(
+        self, multi_truck_problem: Problem
+    ) -> None:
+        state = state_with(multi_truck_problem, placed("top", "truck-b", (2, 0, 0)))
+        result = validate_state(multi_truck_problem, state)
+        assert result.valid is False
+        assert len(result.errors) == 1
+        assert "out of bounds" in result.errors[0]
+
+    @pytest.mark.parametrize("with_truck", [True, False])
+    def test_inconsistent_assignment_after_mutation_is_invalid(
+        self, single_truck_problem: Problem, with_truck: bool
+    ) -> None:
+        state = state_with(single_truck_problem, placed("base", "truck-a", (0, 0, 0)))
+        if with_truck:
+            state.placements[0].position = None
+        else:
+            state.placements[0].truck_id = None
+        result = validate_state(single_truck_problem, state)
+        assert result.valid is False
+        assert len(result.errors) == 1
+        assert "Inconsistent assignment" in result.errors[0]
+
+    def test_duplicate_assignment_across_trucks_is_invalid(
+        self, multi_truck_problem: Problem
+    ) -> None:
+        state = state_with(multi_truck_problem, placed("base", "truck-a", (0, 0, 0)))
+        state.placements.append(placed("base", "truck-b", (0, 0, 0)))
+        result = validate_state(multi_truck_problem, state)
+        assert result.valid is False
+        assert len(result.errors) == 1
+        assert "Duplicate" in result.errors[0]
+        assert result.truck_weights == {"truck-a": 0.0, "truck-b": 0.0}
 
     def test_fully_floating_package_is_invalid(
         self, single_truck_problem: Problem
     ) -> None:
         state = state_with(single_truck_problem, placed("top", "truck-a", (0, 0, 1)))
         assert_invalid(single_truck_problem, state)
+
+    def test_support_cannot_come_from_another_truck(
+        self, multi_truck_problem: Problem
+    ) -> None:
+        state = state_with(
+            multi_truck_problem,
+            placed("base", "truck-a", (0, 0, 0)),
+            placed("top", "truck-b", (0, 0, 1)),
+        )
+        result = validate_state(multi_truck_problem, state)
+        assert result.valid is False
+        assert len(result.errors) == 1
+        assert "top" in result.errors[0] and "floating" in result.errors[0]
+
+    def test_support_uses_rotated_height(self, single_truck_problem: Problem) -> None:
+        state = state_with(
+            single_truck_problem,
+            placed("base", "truck-a", (0, 0, 0), Orientation.WHL),
+            placed("top", "truck-a", (0, 0, 2)),
+        )
+        assert_valid(single_truck_problem, state, {"truck-a": 5.0})
+
+    @pytest.mark.parametrize("coordinates", [(3, 3, 0), (0, 0, 1)])
+    def test_fragile_can_stand_on_floor_or_solid_package(
+        self, single_truck_problem: Problem, coordinates: tuple[int, int, int]
+    ) -> None:
+        state = state_with(
+            single_truck_problem,
+            placed("base", "truck-a", (0, 0, 0)),
+            placed("fragile", "truck-a", coordinates),
+        )
+        assert_valid(single_truck_problem, state, {"truck-a": 4.0})
 
     def test_one_support_cell_is_enough(self) -> None:
         problem = Problem(
@@ -253,3 +335,75 @@ class TestGlobalValidator:
             single_truck_problem, placed("top", "truck-a", (0, 0, 1))
         )
         assert_invalid(single_truck_problem, unsupported)
+
+    def test_independent_errors_accumulate_in_frozen_order(
+        self, multi_truck_problem: Problem
+    ) -> None:
+        state = state_with(
+            multi_truck_problem,
+            placed("base", "truck-a", (0, 0, 0)),
+            placed("top", "truck-a", (0, 0, 0)),
+            placed("fragile", "truck-b", (0, 0, 1)),
+        )
+        result = validate_state(multi_truck_problem, state)
+        assert result.valid is False
+        assert len(result.errors) == 3
+        assert "overlaps" in result.errors[0]
+        assert "capacity" in result.errors[1]
+        assert "floating" in result.errors[2]
+        assert result.truck_weights == {"truck-a": 5.0, "truck-b": 1.0}
+
+    def test_out_of_bounds_packages_still_contribute_to_truck_weight(
+        self, multi_truck_problem: Problem
+    ) -> None:
+        state = state_with(
+            multi_truck_problem,
+            placed("base", "truck-a", (3, 0, 0)),
+            placed("top", "truck-a", (3, 3, 0)),
+        )
+        result = validate_state(multi_truck_problem, state)
+        assert result.valid is False
+        assert len(result.errors) == 2
+        assert "out of bounds" in result.errors[0]
+        assert "capacity" in result.errors[1]
+        assert result.truck_weights == {"truck-a": 5.0, "truck-b": 0.0}
+
+    def test_structural_errors_allow_other_safe_checks(
+        self, multi_truck_problem: Problem
+    ) -> None:
+        state = State(
+            placements=[
+                placed("unknown"),
+                placed("top", "missing-truck", (0, 0, 0)),
+                placed("fragile", "truck-b", (2, 0, 0)),
+            ]
+        )
+        result = validate_state(multi_truck_problem, state)
+        assert result.valid is False
+        assert len(result.errors) == 4
+        assert "Missing placement" in result.errors[0]
+        assert "Unknown package" in result.errors[1]
+        assert "Unknown truck" in result.errors[2]
+        assert "out of bounds" in result.errors[3]
+
+    def test_state_order_does_not_affect_result_or_mutate_input(
+        self, single_truck_problem: Problem
+    ) -> None:
+        state = state_with(
+            single_truck_problem,
+            placed("base", "truck-a", (0, 0, 0)),
+            placed("top", "truck-a", (0, 0, 1)),
+        )
+        reversed_state = state.model_copy(deep=True)
+        reversed_state.placements.reverse()
+        problem_before, state_before = (
+            single_truck_problem.model_dump(),
+            state.model_dump(),
+        )
+        reversed_before = reversed_state.model_dump()
+        result = validate_state(single_truck_problem, state)
+        assert result.valid is True
+        assert result == validate_state(single_truck_problem, reversed_state)
+        assert single_truck_problem.model_dump() == problem_before
+        assert state.model_dump() == state_before
+        assert reversed_state.model_dump() == reversed_before
