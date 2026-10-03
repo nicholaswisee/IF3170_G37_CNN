@@ -16,8 +16,7 @@ assignment consistency, boundaries, overlap, capacity, support, and fragile pack
 
 Neighbor generation, search algorithms, objective evaluation, random initialization, and experiment
 execution remain unimplemented. The current scene uses preview data, and the experiment API returns
-placeholder results rather than optimized placements. See the
-[occupancy and validator integration guide](docs/validation.md) for the shared backend interfaces.
+placeholder results rather than optimized placements.
 
 ## Setup and run
 
