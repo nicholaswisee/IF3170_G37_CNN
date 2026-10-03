@@ -11,7 +11,10 @@ TypeScript, and Vite, with React Three Fiber / Three.js for visualization and Re
 
 The application scaffold and shared domain contract are implemented. The domain includes immutable
 package and truck specifications, fleet problems, six package orientations, and placement-only
-search state. Search algorithms, physical constraint validation, objective evaluation, and experiment
+search state. Per-truck occupancy and global state validation are implemented and tested for
+assignment consistency, boundaries, overlap, capacity, support, and fragile packages.
+
+Neighbor generation, search algorithms, objective evaluation, random initialization, and experiment
 execution remain unimplemented. The current scene uses preview data, and the experiment API returns
 placeholder results rather than optimized placements.
 
@@ -80,7 +83,11 @@ From `src/backend`, with the virtual environment activated:
 ruff check .
 ruff format --check .
 mypy app
+pytest
 ```
+
+The tests cover occupancy, global constraints, and domain serialization/copy integration.
+They do not yet cover execution of the pending search algorithms or experiment API integration.
 
 From `src/frontend`:
 
@@ -104,7 +111,7 @@ All members contribute to integration and review of the shared interfaces.
 ## Repository structure
 
 ```text
-src/backend/    FastAPI application, domain models, and optimization scaffolds
+src/backend/    FastAPI, domain models, occupancy/validator, and optimization scaffolds
 src/frontend/   React application, API client, replay store, 3D scene, and charts
 data/           Input data
 docs/           Project specifications and task planning
