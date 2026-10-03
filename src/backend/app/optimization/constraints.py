@@ -1,6 +1,7 @@
 """Fleet occupancy and the shared state-validation contract."""
 
 from collections import Counter
+from decimal import Decimal
 
 import numpy as np
 from pydantic import BaseModel
@@ -149,12 +150,19 @@ def validate_state(problem: Problem, state: State) -> ValidationResult:
     occupancies, geometry_errors, unsafe_trucks = _collect_occupancies(problem, loaded)
     errors = assignment_errors + geometry_errors
     packages = {package.id: package for package in problem.packages}
-    truck_weights = {truck.id: 0.0 for truck in problem.trucks}
+    # Compare decimal input values exactly at the capacity boundary. Binary
+    # float addition would make 0.1 + 0.2 greater than a capacity of 0.3.
+    exact_weights = {truck.id: Decimal(0) for truck in problem.trucks}
     for placement in loaded:
         assert placement.truck_id is not None
-        truck_weights[placement.truck_id] += packages[placement.package_id].weight
+        exact_weights[placement.truck_id] += Decimal(
+            str(packages[placement.package_id].weight)
+        )
+    truck_weights = {
+        truck_id: float(weight) for truck_id, weight in exact_weights.items()
+    }
     for truck in problem.trucks:
-        if truck_weights[truck.id] > truck.max_capacity:
+        if exact_weights[truck.id] > Decimal(str(truck.max_capacity)):
             errors.append(
                 f"Truck {truck.id} exceeds capacity: "
                 f"{truck_weights[truck.id]} > {truck.max_capacity}"

@@ -159,6 +159,48 @@ class TestGlobalValidator:
         )
         assert_valid(multi_truck_problem, state, {"truck-a": 4.0, "truck-b": 0.0})
 
+    @pytest.mark.parametrize(
+        ("second_weight", "expected_weight", "valid"),
+        [
+            (0.2, 0.3, True),
+            (0.20000000000000004, 0.30000000000000004, False),
+        ],
+    )
+    def test_decimal_capacity_boundary(
+        self, second_weight: float, expected_weight: float, valid: bool
+    ) -> None:
+        problem = Problem(
+            packages=[
+                PackageSpec(
+                    id=package_id,
+                    width=1,
+                    length=1,
+                    height=1,
+                    value=1,
+                    weight=weight,
+                    is_fragile=False,
+                    eta=0,
+                )
+                for package_id, weight in [("first", 0.1), ("second", second_weight)]
+            ],
+            trucks=[
+                TruckSpec(id="truck-a", width=2, length=1, height=1, max_capacity=0.3)
+            ],
+        )
+        state = state_with(
+            problem,
+            placed("first", "truck-a", (0, 0, 0)),
+            placed("second", "truck-a", (1, 0, 0)),
+        )
+        result = validate_state(problem, state)
+        assert result.valid is valid
+        assert result.truck_weights == {"truck-a": expected_weight}
+        if valid:
+            assert result.errors == []
+        else:
+            assert len(result.errors) == 1
+            assert "capacity" in result.errors[0]
+
     def test_boundary_uses_assigned_truck_size(
         self, multi_truck_problem: Problem
     ) -> None:
