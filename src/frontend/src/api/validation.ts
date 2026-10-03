@@ -33,8 +33,10 @@ function isMove(value: unknown): value is Move {
     && moveTypes.has(value.type)
     && Array.isArray(value.package_ids)
     && value.package_ids.every((packageId) => typeof packageId === 'string')
-    && (value.source === undefined || value.source === null || isPosition(value.source))
-    && (value.destination === undefined || value.destination === null || isPosition(value.destination))
+    && Array.isArray(value.before)
+    && value.before.every(isPackagePlacement)
+    && Array.isArray(value.after)
+    && value.after.every(isPackagePlacement)
     && isRecord(value.metadata)
 }
 
