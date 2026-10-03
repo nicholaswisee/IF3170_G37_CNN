@@ -4,6 +4,8 @@ import { AlgorithmControls } from './components/AlgorithmControls'
 import { IterationInspector } from './components/IterationInspector'
 import { ObjectiveChart } from './components/ObjectiveChart'
 import { TruckScene } from './components/TruckScene/TruckScene'
+import { TruckSelector } from './components/TruckScene/TruckSelector'
+import { mockProblem, mockStates } from './mocks/fleetFixture'
 import { useReplayStore } from './stores/replayStore'
 import type { ExperimentResult } from './types/experiment'
 
@@ -12,6 +14,10 @@ type ConnectionState = 'checking' | 'connected' | 'disconnected'
 export default function App() {
   const [connection, setConnection] = useState<ConnectionState>('checking')
   const setExperiment = useReplayStore((state) => state.setExperiment)
+  // Mock fleet until ExperimentResult carries the frozen problem and best_state.
+  const problem = mockProblem
+  const viewedState = mockStates.best
+  const [selectedTruckId, setSelectedTruckId] = useState(problem.trucks[0].id)
 
   useEffect(() => {
     let active = true
@@ -42,7 +48,8 @@ export default function App() {
       </header>
       <div className="workspace">
         <section className="scene-panel" aria-label="Truck scene">
-          <TruckScene />
+          <TruckSelector trucks={problem.trucks} selectedTruckId={selectedTruckId} onSelect={setSelectedTruckId} />
+          <TruckScene problem={problem} state={viewedState} truckId={selectedTruckId} />
         </section>
         <aside className="side-panel">
           <AlgorithmControls onExperimentReady={handleExperimentReady} />
