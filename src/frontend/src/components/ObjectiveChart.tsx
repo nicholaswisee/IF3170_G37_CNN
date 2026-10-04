@@ -5,6 +5,11 @@ import { sceneColors } from '../theme'
 export function ObjectiveChart() {
   const experiment = useReplayStore((state) => state.experiment)
   const data = experiment?.history.map((event) => ({ iteration: event.iteration, objective: event.current_score })) ?? []
+  const emptyMessage = !experiment
+    ? 'Run an experiment to populate the objective trace.'
+    : experiment.metadata.placeholder === true
+      ? 'The search algorithm still a placeholder.'
+      : 'This run recorded no history.'
 
   return (
     <section className="objective-chart" aria-labelledby="chart-heading">
@@ -13,7 +18,7 @@ export function ObjectiveChart() {
         <h2 id="chart-heading">Objective trace</h2>
       </div>
       <div className="chart-frame">
-        {data.length === 0 && <p className="chart-empty">Run an experiment to populate the objective trace.</p>}
+        {data.length === 0 && <p className="chart-empty">{emptyMessage}</p>}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 12, right: 18, bottom: 8, left: 0 }}>
             <CartesianGrid stroke={sceneColors.grid} strokeDasharray="3 3" />
