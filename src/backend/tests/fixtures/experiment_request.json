@@ -1,0 +1,44 @@
+{
+  "problem": {
+    "packages": [
+      {
+        "id": "box-1",
+        "width": 2,
+        "length": 1,
+        "height": 1,
+        "value": 10.0,
+        "weight": 3.0,
+        "is_fragile": false,
+        "eta": 0
+      }
+    ],
+    "trucks": [
+      {
+        "id": "truck-a",
+        "width": 4,
+        "length": 4,
+        "height": 3,
+        "max_capacity": 10.0
+      },
+      {
+        "id": "truck-b",
+        "width": 2,
+        "length": 2,
+        "height": 2,
+        "max_capacity": 5.0
+      }
+    ]
+  },
+  "objective_mode": "total_value",
+  "seed": 42,
+  "include_state_history": true,
+  "persist": true,
+  "algorithm": "simulated_annealing",
+  "parameters": {
+    "initial_temperature": null,
+    "alpha": 0.995,
+    "min_temperature": 0.001,
+    "max_iterations": 5000,
+    "stuck_patience": 50
+  }
+}
