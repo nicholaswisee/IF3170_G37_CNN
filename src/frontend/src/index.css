@@ -84,7 +84,7 @@ select {
   padding-bottom: var(--space-5);
 }
 
-.eyebrow, .panel-index, .field-label, .connection, dt, .scene-caption {
+.eyebrow, .panel-index, .field-label, dt, .scene-caption {
   color: var(--color-ink-muted);
   font-family: var(--font-data);
   font-size: var(--space-3);
@@ -97,18 +97,6 @@ select {
 h1, h2 { margin: 0; font-family: var(--font-display); font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; }
 h1 { max-width: 20ch; font-size: clamp(var(--space-6), 5vw, var(--space-7)); line-height: 0.9; }
 h2 { font-size: var(--space-5); }
-
-.connection {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  white-space: nowrap;
-}
-
-.connection span { width: var(--space-2); height: var(--space-2); background: var(--color-accent); }
-.connection--connected span { background: var(--color-success); }
-.connection--disconnected span { background: var(--color-danger); }
 
 .workspace { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(17rem, 0.8fr); align-items: start; gap: var(--space-4); margin-top: var(--space-4); }
 .scene-panel, .control-panel, .inspector, .objective-chart { border: var(--border-width) solid var(--color-rule); background: var(--color-panel); box-shadow: var(--shadow-panel); }
