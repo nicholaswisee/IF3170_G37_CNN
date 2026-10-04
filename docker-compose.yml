@@ -13,12 +13,6 @@ services:
       FRONTEND_ORIGIN: http://localhost:5173
       OUTPUT_DIR: /workspace/output
       DATA_DIR: /workspace/data
-    healthcheck:
-      test:
-        ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
 
   frontend:
     build:
@@ -31,5 +25,4 @@ services:
     environment:
       VITE_API_URL: http://localhost:8000
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
