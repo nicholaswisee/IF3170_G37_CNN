@@ -14,9 +14,20 @@ package and truck specifications, fleet problems, six package orientations, and 
 search state. Per-truck occupancy and global state validation are implemented and tested for
 assignment consistency, boundaries, overlap, capacity, support, and fragile packages.
 
-Neighbor generation, search algorithms, objective evaluation, random initialization, and experiment
-execution remain unimplemented. The current scene uses preview data, and the experiment API returns
-placeholder results rather than optimized placements.
+Shared neighbor generation, both objective modes, and seeded feasible initialization are implemented.
+Algorithms now share an internal `SearchResult` and a typed `run` interface, with optional state
+snapshots in history. Search algorithms and experiment execution remain unimplemented. The current
+scene uses preview data, and the experiment API returns placeholder results rather than optimized
+placements. Public request/result schema migration and frontend history compatibility are still pending.
+
+### Algorithm implementation handoff
+
+Import `SearchAlgorithm` and `SearchResult` from `app.optimization.algorithms.base`.
+Implement `run(problem, initial_state, *, objective_mode, rng, parameters, include_state_history)`.
+HC and SA receive an initial state from the runner; GA may receive `None` and create its population.
+Return final/best states and scores, iteration count, history, and metadata. History uses
+`app.schemas.experiment.SearchEvent`, with required current/best scores and optional algorithm metrics
+and state snapshots. The experiment runner owns timing, public-result wrapping, IDs, and persistence.
 
 ## Setup and run
 
@@ -86,7 +97,8 @@ mypy app
 pytest
 ```
 
-The tests cover occupancy, global constraints, and domain serialization/copy integration.
+The tests cover occupancy, global constraints, objectives, seeded initialization/neighbors,
+domain serialization/copy integration, and algorithm interface/result contracts.
 They do not yet cover execution of the pending search algorithms or experiment API integration.
 
 From `src/frontend`:
