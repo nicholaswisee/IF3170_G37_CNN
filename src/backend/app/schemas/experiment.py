@@ -22,9 +22,14 @@ class RunExperimentRequest(BaseModel):
 class SearchEvent(BaseModel):
     iteration: int
     current_score: float
-    candidate_score: float
-    accepted: bool
+    best_score: float
+    candidate_score: float | None = None
+    mean_score: float | None = None
+    accepted: bool | None = None
     move: Move | None = None
+    temperature: float | None = None
+    acceptance_probability: float | None = None
+    state_snapshot: State | None = None
     metadata: Metadata = Field(default_factory=dict)
 
 
