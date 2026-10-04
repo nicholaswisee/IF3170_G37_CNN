@@ -1,7 +1,8 @@
 import { useState, type ChangeEvent } from 'react'
 import { runExperiment } from '../api/client'
+import { buildRunRequest } from '../api/requests'
 import { useReplayStore } from '../stores/replayStore'
-import type { Algorithm, ExperimentResult } from '../types/experiment'
+import type { Algorithm, ExperimentResult, Problem } from '../types/experiment'
 
 const algorithms: { value: Algorithm; label: string }[] = [
   { value: 'hill_climbing', label: 'Hill Climbing' },
@@ -10,10 +11,11 @@ const algorithms: { value: Algorithm; label: string }[] = [
 ]
 
 interface AlgorithmControlsProps {
+  problem: Problem
   onExperimentReady: (experiment: ExperimentResult) => void
 }
 
-export function AlgorithmControls({ onExperimentReady }: AlgorithmControlsProps) {
+export function AlgorithmControls({ problem, onExperimentReady }: AlgorithmControlsProps) {
   const [algorithm, setAlgorithm] = useState<Algorithm>('hill_climbing')
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +34,7 @@ export function AlgorithmControls({ onExperimentReady }: AlgorithmControlsProps)
     setError(null)
 
     try {
-      const experiment = await runExperiment({ algorithm, seed: 42, parameters: {} })
+      const experiment = await runExperiment(buildRunRequest({ algorithm, problem, seed: 42 }))
       onExperimentReady(experiment)
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Experiment request failed')
