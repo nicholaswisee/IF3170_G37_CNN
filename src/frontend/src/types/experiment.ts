@@ -148,11 +148,6 @@ export interface ExperimentResult {
   metadata: Record<string, unknown>
 }
 
-export interface HealthResponse {
-  status: 'ok'
-  service: 'backend'
-}
-
 export interface ExperimentListResponse {
   experiments: ExperimentResult[]
 }
