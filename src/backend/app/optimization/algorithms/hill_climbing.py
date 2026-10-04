@@ -1,11 +1,24 @@
 """Placeholder boundary for the future hill-climbing implementation."""
 
+import random
+
+from pydantic import BaseModel
+
+from app.domain.problem import Problem
 from app.domain.state import State
-from app.optimization.algorithms.base import SearchAlgorithm
-from app.schemas.experiment import ExperimentResult
+from app.optimization.algorithms.base import SearchAlgorithm, SearchResult
+from app.optimization.objective import ObjectiveMode
 
 
 class HillClimbing(SearchAlgorithm):
-    def run(self, initial_state: State, **params: object) -> ExperimentResult:
-        # TODO: Implement hill climbing after objective and neighbors are defined.
+    def run(
+        self,
+        problem: Problem,
+        initial_state: State | None,
+        *,
+        objective_mode: ObjectiveMode,
+        rng: random.Random,
+        parameters: BaseModel,
+        include_state_history: bool,
+    ) -> SearchResult:
         raise NotImplementedError("Hill climbing not implemented yet.")
