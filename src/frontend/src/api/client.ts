@@ -1,7 +1,6 @@
 import type {
   ExperimentListResponse,
   ExperimentResult,
-  HealthResponse,
   RunExperimentRequest,
 } from '../types/experiment'
 import { isExperimentResult } from './validation'
@@ -16,10 +15,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>
-}
-
-export function healthCheck(): Promise<HealthResponse> {
-  return request<HealthResponse>('/api/health')
 }
 
 export function listExperiments(): Promise<ExperimentListResponse> {
