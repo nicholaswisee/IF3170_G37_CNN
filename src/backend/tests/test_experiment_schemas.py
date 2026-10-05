@@ -7,6 +7,7 @@ import pytest
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from app.domain import PackagePlacement, Problem, State
+from app.optimization.algorithms.base import SearchResult
 from app.optimization.objective import ObjectiveMode
 from app.schemas import (
     ExperimentListResponse,
@@ -70,6 +71,70 @@ def payload(problem: Problem, algorithm: str) -> dict:
         "algorithm": algorithm,
         "seed": 42,
     }
+
+
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+@pytest.mark.parametrize(
+    ("collection", "field"),
+    [("packages", "value"), ("packages", "weight"), ("trucks", "max_capacity")],
+)
+@pytest.mark.parametrize("number", [float("inf"), float("-inf"), float("nan")])
+def test_request_rejects_nonfinite_problem_numbers(
+    single_truck_problem: Problem,
+    algorithm: str,
+    collection: str,
+    field: str,
+    number: float,
+) -> None:
+    data = payload(single_truck_problem, algorithm)
+    data["problem"][collection][0][field] = number
+    with pytest.raises(ValidationError):
+        REQUEST.validate_python(data)
+
+
+@pytest.mark.parametrize(
+    ("collection", "field"),
+    [("packages", "value"), ("packages", "weight"), ("trucks", "max_capacity")],
+)
+def test_request_rejects_json_exponent_overflow(
+    single_truck_problem: Problem, collection: str, field: str
+) -> None:
+    data = payload(single_truck_problem, "genetic_algorithm")
+    data["problem"][collection][0][field] = "OVERFLOW"
+    raw = json.dumps(data).replace('"OVERFLOW"', "1e400")
+    with pytest.raises(ValidationError):
+        REQUEST.validate_json(raw)
+
+
+@pytest.mark.parametrize("number", [float("inf"), float("-inf"), float("nan")])
+def test_result_and_event_metrics_must_be_finite(number: float) -> None:
+    for field in (
+        "current_score",
+        "best_score",
+        "candidate_score",
+        "mean_score",
+        "temperature",
+        "acceptance_probability",
+    ):
+        with pytest.raises(ValidationError):
+            SearchEvent.model_validate(
+                {"iteration": 0, "current_score": 0, "best_score": 0, field: number}
+            )
+    public = json.loads((FIXTURES / "experiment_result.json").read_text())
+    for field in ("initial_score", "final_score", "best_score"):
+        with pytest.raises(ValidationError):
+            ExperimentResult.model_validate(public | {field: number})
+    internal = {
+        "final_state": public["final_state"],
+        "best_state": public["best_state"],
+        "final_score": 0,
+        "best_score": 0,
+        "iterations": 0,
+        "history": [],
+    }
+    for field in ("final_score", "best_score"):
+        with pytest.raises(ValidationError):
+            SearchResult.model_validate(internal | {field: number})
 
 
 @pytest.mark.parametrize(

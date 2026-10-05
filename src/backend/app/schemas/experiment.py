@@ -91,6 +91,8 @@ type RunExperimentRequest = Annotated[
 
 
 class SearchEvent(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     iteration: int
     current_score: float
     best_score: float
@@ -105,6 +107,8 @@ class SearchEvent(BaseModel):
 
 
 class ExperimentResult(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     id: str
     problem: Problem
     algorithm: AlgorithmName
