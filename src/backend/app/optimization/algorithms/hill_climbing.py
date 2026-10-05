@@ -1,10 +1,3 @@
-"""Hill-Climbing family over the shared bounded sampled neighborhood.
-
-One class dispatches by variant (freeze section 26). Every variant uses the
-shared neighbor engine, validator, and objective evaluator. Only Sideways, the
-mandatory default variant, is implemented so far.
-"""
-
 import random
 
 from pydantic import BaseModel
@@ -22,8 +15,6 @@ from app.schemas.experiment import (
 
 
 class HillClimbing(SearchAlgorithm):
-    """The runner selects the variant here because the frozen run() has no variant."""
-
     def __init__(
         self,
         variant: HillClimbingVariant = HillClimbingVariant.SIDEWAYS,
@@ -71,14 +62,6 @@ class HillClimbing(SearchAlgorithm):
         max_sideways: int,
         include_state_history: bool,
     ) -> SearchResult:
-        """Move to a random equal-best sampled neighbor while it is not worse.
-
-        Improvements are always taken and reset the consecutive sideways
-        counter. Equal-best moves are taken while the counter is below
-        max_sideways; zero disables them. History holds the initial state as
-        iteration 0, then one event per iteration, including the final
-        iteration that rejects every candidate.
-        """
         current = initial_state.model_copy(deep=True)
         current_score = evaluate_objective(problem, current, objective_mode)
         best_state, best_score = current, current_score
