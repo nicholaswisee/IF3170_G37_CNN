@@ -9,25 +9,26 @@ TypeScript, and Vite, with React Three Fiber / Three.js for visualization and Re
 
 ## Current status
 
-The application scaffold and shared domain contract are implemented. The domain includes immutable
-package and truck specifications, fleet problems, six package orientations, and placement-only
-search state. Per-truck occupancy and global state validation are implemented and tested for
-assignment consistency, boundaries, overlap, capacity, support, and fragile packages.
+The application scaffold, shared domain contract, and frontend contract fixtures are implemented.
+The domain uses Pydantic `Problem`, `PackageSpec`, and `TruckSpec` models, six package orientations,
+and placement-only search state. Package `value`/`weight` and truck `max_capacity` must be finite
+(`allow_inf_nan=False`); frontend result validation also rejects non-finite metrics. Per-truck
+occupancy and global state validation are implemented and tested for assignment consistency,
+boundaries, overlap, capacity, support, and fragile packages.
+
+Internal/public result scores and numeric event metrics must also be finite. Invalid requests return
+422 with `detail` entries containing `type`, `loc`, and `msg`; raw input and exception context are
+omitted so non-finite input cannot break error-response serialization.
 
 Shared neighbor generation, both objective modes, and seeded feasible initialization are implemented.
-Algorithms now share an internal `SearchResult` and a typed `run` interface, with optional state
-snapshots in history. Search algorithms and experiment execution remain unimplemented. The current
-scene uses preview data, and the experiment API returns placeholder results rather than optimized
-placements. Public request/result schema migration and frontend history compatibility are still pending.
-
-### Algorithm implementation handoff
-
-Import `SearchAlgorithm` and `SearchResult` from `app.optimization.algorithms.base`.
-Implement `run(problem, initial_state, *, objective_mode, rng, parameters, include_state_history)`.
-HC and SA receive an initial state from the runner; GA may receive `None` and create its population.
-Return final/best states and scores, iteration count, history, and metadata. History uses
-`app.schemas.experiment.SearchEvent`, with required current/best scores and optional algorithm metrics
-and state snapshots. The experiment runner owns timing, public-result wrapping, IDs, and persistence.
+Algorithms share an internal `SearchResult` and a typed `run` interface, with optional state
+snapshots in history. Public request/result schemas and frontend history compatibility are aligned.
+Sideways Hill Climbing is implemented and can be called directly through the algorithm interface.
+Steepest-ascent, stochastic, and random-restart HC, Simulated Annealing, and Genetic Algorithm remain
+unimplemented. The experiment runner, API algorithm dispatch, batch execution, persistence, and
+algorithm-specific UI controls are pending. The scene renders a history snapshot when available and
+otherwise `best_state`; the run endpoint still returns a placeholder and does not execute HC.
+Frontend tests cover schema validation, placeholder API fixtures, and replay selection.
 
 ## Setup and run
 
@@ -40,8 +41,8 @@ docker compose up --build
 ```
 
 Compose installs dependencies and starts both development servers. It mounts the source directories
-for development, along with `data/` and `output/`. No database or separate environment file is required
-for the default setup.
+for development, along with `data/` and `output/`. Startup uses service ordering only, not health
+readiness waits; `/api/health` remains diagnostic. No database or separate environment file is required.
 
 | Service                       | URL                                |
 | ----------------------------- | ---------------------------------- |
@@ -98,14 +99,16 @@ pytest
 ```
 
 The tests cover occupancy, global constraints, objectives, seeded initialization/neighbors,
-domain serialization/copy integration, and algorithm interface/result contracts.
-They do not yet cover execution of the pending search algorithms or experiment API integration.
+domain serialization/copy integration, schemas, placeholder API behavior, algorithm interface/result
+contracts, and Sideways HC execution, seeded behavior, and termination. Other algorithms and real
+algorithm execution through the API remain pending.
 
 From `src/frontend`:
 
 ```bash
 npm run build
 npm run lint
+npm test
 ```
 
 ## Team and planned responsibilities
@@ -123,10 +126,9 @@ All members contribute to integration and review of the shared interfaces.
 ## Repository structure
 
 ```text
-src/backend/    FastAPI, domain models, occupancy/validator, and optimization scaffolds
+src/backend/    FastAPI, domain models, validation, and optimization modules
 src/frontend/   React application, API client, replay store, 3D scene, and charts
 data/           Input data
-docs/           Project specifications and task planning
 output/         Reserved for experiment output
 ```
 
@@ -136,3 +138,4 @@ output/         Reserved for experiment output
 - `GET /api/experiments`: returns an empty experiment list.
 - `POST /api/experiments/run`: returns a deterministic placeholder result for the selected
   algorithm name. This endpoint does not run a search algorithm yet.
+- `POST /api/problems/validate` and `POST /api/experiments/batch` are planned, not implemented.
