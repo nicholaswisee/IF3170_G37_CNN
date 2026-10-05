@@ -1,7 +1,7 @@
 import random
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.domain.problem import Problem
 from app.domain.state import State
@@ -11,6 +11,8 @@ from app.schemas.experiment import SearchEvent
 
 
 class SearchResult(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     final_state: State
     best_state: State
     final_score: float

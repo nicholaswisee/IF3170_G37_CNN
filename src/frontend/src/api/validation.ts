@@ -19,8 +19,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
 function isNullableNumber(value: unknown): value is number | null {
-  return value === null || typeof value === 'number'
+  return value === null || isFiniteNumber(value)
 }
 
 function isPackageSpec(value: unknown): value is PackageSpec {
@@ -29,8 +33,8 @@ function isPackageSpec(value: unknown): value is PackageSpec {
     && Number.isInteger(value.width)
     && Number.isInteger(value.length)
     && Number.isInteger(value.height)
-    && typeof value.value === 'number'
-    && typeof value.weight === 'number'
+    && isFiniteNumber(value.value)
+    && isFiniteNumber(value.weight)
     && typeof value.is_fragile === 'boolean'
     && Number.isInteger(value.eta)
 }
@@ -41,7 +45,7 @@ function isTruckSpec(value: unknown): value is TruckSpec {
     && Number.isInteger(value.width)
     && Number.isInteger(value.length)
     && Number.isInteger(value.height)
-    && typeof value.max_capacity === 'number'
+    && isFiniteNumber(value.max_capacity)
 }
 
 function isProblem(value: unknown): value is Problem {
@@ -88,9 +92,9 @@ function isMove(value: unknown): value is Move {
 
 function isSearchEvent(value: unknown): value is SearchEvent {
   return isRecord(value)
-    && typeof value.iteration === 'number'
-    && typeof value.current_score === 'number'
-    && typeof value.best_score === 'number'
+    && isFiniteNumber(value.iteration)
+    && isFiniteNumber(value.current_score)
+    && isFiniteNumber(value.best_score)
     && isNullableNumber(value.candidate_score)
     && isNullableNumber(value.mean_score)
     && (value.accepted === null || typeof value.accepted === 'boolean')
@@ -110,16 +114,16 @@ export function isExperimentResult(value: unknown): value is ExperimentResult {
     && (value.variant === null || (typeof value.variant === 'string' && hillClimbingVariants.has(value.variant)))
     && typeof value.objective_mode === 'string'
     && objectiveModes.has(value.objective_mode)
-    && typeof value.seed === 'number'
+    && isFiniteNumber(value.seed)
     && isRecord(value.parameters)
     && isOptimizationState(value.initial_state)
     && isOptimizationState(value.final_state)
     && isOptimizationState(value.best_state)
-    && typeof value.initial_score === 'number'
-    && typeof value.final_score === 'number'
-    && typeof value.best_score === 'number'
-    && typeof value.runtime_ms === 'number'
-    && typeof value.iterations === 'number'
+    && isFiniteNumber(value.initial_score)
+    && isFiniteNumber(value.final_score)
+    && isFiniteNumber(value.best_score)
+    && isFiniteNumber(value.runtime_ms)
+    && isFiniteNumber(value.iterations)
     && Array.isArray(value.history)
     && value.history.every(isSearchEvent)
     && isRecord(value.metadata)

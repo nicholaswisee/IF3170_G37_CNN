@@ -5,15 +5,16 @@ import { ObjectiveChart } from './components/ObjectiveChart'
 import { TruckScene } from './components/TruckScene/TruckScene'
 import { TruckSelector } from './components/TruckScene/TruckSelector'
 import { mockProblem, mockStates } from './mocks/fleetFixture'
-import { useReplayStore } from './stores/replayStore'
+import { selectReplayState, useReplayStore } from './stores/replayStore'
 import type { ExperimentResult } from './types/experiment'
 
 export default function App() {
   const experiment = useReplayStore((state) => state.experiment)
+  const currentIteration = useReplayStore((state) => state.currentIteration)
   const setExperiment = useReplayStore((state) => state.setExperiment)
   // The mock fleet is shown until a run returns; it is also the problem sent with each run.
   const problem = experiment?.problem ?? mockProblem
-  const viewedState = experiment?.best_state ?? mockStates.best
+  const viewedState = selectReplayState(experiment, currentIteration) ?? mockStates.best
   const [selectedTruckId, setSelectedTruckId] = useState(mockProblem.trucks[0].id)
   const activeTruckId = problem.trucks.some((truck) => truck.id === selectedTruckId) ? selectedTruckId : problem.trucks[0].id
 

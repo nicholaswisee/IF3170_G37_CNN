@@ -1,5 +1,7 @@
 """Keep the placeholder API importable and explicit about its pending execution."""
 
+import asyncio
+import json
 from pathlib import Path
 
 import pytest
@@ -84,3 +86,48 @@ def test_handoff_result_is_the_actual_placeholder_response() -> None:
         (fixtures / "experiment_result.json").read_text()
     )
     assert run_experiment(request) == result
+
+
+@pytest.mark.parametrize(
+    ("collection", "field"),
+    [("packages", "value"), ("packages", "weight"), ("trucks", "max_capacity")],
+)
+def test_http_rejects_overflow_with_serializable_422(
+    collection: str, field: str
+) -> None:
+    data = json.loads(
+        (Path(__file__).parent / "fixtures" / "experiment_request.json").read_text()
+    )
+    data["problem"][collection][0][field] = "OVERFLOW"
+    body = json.dumps(data).replace('"OVERFLOW"', "1e400").encode()
+    messages = []
+
+    async def receive():
+        return {"type": "http.request", "body": body, "more_body": False}
+
+    async def send(message):
+        messages.append(message)
+
+    asyncio.run(
+        app(
+            {
+                "type": "http",
+                "asgi": {"version": "3.0"},
+                "http_version": "1.1",
+                "method": "POST",
+                "scheme": "http",
+                "path": "/api/experiments/run",
+                "raw_path": b"/api/experiments/run",
+                "query_string": b"",
+                "headers": [(b"content-type", b"application/json")],
+                "server": ("test", 80),
+                "client": ("test", 123),
+            },
+            receive,
+            send,
+        )
+    )
+    assert messages[0]["status"] == 422
+    content = json.loads(b"".join(message.get("body", b"") for message in messages))
+    assert content["detail"][0]["type"] == "finite_number"
+    assert content["detail"][0]["loc"][-1] == field

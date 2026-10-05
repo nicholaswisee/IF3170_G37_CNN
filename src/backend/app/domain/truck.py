@@ -4,7 +4,7 @@ from app.domain.package import Orientation
 
 
 class TruckSpec(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, allow_inf_nan=False)
 
     id: str
     width: int = Field(gt=0)

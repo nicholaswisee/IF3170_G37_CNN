@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ExperimentResult } from '../types/experiment'
+import type { ExperimentResult, OptimizationState } from '../types/experiment'
 
 const defaultPlaybackSpeed = 1
 
@@ -20,6 +20,14 @@ interface ReplayState {
 
 function lastIteration(experiment: ExperimentResult | null): number {
   return Math.max((experiment?.history.length ?? 1) - 1, 0)
+}
+
+export function selectReplayState(
+  experiment: ExperimentResult | null,
+  currentIteration: number,
+): OptimizationState | null {
+  if (!experiment) return null
+  return experiment.history[currentIteration]?.state_snapshot ?? experiment.best_state
 }
 
 export const useReplayStore = create<ReplayState>((set) => ({
