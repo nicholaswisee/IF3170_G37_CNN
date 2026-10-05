@@ -91,9 +91,7 @@ def test_run_signature_matches_frozen_contract(
     }
 
 
-@pytest.mark.parametrize(
-    "algorithm_type", [HillClimbing, SimulatedAnnealing, GeneticAlgorithm]
-)
+@pytest.mark.parametrize("algorithm_type", [SimulatedAnnealing, GeneticAlgorithm])
 def test_algorithm_placeholders_remain_explicitly_unimplemented(
     single_truck_problem: Problem, algorithm_type: type[SearchAlgorithm]
 ) -> None:
