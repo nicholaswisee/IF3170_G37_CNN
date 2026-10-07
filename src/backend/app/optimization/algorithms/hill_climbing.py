@@ -67,13 +67,6 @@ class HillClimbing(SearchAlgorithm):
         config: HillClimbingParameters,
         include_state_history: bool,
     ) -> SearchResult:
-        """Run 1 + max_restarts Steepest-Ascent climbs and keep the best.
-
-        The first climb starts from the runner's initial state; each restart
-        starts from a fresh random feasible state. ``max_iterations`` bounds
-        each climb. History is concatenated with a strictly increasing
-        iteration index, so every restart's start state is its own event.
-        """
         climbs: list[SearchResult] = []
         history: list[SearchEvent] = []
         running_best = float("-inf")
