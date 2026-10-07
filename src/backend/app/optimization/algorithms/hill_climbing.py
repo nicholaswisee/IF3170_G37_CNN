@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from app.domain.problem import Problem
 from app.domain.state import State
 from app.optimization.algorithms.base import SearchAlgorithm, SearchResult
+from app.optimization.initializer import generate_random_feasible_state
 from app.optimization.neighbors import NeighborConfig, sample_valid_neighbors
 from app.optimization.objective import ObjectiveMode, evaluate_objective
 from app.schemas.experiment import (
@@ -37,21 +38,26 @@ class HillClimbing(SearchAlgorithm):
             raise ValueError("Hill climbing requires an initial state from the runner.")
         config = HillClimbingParameters.model_validate(parameters.model_dump())
 
-        if self.variant is HillClimbingVariant.SIDEWAYS:
-            return self._climb(
+        if self.variant is HillClimbingVariant.RANDOM_RESTART:
+            return self._random_restart(
                 problem,
                 initial_state,
                 objective_mode=objective_mode,
                 rng=rng,
                 config=config,
-                max_sideways=config.max_sideways,
                 include_state_history=include_state_history,
             )
-        raise NotImplementedError(
-            f"Hill climbing variant {self.variant.value} not implemented yet."
+        return self._climb(
+            problem,
+            initial_state,
+            variant=self.variant,
+            objective_mode=objective_mode,
+            rng=rng,
+            config=config,
+            include_state_history=include_state_history,
         )
 
-    def _climb(
+    def _random_restart(
         self,
         problem: Problem,
         initial_state: State,
@@ -59,15 +65,89 @@ class HillClimbing(SearchAlgorithm):
         objective_mode: ObjectiveMode,
         rng: random.Random,
         config: HillClimbingParameters,
-        max_sideways: int,
         include_state_history: bool,
     ) -> SearchResult:
+        """Run 1 + max_restarts Steepest-Ascent climbs and keep the best.
+
+        The first climb starts from the runner's initial state; each restart
+        starts from a fresh random feasible state. ``max_iterations`` bounds
+        each climb. History is concatenated with a strictly increasing
+        iteration index, so every restart's start state is its own event.
+        """
+        climbs: list[SearchResult] = []
+        history: list[SearchEvent] = []
+        running_best = float("-inf")
+        start = initial_state
+        for restart in range(config.max_restarts + 1):
+            if restart > 0:
+                start = generate_random_feasible_state(problem, rng)
+            climb = self._climb(
+                problem,
+                start,
+                variant=HillClimbingVariant.STEEPEST_ASCENT,
+                objective_mode=objective_mode,
+                rng=rng,
+                config=config,
+                include_state_history=include_state_history,
+            )
+            climbs.append(climb)
+            offset = history[-1].iteration + 1 if history else 0
+            for event in climb.history:
+                running_best = max(running_best, event.best_score)
+                history.append(
+                    event.model_copy(
+                        update={
+                            "iteration": event.iteration + offset,
+                            "best_score": running_best,
+                            "metadata": {**event.metadata, "restart": restart},
+                        }
+                    )
+                )
+
+        # max() keeps the earliest climb among equal best scores.
+        best = max(climbs, key=lambda climb: climb.best_score)
+        return SearchResult(
+            final_state=climbs[-1].final_state,
+            best_state=best.best_state,
+            final_score=climbs[-1].final_score,
+            best_score=best.best_score,
+            iterations=sum(climb.iterations for climb in climbs),
+            history=history,
+            metadata={
+                "restarts_performed": len(climbs) - 1, # Banyak restart
+                "iterations_per_restart": [climb.iterations for climb in climbs], # Banyak iterasi per restart
+                "best_score_per_restart": [climb.best_score for climb in climbs],
+                "termination_reason": "max_restarts",
+            },
+        )
+
+    def _climb(
+        self,
+        problem: Problem,
+        initial_state: State,
+        *,
+        variant: HillClimbingVariant,
+        objective_mode: ObjectiveMode,
+        rng: random.Random,
+        config: HillClimbingParameters,
+        include_state_history: bool,
+    ) -> SearchResult:
+        """One local climb over sampled neighborhoods.
+
+        Steepest-Ascent and Sideways move to a random equal-best candidate;
+        Sideways also accepts equal-score moves up to ``max_sideways``
+        consecutive times. Stochastic moves to a uniformly random improving
+        candidate.
+        """
+        is_sideways = variant is HillClimbingVariant.SIDEWAYS
+        is_stochastic = variant is HillClimbingVariant.STOCHASTIC
+        max_sideways = config.max_sideways if is_sideways else 0 # parameter max_sideways
         current = initial_state.model_copy(deep=True)
         current_score = evaluate_objective(problem, current, objective_mode)
         best_state, best_score = current, current_score
         consecutive_sideways = 0
         sideways_moves = 0
-        iterations = 0
+        iterations = 0 # Banyak iterasi hingga proses pencarian berhenti
         termination_reason = "max_iterations"
         history = [
             SearchEvent(
@@ -106,13 +186,25 @@ class HillClimbing(SearchAlgorithm):
                 for neighbor in neighbors
             ]
             top_score = max(scores)
-            improved = top_score > current_score
-            sideways = (
+            if is_stochastic:
+                pool = [
+                    (n, score)
+                    for n, score in zip(neighbors, scores)
+                    if score > current_score
+                ]
+            elif top_score > current_score or (
                 top_score == current_score and consecutive_sideways < max_sideways
-            )
-            if not (improved or sideways):
+            ):
+                pool = [
+                    (n, score)
+                    for n, score in zip(neighbors, scores)
+                    if score == top_score
+                ]
+            else:
+                pool = []
+            if not pool:
                 if top_score == current_score and max_sideways > 0:
-                    termination_reason = "max_sideways"
+                    termination_reason = "max_sideways" # terminasi kalau udah lewat dari jumlah max sideways
                 else:
                     termination_reason = "local_optimum"
                 history.append(
@@ -128,10 +220,9 @@ class HillClimbing(SearchAlgorithm):
                 )
                 break
 
-            selected = rng.choice(
-                [n for n, score in zip(neighbors, scores) if score == top_score]
-            )
-            current, current_score = selected.state, top_score
+            selected, selected_score = rng.choice(pool)
+            improved = selected_score > current_score
+            current, current_score = selected.state, selected_score
             if improved:
                 consecutive_sideways = 0
             else:
@@ -140,23 +231,36 @@ class HillClimbing(SearchAlgorithm):
             if current_score > best_score:
                 best_state, best_score = current, current_score
 
+            event_metadata: dict[str, object] = {"sampled_neighbors": len(neighbors)}
+            if is_sideways:
+                event_metadata["sideways"] = not improved
+                event_metadata["consecutive_sideways"] = consecutive_sideways
+            if is_stochastic:
+                event_metadata["improving_candidates"] = len(pool)
             history.append(
                 SearchEvent(
                     iteration=iteration,
                     current_score=current_score,
                     best_score=best_score,
-                    candidate_score=top_score,
+                    candidate_score=selected_score,
                     accepted=True,
                     move=selected.move,
                     state_snapshot=current if include_state_history else None,
-                    metadata={
-                        "sampled_neighbors": len(neighbors),
-                        "sideways": not improved,
-                        "consecutive_sideways": consecutive_sideways,
-                    },
+                    metadata=event_metadata,
                 )
             )
 
+        metadata: dict[str, object]
+        if is_sideways:
+            metadata = {
+                "sideways_moves": sideways_moves,
+                "termination_reason": termination_reason,
+            }
+        else:
+            metadata = {
+                "termination_reason": termination_reason,
+                "sampled_neighbors": config.candidates_per_iteration,
+            }
         return SearchResult(
             final_state=current.model_copy(deep=True),
             best_state=best_state.model_copy(deep=True),
@@ -164,8 +268,5 @@ class HillClimbing(SearchAlgorithm):
             best_score=best_score,
             iterations=iterations,
             history=history,
-            metadata={
-                "sideways_moves": sideways_moves,
-                "termination_reason": termination_reason,
-            },
+            metadata=metadata,
         )
