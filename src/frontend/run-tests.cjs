@@ -8,7 +8,8 @@ try {
     require.resolve('typescript/bin/tsc'),
     '--module', 'commonjs', '--moduleResolution', 'node', '--target', 'ES2022',
     '--esModuleInterop', '--skipLibCheck', '--types', 'node', '--outDir', output,
-    'src/api/validation.test.ts', 'src/api/errors.test.ts', 'src/stores/replayStore.test.ts',
+    'src/api/validation.test.ts', 'src/api/requests.test.ts', 'src/api/errors.test.ts',
+    'src/stores/replayStore.test.ts',
   ], { stdio: 'inherit' })
   if (compilation.error) throw compilation.error
   process.exitCode = compilation.status ?? 1
@@ -16,6 +17,7 @@ try {
     writeFileSync(join(output, 'package.json'), JSON.stringify({ type: 'commonjs' }))
     const tests = spawnSync(process.execPath, [
       '--test', join(output, 'api/validation.test.js'),
+      join(output, 'api/requests.test.js'),
       join(output, 'api/errors.test.js'),
       join(output, 'stores/replayStore.test.js'),
     ], { stdio: 'inherit' })
