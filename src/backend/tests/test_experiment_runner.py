@@ -57,3 +57,26 @@ def _minimal_result(score: float):
         iterations=1,
         history=[],
     )
+
+
+def test_mandatory_presets_keep_two_sweeps_separate() -> None:
+    from app.experiments.presets import ga_mandatory_presets
+
+    presets = ga_mandatory_presets()
+    assert len(presets) == 18
+    groups = {preset.label for preset in presets}
+    assert groups == {"generations", "population_size"}
+    assert (
+        len(
+            {
+                (
+                    preset.label,
+                    preset.parameters.population_size,
+                    preset.parameters.generations,
+                    preset.seed,
+                )
+                for preset in presets
+            }
+        )
+        == 18
+    )
