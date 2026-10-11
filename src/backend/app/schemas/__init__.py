@@ -1,5 +1,9 @@
 from app.schemas.experiment import (
     AlgorithmName,
+    BatchExperimentRequest,
+    BatchExperimentResult,
+    BatchGroupResult,
+    BatchRunSpec,
     ExperimentListResponse,
     ExperimentResult,
     GeneticAlgorithmParameters,
@@ -15,6 +19,10 @@ from app.schemas.experiment import (
 
 __all__ = [
     "AlgorithmName",
+    "BatchExperimentRequest",
+    "BatchExperimentResult",
+    "BatchGroupResult",
+    "BatchRunSpec",
     "ExperimentListResponse",
     "ExperimentResult",
     "GeneticAlgorithmParameters",

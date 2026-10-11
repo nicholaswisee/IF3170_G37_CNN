@@ -407,3 +407,44 @@ def test_handoff_json_examples_match_the_frozen_contract() -> None:
     assert result.seed == request.seed
     assert result.metadata["placeholder"] is True
     assert json.loads(result.model_dump_json())["variant"] is None
+
+
+@pytest.mark.parametrize("seed", [-(2**53 - 1), 2**53 - 1])
+def test_request_accepts_javascript_safe_seed_boundaries(
+    single_truck_problem: Problem, seed: int
+) -> None:
+    request = REQUEST.validate_python(
+        payload(single_truck_problem, "genetic_algorithm") | {"seed": seed}
+    )
+    assert request.seed == seed
+
+
+def test_request_accepts_package_truck_and_id_length_boundaries(
+    single_truck_problem: Problem,
+) -> None:
+    package = single_truck_problem.packages[0].model_dump(mode="json")
+    truck = single_truck_problem.trucks[0].model_dump(mode="json")
+    problem = Problem(
+        packages=[{**package, "id": f"p-{index}"} for index in range(100)],
+        trucks=[{**truck, "id": f"t-{index}"} for index in range(20)],
+    )
+    request_data = payload(problem, "genetic_algorithm")
+    request_data["problem"]["packages"][0]["id"] = "p" * 128
+    request = REQUEST.validate_python(request_data)
+    assert len(request.problem.packages) == 100
+    assert len(request.problem.trucks) == 20
+
+
+@pytest.mark.parametrize(("collection", "count"), [("packages", 101), ("trucks", 21)])
+def test_request_rejects_over_count_boundary_before_domain_parse(
+    single_truck_problem: Problem, collection: str, count: int
+) -> None:
+    problem = single_truck_problem.model_dump(mode="json")
+    source = problem[collection][0]
+    problem[collection] = [
+        {**source, "id": f"{collection}-{index}"} for index in range(count)
+    ]
+    with pytest.raises(ValidationError):
+        REQUEST.validate_python(
+            payload(single_truck_problem, "genetic_algorithm") | {"problem": problem}
+        )
