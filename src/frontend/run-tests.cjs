@@ -9,7 +9,7 @@ try {
     '--module', 'commonjs', '--moduleResolution', 'node', '--target', 'ES2022',
     '--esModuleInterop', '--skipLibCheck', '--types', 'node', '--outDir', output,
     'src/api/validation.test.ts', 'src/api/requests.test.ts', 'src/api/errors.test.ts',
-    'src/stores/replayStore.test.ts',
+    'src/components/objectiveChartData.test.ts', 'src/stores/replayStore.test.ts',
   ], { stdio: 'inherit' })
   if (compilation.error) throw compilation.error
   process.exitCode = compilation.status ?? 1
@@ -19,6 +19,7 @@ try {
       '--test', join(output, 'api/validation.test.js'),
       join(output, 'api/requests.test.js'),
       join(output, 'api/errors.test.js'),
+      join(output, 'components/objectiveChartData.test.js'),
       join(output, 'stores/replayStore.test.js'),
     ], { stdio: 'inherit' })
     if (tests.error) throw tests.error
