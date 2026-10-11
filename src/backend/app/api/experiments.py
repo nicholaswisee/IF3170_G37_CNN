@@ -1,8 +1,20 @@
-from fastapi import APIRouter
+from pathlib import Path
 
-from app.domain.state import State
-from app.domain.truck import PackagePlacement
+from fastapi import APIRouter, HTTPException
+
+from app.config import settings
+from app.experiments.batch import BatchConfigurationError
+from app.experiments.batch import run_batch as execute_batch
+from app.experiments.presets import ga_mandatory_presets
+from app.experiments.runner import (
+    ExecutionBudgetError,
+    UnsupportedAlgorithmError,
+)
+from app.experiments.runner import run_experiment as execute_experiment
+from app.optimization.objective import ObjectiveRangeError
 from app.schemas.experiment import (
+    BatchExperimentRequest,
+    BatchExperimentResult,
     ExperimentListResponse,
     ExperimentResult,
     RunExperimentRequest,
@@ -13,36 +25,54 @@ router = APIRouter(prefix="/api/experiments", tags=["experiments"])
 
 @router.get("", response_model=ExperimentListResponse)
 def list_experiments() -> ExperimentListResponse:
-    return ExperimentListResponse()
+    directory = Path(settings.output_dir) / "experiments"
+    try:
+        files = sorted(directory.iterdir())
+    except FileNotFoundError:
+        files = []
+    return ExperimentListResponse(
+        experiments=[
+            ExperimentResult.model_validate_json(path.read_text(encoding="utf-8"))
+            for path in files
+            if path.suffix == ".json"
+        ]
+    )
 
 
 @router.post("/run", response_model=ExperimentResult)
 def run_experiment(request: RunExperimentRequest) -> ExperimentResult:
-    """Return a schema-compatible preview; execution and persistence are pending."""
-    initial_state = State(
-        placements=[PackagePlacement(package_id=p.id) for p in request.problem.packages]
-    )
+    try:
+        return execute_experiment(request)
+    except UnsupportedAlgorithmError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except ExecutionBudgetError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+    except ObjectiveRangeError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
-    return ExperimentResult(
-        id="scaffold-demo",
-        problem=request.problem,
-        algorithm=request.algorithm,
-        variant=request.variant if request.algorithm == "hill_climbing" else None,
-        objective_mode=request.objective_mode,
-        seed=request.seed,
-        parameters=request.parameters.model_dump(mode="json"),
-        initial_state=initial_state,
-        final_state=initial_state.model_copy(deep=True),
-        best_state=initial_state.model_copy(deep=True),
-        initial_score=0.0,
-        final_score=0.0,
-        best_score=0.0,
-        runtime_ms=0,
-        iterations=0,
-        history=[],
-        metadata={
-            "placeholder": True,
-            "persisted": False,
-            "message": "Algorithm execution and persistence are not implemented.",
-        },
-    )
+
+@router.get("/presets/genetic_algorithm")
+def list_ga_presets() -> dict:
+    return {
+        "presets": [
+            {
+                "label": preset.label,
+                "seed": preset.seed,
+                "parameters": preset.parameters.model_dump(mode="json"),
+            }
+            for preset in ga_mandatory_presets()
+        ]
+    }
+
+
+@router.post("/batch", response_model=BatchExperimentResult)
+def run_batch(request: BatchExperimentRequest) -> BatchExperimentResult:
+    try:
+        return execute_batch(request)
+    except (
+        BatchConfigurationError,
+        UnsupportedAlgorithmError,
+        ExecutionBudgetError,
+        ObjectiveRangeError,
+    ) as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
