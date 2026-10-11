@@ -5,7 +5,11 @@ from typing import cast
 import pytest
 
 from app.domain import Orientation, PackagePlacement, Position, Problem, State
-from app.optimization.objective import ObjectiveMode, evaluate_objective
+from app.optimization.objective import (
+    ObjectiveMode,
+    evaluate_objective,
+    objective_upper_bound,
+)
 
 
 def make_state(problem: Problem, loaded_ids: tuple[str, ...]) -> State:
@@ -146,6 +150,52 @@ def test_unknown_mode_is_rejected_even_for_empty_state(
         evaluate_objective(single_truck_problem, state, cast(ObjectiveMode, "unknown"))
 
 
+def test_total_value_rejects_unrepresentable_finite_sum(
+    single_truck_problem: Problem,
+) -> None:
+    problem = Problem(
+        packages=[
+            package.model_copy(update={"value": 1e308})
+            for package in single_truck_problem.packages
+        ],
+        trucks=single_truck_problem.trucks,
+    )
+    state = make_state(problem, ("base", "top", "fragile"))
+    with pytest.raises(ValueError, match="(?i)objective.*representable"):
+        evaluate_objective(problem, state, ObjectiveMode.TOTAL_VALUE)
+
+
+def test_eta_weighted_handles_huge_integer_eta(
+    single_truck_problem: Problem,
+) -> None:
+    problem = Problem(
+        packages=[
+            package.model_copy(update={"eta": 10**309, "value": 1e308})
+            for package in single_truck_problem.packages
+        ],
+        trucks=single_truck_problem.trucks,
+    )
+    state = make_state(problem, ("base",))
+    score = evaluate_objective(problem, state, ObjectiveMode.ETA_WEIGHTED_VALUE)
+    assert score == pytest.approx(0.1)
+
+
 def test_mode_values_match_serialized_contract() -> None:
     assert ObjectiveMode("total_value") is ObjectiveMode.TOTAL_VALUE
     assert ObjectiveMode("eta_weighted_value") is ObjectiveMode.ETA_WEIGHTED_VALUE
+
+
+def test_upper_bound_normalizes_serialized_total_value(
+    single_truck_problem: Problem,
+) -> None:
+    assert objective_upper_bound(
+        single_truck_problem, cast(ObjectiveMode, "total_value")
+    ) == objective_upper_bound(single_truck_problem, ObjectiveMode.TOTAL_VALUE)
+
+
+def test_upper_bound_rejects_unknown_mode_for_empty_problem(
+    single_truck_problem: Problem,
+) -> None:
+    problem = Problem(packages=[], trucks=single_truck_problem.trucks)
+    with pytest.raises(ValueError):
+        objective_upper_bound(problem, cast(ObjectiveMode, "unknown"))
