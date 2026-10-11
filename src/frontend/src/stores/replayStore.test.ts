@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { selectReplayState } from './replayStore'
+import { selectReplayState, useReplayStore } from './replayStore'
 import type { ExperimentResult, OptimizationState } from '../types/experiment'
 
 const best: OptimizationState = { placements: [] }
@@ -24,4 +24,21 @@ test('selects the current iteration snapshot and falls back to best state', () =
 test('falls back to best state for empty history and to null without an experiment', () => {
   assert.equal(selectReplayState({ ...experiment, history: [] }, 0), best)
   assert.equal(selectReplayState(null, 0), null)
+})
+
+test('replay navigation and explicit selection stay within the available history', () => {
+  const store = useReplayStore.getState()
+  store.reset()
+  store.setExperiment(experiment)
+  store.previous()
+  assert.equal(useReplayStore.getState().currentIteration, 0)
+  store.next()
+  assert.equal(useReplayStore.getState().currentIteration, 1)
+  store.next()
+  assert.equal(useReplayStore.getState().currentIteration, 1)
+  store.setIteration(20)
+  assert.equal(useReplayStore.getState().currentIteration, 1)
+  store.setIteration(-2)
+  assert.equal(useReplayStore.getState().currentIteration, 0)
+  store.reset()
 })
