@@ -90,3 +90,12 @@ test('rejects nonfinite required result and optional event metrics', () => {
     }
   }
 })
+
+test('accepts signed safe response seeds and rejects unsafe integer seeds', () => {
+  for (const seed of [Number.MIN_SAFE_INTEGER, -42, 42, 2147483648, Number.MAX_SAFE_INTEGER]) {
+    assert.equal(isExperimentResult({ ...fixture, seed }), true, `rejects safe seed ${seed}`)
+  }
+  for (const seed of [Number.MIN_SAFE_INTEGER - 1, Number.MAX_SAFE_INTEGER + 1]) {
+    assert.equal(isExperimentResult({ ...fixture, seed }), false, `accepts unsafe seed ${seed}`)
+  }
+})
