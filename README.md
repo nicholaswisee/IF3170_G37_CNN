@@ -1,48 +1,20 @@
 # mejirowise
 
-mejirowise is a project for IF3170 Artificial Intelligence, Assignment 1. It aims to optimize
-package placement in trucks using Hill Climbing, Simulated Annealing, and a Genetic Algorithm,
-with a browser interface for inspecting results in 3D.
-
-The backend uses Python 3.12, FastAPI, Pydantic v2, and NumPy. The frontend uses React,
-TypeScript, and Vite, with React Three Fiber / Three.js for visualization and Recharts for charts.
+Truck-loading optimization for IF3170 Artificial Intelligence, Assignment 1, with a 3D result viewer.
+Backend: Python 3.12, FastAPI, Pydantic, and NumPy. Frontend: React, TypeScript, Vite,
+React Three Fiber, and Recharts.
 
 ## Current status
 
-The application scaffold, shared domain contract, and frontend contract fixtures are implemented.
-The domain uses Pydantic `Problem`, `PackageSpec`, and `TruckSpec` models, six package orientations,
-and placement-only search state. Package `value`/`weight` and truck `max_capacity` must be finite
-(`allow_inf_nan=False`); frontend result validation also rejects non-finite metrics. Per-truck
-occupancy and global state validation are implemented and tested for assignment consistency,
-boundaries, overlap, capacity, support, and fragile packages.
+- Genetic Algorithm and Sideways Hill Climbing run through the API for single or multiple trucks.
+- Batch execution supports the 18-run GA preset, per-configuration statistics, and JSON/CSV output.
+- The UI provides GA controls, max/mean charts, result comparison, and manual snapshot replay.
+- Simulated Annealing, other HC variants, and automatic replay are still pending.
 
-Internal/public result scores and numeric event metrics must also be finite. Invalid requests return
-422 with `detail` entries containing `type`, `loc`, and `msg`; raw input and exception context are
-omitted so non-finite input cannot break error-response serialization.
+## Local development
 
-Shared neighbor generation, both objective modes, and seeded feasible initialization are implemented.
-Algorithms share an internal `SearchResult` and a typed `run` interface, with optional state
-snapshots in history. Public request/result schemas and frontend history compatibility are aligned.
-Sideways Hill Climbing is implemented and can be called directly through the algorithm interface.
-Steepest-ascent, stochastic, and random-restart HC, Simulated Annealing, and Genetic Algorithm remain
-unimplemented. The experiment runner, API algorithm dispatch, batch execution, persistence, and
-algorithm-specific UI controls are pending. The scene renders a history snapshot when available and
-otherwise `best_state`; the run endpoint still returns a placeholder and does not execute HC.
-Frontend tests cover schema validation, placeholder API fixtures, and replay selection.
-
-## Setup and run
-
-### Docker (recommended)
-
-Install Docker with the Docker Compose plugin, then run from the repository root:
-
-```bash
-docker compose up --build
-```
-
-Compose installs dependencies and starts both development servers. It mounts the source directories
-for development, along with `data/` and `output/`. Startup uses service ordering only, not health
-readiness waits; `/api/health` remains diagnostic. No database or separate environment file is required.
+Start commands from the repository root. Choose one setup; do not run both on the same ports.
+The default setup does not require a database or `.env` file.
 
 | Service                       | URL                                |
 | ----------------------------- | ---------------------------------- |
@@ -50,70 +22,138 @@ readiness waits; `/api/health` remains diagnostic. No database or separate envir
 | Backend health check          | <http://localhost:8000/api/health> |
 | Interactive API documentation | <http://localhost:8000/docs>       |
 
-Stop the servers with `Ctrl+C`. To remove the stopped containers, run:
+### With Docker
+
+Install Docker Desktop, or Docker Engine with the Compose plugin. Make sure Docker is running.
+
+First run:
 
 ```bash
-docker compose down
+docker compose up --build
 ```
 
-### Local development
+Compose installs dependencies and starts both servers with reload enabled. Source, `data/`,
+and `output/` are mounted from the host; Python and Node.js are not required on the host.
 
-Requirements: Python 3.12 with pip and venv, and Node.js 22.12+ (Node.js 20.19+ is also supported)
-with npm. Run the backend and frontend in separate terminals.
+Subsequent runs:
 
-Backend, starting from the repository root:
+```bash
+docker compose up
+```
+
+Stop with `Ctrl+C`, then remove the containers with `docker compose down`. Saved results remain
+in the host's `output/` directory.
+
+After changing dependencies, rebuild and refresh the frontend dependency volume:
+
+```bash
+docker compose up --build --renew-anon-volumes
+```
+
+### Without Docker
+
+Requirements: Python **3.12** with `venv` and pip, plus Node.js **22.12+** (or **20.19+**) with npm.
+Python 3.13+ is not supported by the backend configuration.
+
+#### One-time setup
+
+Linux/macOS:
+
+```bash
+python3.12 -m venv src/backend/.venv
+src/backend/.venv/bin/python -m pip install -e "./src/backend[dev]"
+npm --prefix src/frontend ci
+```
+
+Windows PowerShell:
+
+```powershell
+py -3.12 -m venv src/backend/.venv
+.\src\backend\.venv\Scripts\python.exe -m pip install -e "./src/backend[dev]"
+npm --prefix src/frontend ci
+```
+
+Keep the venv for later sessions. Repeat the install commands when `pyproject.toml` or
+`package-lock.json` changes.
+
+#### Terminal 1: backend
+
+Linux/macOS:
 
 ```bash
 cd src/backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install ".[dev]"
-OUTPUT_DIR=../../output DATA_DIR=../../data uvicorn app.main:app --reload --port 8000
+OUTPUT_DIR=../../output DATA_DIR=../../data .venv/bin/python -m uvicorn app.main:app --reload --port 8000
 ```
 
-On Windows, create the environment with `py -3.12 -m venv .venv` and activate it with
-`.venv\Scripts\Activate.ps1` in PowerShell. Set `$env:OUTPUT_DIR = "../../output"` and
-`$env:DATA_DIR = "../../data"`, then run `uvicorn app.main:app --reload --port 8000`.
+Windows PowerShell:
 
-Frontend, starting from the repository root:
+```powershell
+cd src/backend
+$env:OUTPUT_DIR = "../../output"
+$env:DATA_DIR = "../../data"
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
+```
+
+The directory variables replace Docker's `/workspace/...` defaults. Commands use the venv's
+interpreter directly, so activation is optional.
+
+#### Terminal 2: frontend
+
+Open a new terminal at the repository root:
 
 ```bash
 cd src/frontend
-npm ci
-npm run dev -- --port 5173
+npm run dev -- --port 5173 --strictPort
 ```
 
-Use the same URLs listed above. The frontend connects to `http://localhost:8000` by default.
-Set `VITE_API_URL` before starting Vite if the backend runs elsewhere. The backend's
-`FRONTEND_ORIGIN` setting controls the allowed browser origin and defaults to `http://localhost:5173`.
+Open <http://localhost:5173> once both servers are running. Stop each with `Ctrl+C`.
+`--strictPort` reports an occupied port instead of silently switching to another one.
+
+For different local addresses, set `VITE_API_URL` when starting Vite and `FRONTEND_ORIGIN` when
+starting Uvicorn. With Docker, change the corresponding environment values and port mappings
+in `docker-compose.yml`.
 
 ## Development checks
 
-From `src/backend`, with the virtual environment activated:
+Without Docker, from `src/backend` (use `.\.venv\Scripts\python.exe` on Windows):
 
 ```bash
-ruff check .
-ruff format --check .
-mypy app
-pytest
+.venv/bin/python -m pytest
+.venv/bin/python -m ruff check .
+.venv/bin/python -m ruff format --check .
+.venv/bin/python -m mypy app
 ```
-
-The tests cover occupancy, global constraints, objectives, seeded initialization/neighbors,
-domain serialization/copy integration, schemas, placeholder API behavior, algorithm interface/result
-contracts, and Sideways HC execution, seeded behavior, and termination. Other algorithms and real
-algorithm execution through the API remain pending.
 
 From `src/frontend`:
 
 ```bash
+npm test
 npm run build
 npm run lint
-npm test
 ```
 
-## Team and planned responsibilities
+With Docker running, from the repository root:
 
-These are the initial ownership areas. They describe planned work, not completed features.
+```bash
+docker compose exec backend python -m pytest
+docker compose exec frontend npm test
+```
+
+## API and saved results
+
+| Method | Endpoint | Purpose |
+| ------ | -------- | ------- |
+| GET | `/api/health` | Backend status |
+| GET | `/api/experiments` | Saved individual results |
+| POST | `/api/experiments/run` | Run GA or Sideways HC |
+| GET | `/api/experiments/presets/genetic_algorithm` | List the 18 GA preset specifications |
+| POST | `/api/experiments/batch` | Execute explicit runs or the `ga_mandatory` preset |
+
+Use `/docs` to inspect request bodies. Set `persist: true` to save individual results under
+`output/experiments/` and batch JSON/CSV under `output/batches/`. UI runs use `persist: false` by
+default and remain available only during the current page session.
+
+## Team
 
 | Student ID | Name                            | Main responsibilities                                                                  |
 | ---------- | ------------------------------- | -------------------------------------------------------------------------------------- |
@@ -121,21 +161,11 @@ These are the initial ownership areas. They describe planned work, not completed
 | 13524037   | Nicholas Wise Saragih Sumbayak  | Shared domain models, Genetic Algorithm, and experiment results/statistics.            |
 | 13524136   | Neswa Eka Anggara               | Simulated Annealing, constraint validation, objective evaluation, and API integration. |
 
-All members contribute to integration and review of the shared interfaces.
-
 ## Repository structure
 
 ```text
 src/backend/    FastAPI, domain models, validation, and optimization modules
 src/frontend/   React application, API client, replay store, 3D scene, and charts
 data/           Input data
-output/         Reserved for experiment output
+output/         Saved experiment JSON and batch JSON/CSV
 ```
-
-## Current API endpoints
-
-- `GET /api/health`: checks backend availability.
-- `GET /api/experiments`: returns an empty experiment list.
-- `POST /api/experiments/run`: returns a deterministic placeholder result for the selected
-  algorithm name. This endpoint does not run a search algorithm yet.
-- `POST /api/problems/validate` and `POST /api/experiments/batch` are planned, not implemented.
