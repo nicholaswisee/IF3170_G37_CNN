@@ -6,9 +6,10 @@ const output = mkdtempSync(join(process.cwd(), '.test-build-'))
 try {
   const compilation = spawnSync(process.execPath, [
     require.resolve('typescript/bin/tsc'),
-    '--module', 'commonjs', '--moduleResolution', 'node', '--target', 'ES2022',
+    '--module', 'commonjs', '--moduleResolution', 'node', '--target', 'ES2022', '--jsx', 'react-jsx',
     '--esModuleInterop', '--skipLibCheck', '--types', 'node', '--outDir', output,
-    'src/api/validation.test.ts', 'src/stores/replayStore.test.ts',
+    'src/api/validation.test.ts', 'src/api/requests.test.ts', 'src/api/errors.test.ts',
+    'src/components/objectiveChartData.test.ts', 'src/components/ResultComparison.test.tsx', 'src/stores/replayStore.test.ts',
   ], { stdio: 'inherit' })
   if (compilation.error) throw compilation.error
   process.exitCode = compilation.status ?? 1
@@ -16,6 +17,10 @@ try {
     writeFileSync(join(output, 'package.json'), JSON.stringify({ type: 'commonjs' }))
     const tests = spawnSync(process.execPath, [
       '--test', join(output, 'api/validation.test.js'),
+      join(output, 'api/requests.test.js'),
+      join(output, 'api/errors.test.js'),
+      join(output, 'components/objectiveChartData.test.js'),
+      join(output, 'components/ResultComparison.test.js'),
       join(output, 'stores/replayStore.test.js'),
     ], { stdio: 'inherit' })
     if (tests.error) throw tests.error

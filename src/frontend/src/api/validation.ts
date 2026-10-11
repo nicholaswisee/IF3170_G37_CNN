@@ -114,7 +114,7 @@ export function isExperimentResult(value: unknown): value is ExperimentResult {
     && (value.variant === null || (typeof value.variant === 'string' && hillClimbingVariants.has(value.variant)))
     && typeof value.objective_mode === 'string'
     && objectiveModes.has(value.objective_mode)
-    && isFiniteNumber(value.seed)
+    && Number.isSafeInteger(value.seed)
     && isRecord(value.parameters)
     && isOptimizationState(value.initial_state)
     && isOptimizationState(value.final_state)

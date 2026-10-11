@@ -91,18 +91,13 @@ def test_run_signature_matches_frozen_contract(
     }
 
 
-@pytest.mark.parametrize("algorithm_type", [SimulatedAnnealing, GeneticAlgorithm])
-def test_algorithm_placeholders_remain_explicitly_unimplemented(
-    single_truck_problem: Problem, algorithm_type: type[SearchAlgorithm]
+def test_simulated_annealing_placeholder_remains_explicitly_unimplemented(
+    single_truck_problem: Problem,
 ) -> None:
     rng = random.Random(42)
-    initial_state = (
-        None
-        if algorithm_type is GeneticAlgorithm
-        else generate_random_feasible_state(single_truck_problem, rng)
-    )
+    initial_state = generate_random_feasible_state(single_truck_problem, rng)
     with pytest.raises(NotImplementedError, match="not implemented yet"):
-        algorithm_type().run(
+        SimulatedAnnealing().run(
             single_truck_problem,
             initial_state,
             objective_mode=ObjectiveMode.TOTAL_VALUE,

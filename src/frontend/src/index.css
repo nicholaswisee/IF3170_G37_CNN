@@ -39,11 +39,11 @@
 
 body { margin: 0; min-width: 20rem; min-height: 100vh; background: var(--color-canvas); }
 
-button, select { font: inherit; }
+button, select, input { font: inherit; }
 
 button, select { border-radius: var(--radius-none); }
 
-button:focus-visible, select:focus-visible {
+button:focus-visible, select:focus-visible, input:focus-visible {
   outline: var(--border-width-strong) solid var(--color-accent);
   outline-offset: var(--space-1);
 }
@@ -60,13 +60,17 @@ button {
 button:hover:not(:disabled) { border-color: var(--color-cool); background: var(--color-grid); }
 button:disabled { cursor: not-allowed; opacity: 0.5; }
 
-select {
+select, input {
   width: 100%;
   min-height: calc(var(--space-6) + var(--space-4));
   border: var(--border-width) solid var(--color-rule);
   background: var(--color-canvas);
   color: var(--color-ink);
   padding-inline: var(--space-3);
+}
+
+input {
+  padding: var(--space-2) var(--space-3);
 }
 
 .app-shell {
@@ -117,7 +121,7 @@ h2 { font-size: var(--space-5); }
 .truck-selector button[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-accent); }
 .truck-scene { position: relative; width: 100%; height: var(--scene-height); }
 .truck-scene canvas { display: block; }
-.scene-caption { position: absolute; left: var(--space-4); bottom: var(--space-3); margin: 0; pointer-events: none; }
+.scene-caption { position: absolute; left: var(--space-4); bottom: var(--space-3); max-width: calc(100% - 2 * var(--space-4)); margin: 0; overflow-wrap: anywhere; pointer-events: none; }
 .scene-legend { position: absolute; top: var(--space-3); right: var(--space-4); display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; color: var(--color-ink-muted); font-family: var(--font-data); font-size: var(--space-3); letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none; }
 .scene-legend li { display: flex; align-items: center; gap: var(--space-2); }
 .scene-legend span { width: var(--space-3); height: var(--space-3); border: var(--border-width) solid var(--color-rule); }
@@ -128,14 +132,39 @@ dt { color: var(--color-ink-muted); }
 dd { margin: 0; color: var(--color-ink); font-family: var(--font-data); font-size: var(--space-3); }
 
 .objective-chart { margin-top: var(--space-4); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: 0 0 var(--space-3); padding: 0; list-style: none; color: var(--color-ink-muted); font-family: var(--font-data); font-size: var(--space-3); }
+.chart-legend li { display: flex; align-items: center; gap: var(--space-2); }
+.chart-legend span { width: var(--space-3); height: var(--space-1); }
 .chart-frame { position: relative; height: var(--chart-height); }
 .chart-empty { position: absolute; inset: 0; display: grid; place-items: center; z-index: 1; margin: 0; color: var(--color-ink-muted); font-size: var(--space-3); pointer-events: none; }
+
+.run-selector { display: block; margin: 0; padding: var(--space-3) var(--space-4); border-bottom: var(--border-width) solid var(--color-rule); }
+.run-selector select { margin-top: var(--space-2); }
+.run-list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-4); }
+.run-list-toolbar button { padding-inline: var(--space-3); font-family: var(--font-data); font-size: var(--space-3); }
+.run-list-toolbar .control-error { margin: 0; }
+.comparison-panel, .result-summary { min-width: 0; margin-top: var(--space-4); border: var(--border-width) solid var(--color-rule); background: var(--color-panel); box-shadow: var(--shadow-panel); padding: var(--space-4); }
+.comparison-empty { color: var(--color-ink-muted); font-size: var(--space-3); }
+.comparison-table-wrap { max-width: 100%; overflow-x: auto; }
+.comparison-table { width: 100%; border-collapse: collapse; text-align: left; font-size: var(--space-3); }
+.comparison-table th, .comparison-table td { border-bottom: var(--border-width) solid var(--color-grid); padding: var(--space-2) var(--space-3); vertical-align: top; }
+.comparison-table th { color: var(--color-ink-muted); font-family: var(--font-data); font-size: var(--space-3); font-weight: 400; text-transform: uppercase; white-space: nowrap; }
+.comparison-table tr[aria-selected="true"] { background: var(--color-grid); }
+.comparison-table code { display: block; max-width: 20rem; color: var(--color-cool); font-family: var(--font-data); overflow-wrap: anywhere; }
+.comparison-run { min-height: auto; border: 0; padding: 0 var(--space-2); color: var(--color-accent); font-family: var(--font-data); }
+.summary-context { margin: 0 0 var(--space-4); color: var(--color-ink-muted); font-family: var(--font-data); font-size: var(--space-3); }
+.summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-5); }
+.summary-metrics div { display: grid; justify-content: stretch; gap: var(--space-2); }
+.summary-metrics dd { overflow-wrap: anywhere; }
 
 @media (max-width: 48rem) {
   .app-shell { padding: var(--space-4); }
   .app-header { align-items: start; flex-direction: column; }
   .workspace { grid-template-columns: minmax(0, 1fr); }
-  .scene-panel, .truck-scene { min-height: calc(var(--scene-height) - var(--space-7)); height: calc(var(--scene-height) - var(--space-7)); }
+  .scene-panel { height: auto; }
+  .truck-scene { min-height: calc(var(--scene-height) - var(--space-7)); height: calc(var(--scene-height) - var(--space-7)); }
+  .run-list-toolbar { align-items: stretch; flex-direction: column; }
+  .summary-metrics { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
