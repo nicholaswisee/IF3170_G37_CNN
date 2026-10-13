@@ -27,6 +27,26 @@ dist/
 output/*
 !output/.gitkeep
 
+# LaTeX build artifacts (keep report sources, images, and final PDFs)
+docs/**/*.aux
+docs/**/*.toc
+docs/**/*.out
+docs/**/*.lof
+docs/**/*.lot
+docs/**/*.loa
+docs/**/*.fls
+docs/**/*.fdb_latexmk
+docs/**/*.synctex.gz
+docs/**/*.bbl
+docs/**/*.blg
+docs/**/*.bcf
+docs/**/*.run.xml
+docs/**/*.nav
+docs/**/*.snm
+docs/**/*.vrb
+docs/**/*.xdv
+docs/**/*.dvi
+
 # Browser and runtime artifacts
 .playwright-mcp/
 *.log
