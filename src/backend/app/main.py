@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.experiments import router as experiments_router
 from app.api.health import router as health_router
+from app.api.problems import router as problems_router
 from app.api.request_limits import RunBodyLimitMiddleware
 from app.config import settings
 
@@ -31,4 +32,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.include_router(health_router)
+app.include_router(problems_router)
 app.include_router(experiments_router)

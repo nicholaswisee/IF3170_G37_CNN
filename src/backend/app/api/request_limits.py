@@ -10,7 +10,12 @@ class RunBodyLimitMiddleware:
         if (
             scope["type"] != "http"
             or scope["method"] != "POST"
-            or scope["path"] not in ("/api/experiments/run", "/api/experiments/batch")
+            or scope["path"]
+            not in (
+                "/api/experiments/run",
+                "/api/experiments/batch",
+                "/api/problems/validate",
+            )
         ):
             await self.app(scope, receive, send)
             return

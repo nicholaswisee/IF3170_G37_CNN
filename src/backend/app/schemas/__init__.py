@@ -16,6 +16,7 @@ from app.schemas.experiment import (
     SimulatedAnnealingParameters,
     SimulatedAnnealingRequest,
 )
+from app.schemas.problem import ProblemValidationResponse
 
 __all__ = [
     "AlgorithmName",
@@ -30,6 +31,7 @@ __all__ = [
     "HillClimbingParameters",
     "HillClimbingRequest",
     "HillClimbingVariant",
+    "ProblemValidationResponse",
     "RunExperimentRequest",
     "SearchEvent",
     "SimulatedAnnealingParameters",

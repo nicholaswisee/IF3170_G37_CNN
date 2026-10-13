@@ -3,13 +3,20 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { renderToStaticMarkup } from 'react-dom/server'
 import test from 'node:test'
-import { ExperimentComparisonTable, ResultSummary } from './ResultComparison'
+import { ExperimentComparisonTable, ResultSummary, RunSelector } from './ResultComparison'
 import { isExperimentResult } from '../api/validation'
 import type { ExperimentResult } from '../types/experiment'
 
 const fixtureValue: unknown = JSON.parse(readFileSync(resolve(process.cwd(), '../backend/tests/fixtures/experiment_result.json'), 'utf8'))
 assert.ok(isExperimentResult(fixtureValue))
 const fixture: ExperimentResult = fixtureValue
+
+test('run selector identifies configured preview even when saved runs exist', () => {
+  const preview = renderToStaticMarkup(<RunSelector experiments={[fixture]} selectedId="" onSelect={() => {}} />)
+  assert.match(preview, /<option value="" selected="">Configured problem preview<\/option>/)
+  const replay = renderToStaticMarkup(<RunSelector experiments={[fixture]} selectedId={fixture.id} onSelect={() => {}} />)
+  assert.doesNotMatch(replay, /Configured problem preview/)
+})
 
 test('renders HC, SA, and GA in the generic comparison table and summarizes the active run', () => {
   const runs: ExperimentResult[] = [

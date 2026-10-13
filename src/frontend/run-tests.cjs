@@ -10,6 +10,8 @@ try {
     '--esModuleInterop', '--skipLibCheck', '--types', 'node', '--outDir', output,
     'src/api/validation.test.ts', 'src/api/requests.test.ts', 'src/api/errors.test.ts',
     'src/components/objectiveChartData.test.ts', 'src/components/ResultComparison.test.tsx', 'src/stores/replayStore.test.ts',
+    'src/components/Annealing.test.tsx',
+    'src/components/ProblemConfiguration.test.tsx',
   ], { stdio: 'inherit' })
   if (compilation.error) throw compilation.error
   process.exitCode = compilation.status ?? 1
@@ -21,6 +23,8 @@ try {
       join(output, 'api/errors.test.js'),
       join(output, 'components/objectiveChartData.test.js'),
       join(output, 'components/ResultComparison.test.js'),
+      join(output, 'components/Annealing.test.js'),
+      join(output, 'components/ProblemConfiguration.test.js'),
       join(output, 'stores/replayStore.test.js'),
     ], { stdio: 'inherit' })
     if (tests.error) throw tests.error

@@ -4,7 +4,7 @@ import { progressLabelForAlgorithm } from './objectiveChartData'
 export function IterationInspector() {
   const { currentIteration, experiment } = useReplayStore()
   const event = experiment?.history[currentIteration]
-  const source = !experiment ? 'Preview fixture' : experiment.metadata.placeholder === true ? 'Placeholder (not optimized)' : 'Backend run'
+  const source = !experiment ? 'Configured problem preview' : experiment.metadata.placeholder === true ? 'Placeholder (not optimized)' : 'Backend run'
   const progressLabel = progressLabelForAlgorithm(experiment?.algorithm)
   const objectiveMode = experiment?.objective_mode === 'eta_weighted_value' ? 'ETA-weighted value' : experiment ? 'Total value' : '—'
 
@@ -21,6 +21,13 @@ export function IterationInspector() {
         <div><dt>Objective mode</dt><dd>{objectiveMode}</dd></div>
         <div><dt>Move</dt><dd>{event?.move?.type ?? '—'}</dd></div>
         <div><dt>Decision</dt><dd>{event?.accepted == null ? '—' : event.accepted ? 'Accepted' : 'Rejected'}</dd></div>
+        {experiment?.algorithm === 'simulated_annealing' && (
+          <>
+            <div><dt>Best objective</dt><dd>{event?.best_score ?? experiment.best_score}</dd></div>
+            <div><dt>Temperature</dt><dd>{event?.temperature ?? '—'}</dd></div>
+            <div><dt>Acceptance probability</dt><dd>{event?.acceptance_probability ?? '—'}</dd></div>
+          </>
+        )}
       </dl>
     </section>
   )
