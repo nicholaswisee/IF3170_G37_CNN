@@ -5,9 +5,12 @@ import pytest
 
 from app.domain.problem import Problem
 from app.main import app
+from app.optimization.constraints import validate_state
+from app.optimization.objective import evaluate_objective
+from app.schemas import ExperimentResult
 
 
-def post_problem(body: bytes) -> tuple[int, dict]:
+def post_problem(body: bytes, path: str = "/api/problems/validate") -> tuple[int, dict]:
     messages = []
 
     async def receive():
@@ -24,8 +27,8 @@ def post_problem(body: bytes) -> tuple[int, dict]:
                 "http_version": "1.1",
                 "method": "POST",
                 "scheme": "http",
-                "path": "/api/problems/validate",
-                "raw_path": b"/api/problems/validate",
+                "path": path,
+                "raw_path": path.encode(),
                 "query_string": b"",
                 "headers": [(b"content-type", b"application/json")],
                 "server": ("test", 80),
@@ -172,3 +175,65 @@ def test_openapi_exposes_problem_body_and_validation_response() -> None:
     response = operation["responses"]["200"]["content"]["application/json"]["schema"]
     assert response["$ref"] == "#/components/schemas/ProblemValidationResponse"
     assert "422" in operation["responses"]
+
+
+@pytest.mark.parametrize(
+    "problem_fixture", ["single_truck_problem", "multi_truck_problem"]
+)
+@pytest.mark.parametrize("objective_mode", ["total_value", "eta_weighted_value"])
+@pytest.mark.parametrize(
+    ("algorithm", "parameters"),
+    [
+        ("simulated_annealing", {"max_iterations": 5, "stuck_patience": 2}),
+        ("genetic_algorithm", {"population_size": 4, "generations": 2}),
+        ("hill_climbing", {"max_iterations": 5, "candidates_per_iteration": 3}),
+    ],
+)
+def test_validated_configuration_runs_with_selected_objective(
+    request: pytest.FixtureRequest,
+    problem_fixture: str,
+    objective_mode: str,
+    algorithm: str,
+    parameters: dict,
+) -> None:
+    problem: Problem = request.getfixturevalue(problem_fixture)
+    payload = problem.model_dump(mode="json")
+    for index, truck in enumerate(payload["trucks"]):
+        truck["id"] = f"configured-truck-{index}"
+    for index, package in enumerate(payload["packages"]):
+        package["id"] = f"configured-package-{index}"
+    assert post_problem(json.dumps(payload).encode()) == (200, {"valid": True})
+
+    status, content = post_problem(
+        json.dumps(
+            {
+                "problem": payload,
+                "algorithm": algorithm,
+                "objective_mode": objective_mode,
+                "seed": 123,
+                "parameters": parameters,
+                "include_state_history": True,
+                "persist": False,
+            }
+        ).encode(),
+        "/api/experiments/run",
+    )
+    assert status == 200, content
+    result = ExperimentResult.model_validate(content)
+    assert result.problem.model_dump(mode="json") == payload
+    assert result.objective_mode.value == objective_mode
+    assert result.algorithm == algorithm
+    assert result.seed == 123
+    for state, score in (
+        (result.initial_state, result.initial_score),
+        (result.final_state, result.final_score),
+        (result.best_state, result.best_score),
+    ):
+        assert validate_state(result.problem, state).valid
+        assert score == pytest.approx(
+            evaluate_objective(result.problem, state, result.objective_mode)
+        )
+    assert result.history
+    for event in result.history:
+        if event.state_snapshot is not None:
+            assert validate_state(result.problem, event.state_snapshot).valid

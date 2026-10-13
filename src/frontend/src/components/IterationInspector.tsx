@@ -4,7 +4,7 @@ import { progressLabelForAlgorithm } from './objectiveChartData'
 export function IterationInspector() {
   const { currentIteration, experiment } = useReplayStore()
   const event = experiment?.history[currentIteration]
-  const source = !experiment ? 'Preview fixture' : experiment.metadata.placeholder === true ? 'Placeholder (not optimized)' : 'Backend run'
+  const source = !experiment ? 'Configured problem preview' : experiment.metadata.placeholder === true ? 'Placeholder (not optimized)' : 'Backend run'
   const progressLabel = progressLabelForAlgorithm(experiment?.algorithm)
   const objectiveMode = experiment?.objective_mode === 'eta_weighted_value' ? 'ETA-weighted value' : experiment ? 'Total value' : '—'
 
