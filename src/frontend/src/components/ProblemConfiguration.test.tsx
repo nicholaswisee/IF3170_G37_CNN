@@ -144,3 +144,8 @@ test('empty package list and multi-truck controls render correctly', () => {
   const multi = renderToStaticMarkup(<ProblemConfiguration initialProblem={mockProblem} onSubmit={() => {}} />)
   assert.doesNotMatch(multi, /disabled=""/)
 })
+
+test('configuration controls can be locked while a run is in progress', () => {
+  const markup = renderToStaticMarkup(<ProblemConfiguration initialProblem={singleTruck} onSubmit={async () => {}} disabled />)
+  assert.match(markup, /<fieldset class="form-fields" disabled=""/)
+})

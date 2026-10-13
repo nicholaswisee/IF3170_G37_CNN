@@ -158,6 +158,14 @@ dd { margin: 0; color: var(--color-ink); font-family: var(--font-data); font-siz
 .summary-metrics dd { overflow-wrap: anywhere; }
 
 .problem-configuration { margin-top: var(--space-4); }
+.form-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
+.form-fields:disabled { opacity: 0.65; }
+.configuration-disclosure { margin-top: var(--space-4); }
+.configuration-disclosure summary { padding: var(--space-3); border: var(--border-width) solid var(--color-rule); cursor: pointer; }
+.configuration-disclosure summary:focus-visible { outline: var(--border-width-strong) solid var(--color-accent); outline-offset: var(--space-1); }
+.preview-toolbar { padding: var(--space-3) var(--space-4); }
+.preview-toolbar .problem-help { margin: 0; }
+.preview-toolbar button { margin-top: var(--space-2); padding-inline: var(--space-3); }
 .problem-section-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-4); }
 .problem-section-heading h3 { margin: 0; font-family: var(--font-display); font-weight: 600; }
 .problem-section-heading button, .problem-remove { padding-inline: var(--space-3); }

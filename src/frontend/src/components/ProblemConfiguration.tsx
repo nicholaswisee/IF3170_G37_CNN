@@ -1,10 +1,12 @@
 import { useId, useReducer, useState, type FormEvent } from 'react'
 import type { Problem } from '../types/experiment'
-import { createProblemForm, parseProblemForm, problemFormReducer } from './problemForm'
+import { createProblemForm, parseProblemForm, problemFormReducer, type ProblemFormAction } from './problemForm'
 
 interface ProblemConfigurationProps {
   initialProblem: Problem
-  onSubmit: (problem: Problem) => void
+  onSubmit: (problem: Problem) => void | Promise<void>
+  onDirtyChange?: (dirty: boolean) => void
+  disabled?: boolean
 }
 
 interface ProblemFieldProps {
@@ -39,17 +41,41 @@ function ProblemField({ id, label, value, onChange, error, numeric = false, mini
   )
 }
 
-export function ProblemConfiguration({ initialProblem, onSubmit }: ProblemConfigurationProps) {
+export function ProblemConfiguration({ initialProblem, onSubmit, onDirtyChange, disabled = false }: ProblemConfigurationProps) {
   const prefix = useId()
-  const [draft, dispatch] = useReducer(problemFormReducer, initialProblem, createProblemForm)
+  const [draft, updateDraft] = useReducer(problemFormReducer, initialProblem, createProblemForm)
   const [showErrors, setShowErrors] = useState(false)
+  const [isApplying, setIsApplying] = useState(false)
+  const [applied, setApplied] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const result = parseProblemForm(draft)
   const errors = showErrors ? result.errors : {}
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const dispatch = (action: ProblemFormAction) => {
+    updateDraft(action)
+    setApplied(false)
+    setError(null)
+    onDirtyChange?.(true)
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (disabled || isApplying) return
     setShowErrors(true)
-    if (result.problem) onSubmit(result.problem)
+    setApplied(false)
+    setError(null)
+    onDirtyChange?.(true)
+    if (!result.problem) return
+    setIsApplying(true)
+    try {
+      await onSubmit(result.problem)
+      onDirtyChange?.(false)
+      setApplied(true)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not apply configuration.')
+    } finally {
+      setIsApplying(false)
+    }
   }
 
   return (
@@ -57,7 +83,8 @@ export function ProblemConfiguration({ initialProblem, onSubmit }: ProblemConfig
       <div className="panel-heading">
         <h2 id={`${prefix}-heading`}>Problem and fleet configuration</h2>
       </div>
-      <form noValidate onSubmit={handleSubmit}>
+      <form noValidate aria-busy={isApplying} onSubmit={(event) => void handleSubmit(event)}>
+        <fieldset className="form-fields" disabled={disabled || isApplying}>
         <div className="problem-section-heading">
           <h3>Trucks ({draft.trucks.length})</h3>
           <button type="button" onClick={() => dispatch({ type: 'add-truck' })}>Add truck</button>
@@ -107,7 +134,10 @@ export function ProblemConfiguration({ initialProblem, onSubmit }: ProblemConfig
           ))}
         </div>
         {showErrors && !result.problem && <p className="control-error" role="alert">Correct the highlighted fields before applying the configuration.</p>}
-        <button className="run-button" type="submit">Apply configuration</button>
+        <button className="run-button" type="submit">{isApplying ? 'Validating…' : 'Apply configuration'}</button>
+        </fieldset>
+        {error && <p className="control-error" role="alert">{error}</p>}
+        {applied && <p className="problem-help" role="status">Configuration applied. Ready to run.</p>}
       </form>
     </section>
   )

@@ -1,6 +1,7 @@
 import type {
   ExperimentListResponse,
   ExperimentResult,
+  Problem,
   RunExperimentRequest,
 } from '../types/experiment'
 import { isExperimentResult } from './validation'
@@ -23,6 +24,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>
+}
+
+export async function validateProblem(problem: Problem): Promise<void> {
+  const response = await request<unknown>('/api/problems/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(problem),
+  })
+  if (typeof response !== 'object' || response === null || !('valid' in response) || response.valid !== true) {
+    throw new Error('Invalid problem validation response.')
+  }
 }
 
 export async function listExperiments(): Promise<ExperimentListResponse> {

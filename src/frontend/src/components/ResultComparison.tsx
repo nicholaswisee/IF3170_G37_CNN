@@ -26,7 +26,7 @@ export function ResultSummary({ experiment }: { experiment: ExperimentResult | n
         <span className="panel-index">04</span>
         <h2 id="summary-heading">Active run summary</h2>
       </div>
-      {!experiment ? <p className="chart-empty">Select or run an experiment to see its results.</p> : (
+      {!experiment ? <p className="comparison-empty">Select or run an experiment to see its results.</p> : (
         <>
           <p className="summary-context">{algorithmLabels[experiment.algorithm]} · {objectiveLabels[experiment.objective_mode]} · seed {experiment.seed}</p>
           <dl className="summary-metrics">
@@ -69,6 +69,7 @@ export function RunSelector({
         }}
       >
         {experiments.length === 0 && <option value="">No runs available</option>}
+        {experiments.length > 0 && selectedId === '' && <option value="">Configured problem preview</option>}
         {experiments.map((experiment, index) => (
           <option key={experiment.id} value={experiment.id}>
             {index + 1}. {algorithmLabels[experiment.algorithm]} · {experiment.id.slice(0, 8)}

@@ -2,8 +2,30 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { buildRunRequest, defaultGeneticAlgorithmParameters, defaultSimulatedAnnealingParameters, validateGeneticAlgorithmInput, validateSimulatedAnnealingInput, validateSeed } from './requests'
 import type { Problem } from '../types/experiment'
+import { createProblemForm, parseProblemForm } from '../components/problemForm'
 
 const problem: Problem = { packages: [], trucks: [{ id: 'T1', width: 1, length: 1, height: 1, max_capacity: 1 }] }
+
+test('configured packages and trucks reach every algorithm with the selected objective', () => {
+  const configured: Problem = {
+    trucks: [
+      { id: 'custom-a', width: 3, length: 4, height: 2, max_capacity: 10 },
+      { id: 'custom-b', width: 2, length: 2, height: 1, max_capacity: 5 },
+    ],
+    packages: [{ id: 'custom-package', width: 1, length: 2, height: 1, value: 12.5, weight: 2, eta: 3, is_fragile: true }],
+  }
+  const parsed = parseProblemForm(createProblemForm(configured))
+  assert.ok(parsed.problem)
+  for (const algorithm of ['hill_climbing', 'simulated_annealing', 'genetic_algorithm'] as const) {
+    assert.equal(buildRunRequest({ algorithm, problem: parsed.problem, seed: 42 }).objective_mode, 'total_value')
+    for (const objectiveMode of ['total_value', 'eta_weighted_value'] as const) {
+      const request = buildRunRequest({ algorithm, problem: parsed.problem, seed: 123, objectiveMode })
+      assert.deepEqual(request.problem, configured)
+      assert.equal(request.objective_mode, objectiveMode)
+      assert.equal(request.seed, 123)
+    }
+  }
+})
 
 test('keeps official GA defaults unless callers provide overrides', () => {
   const request = buildRunRequest({ algorithm: 'genetic_algorithm', problem, seed: 42 })

@@ -3,7 +3,7 @@ import { runExperiment } from '../api/client'
 import { buildRunRequest, defaultSimulatedAnnealingParameters, validateGeneticAlgorithmInput, validateSimulatedAnnealingInput, validateSeed } from '../api/requests'
 import { AnnealingParameters, type AnnealingFormValues } from './AnnealingParameters'
 import { useReplayStore } from '../stores/replayStore'
-import type { ExperimentResult, Problem } from '../types/experiment'
+import type { ExperimentResult, ObjectiveMode, Problem } from '../types/experiment'
 
 const algorithms = [
   { value: 'hill_climbing', label: 'Hill Climbing' },
@@ -14,11 +14,14 @@ const algorithms = [
 interface AlgorithmControlsProps {
   problem: Problem
   onExperimentReady: (experiment: ExperimentResult) => void
+  configurationPending?: boolean
+  onRunningChange?: (running: boolean) => void
 }
 
-export function AlgorithmControls({ problem, onExperimentReady }: AlgorithmControlsProps) {
+export function AlgorithmControls({ problem, onExperimentReady, configurationPending = false, onRunningChange }: AlgorithmControlsProps) {
   const [algorithm, setAlgorithm] = useState<(typeof algorithms)[number]['value']>('genetic_algorithm')
   const [isRunning, setIsRunning] = useState(false)
+  const [objectiveMode, setObjectiveMode] = useState<ObjectiveMode>('total_value')
   const [error, setError] = useState<string | null>(null)
   const [populationSize, setPopulationSize] = useState('6')
   const [generations, setGenerations] = useState('5')
@@ -46,6 +49,7 @@ export function AlgorithmControls({ problem, onExperimentReady }: AlgorithmContr
 
   const handleRun = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isRunning || configurationPending) return
     const inputValues = algorithm === 'genetic_algorithm'
       ? [populationSize, generations, crossoverProbability, mutationProbability, seed]
       : algorithm === 'simulated_annealing'
@@ -79,12 +83,14 @@ export function AlgorithmControls({ problem, onExperimentReady }: AlgorithmContr
       return
     }
     setIsRunning(true)
+    onRunningChange?.(true)
     setError(null)
 
     try {
       const experiment = await runExperiment(buildRunRequest({
         algorithm,
         problem,
+        objectiveMode,
         seed: numericSeed,
         persist: false,
         ...(algorithm === 'simulated_annealing' ? { simulatedAnnealingParameters: annealingParameters } : {}),
@@ -103,6 +109,7 @@ export function AlgorithmControls({ problem, onExperimentReady }: AlgorithmContr
       setError(caught instanceof Error ? caught.message : 'Experiment request failed')
     } finally {
       setIsRunning(false)
+      onRunningChange?.(false)
     }
   }
 
@@ -113,9 +120,17 @@ export function AlgorithmControls({ problem, onExperimentReady }: AlgorithmContr
         <h2 id="algorithm-heading">Algorithm console</h2>
       </div>
       <form onSubmit={(event) => void handleRun(event)}>
+        <p className="problem-help">Next run: {problem.packages.length} packages · {problem.trucks.length} trucks</p>
+        {configurationPending && <p className="control-error" role="status">Apply your configuration changes before running an experiment.</p>}
+        <fieldset className="form-fields" disabled={isRunning || configurationPending}>
         <label className="field-label" htmlFor="algorithm">Search method</label>
         <select id="algorithm" value={algorithm} onChange={handleAlgorithmChange}>
           {algorithms.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+        <label className="field-label" htmlFor="objective-mode">Objective</label>
+        <select id="objective-mode" value={objectiveMode} onChange={(event) => setObjectiveMode(event.currentTarget.value as ObjectiveMode)}>
+          <option value="total_value">Total value</option>
+          <option value="eta_weighted_value">ETA-weighted value</option>
         </select>
         {algorithm === 'genetic_algorithm' && (
           <>
@@ -134,9 +149,10 @@ export function AlgorithmControls({ problem, onExperimentReady }: AlgorithmContr
         )}
         <label className="field-label" htmlFor="seed">Seed (safe integer)</label>
         <input id="seed" type="number" min={Number.MIN_SAFE_INTEGER} max={Number.MAX_SAFE_INTEGER} step={1} required value={seed} onChange={(event) => setSeed(event.currentTarget.value)} />
-        <button className="run-button" type="submit" disabled={isRunning}>
+        <button className="run-button" type="submit" disabled={isRunning || configurationPending}>
           {isRunning ? 'Dispatching...' : 'Run experiment'}
         </button>
+        </fieldset>
       </form>
       {error && <p className="control-error" role="alert">{error}</p>}
       <div className="transport-controls" aria-label="Replay controls">
