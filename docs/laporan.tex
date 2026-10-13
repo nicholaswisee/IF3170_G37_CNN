@@ -1,0 +1,118 @@
+\documentclass[12pt,a4paper,oneside]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=3cm]{geometry}
+\usepackage{tabularx}
+\usepackage[hidelinks]{hyperref}
+
+\renewcommand{\contentsname}{Daftar Isi}
+\renewcommand{\chaptername}{Bab}
+\renewcommand{\appendixname}{Lampiran}
+\renewcommand{\tablename}{Tabel}
+\renewcommand{\figurename}{Gambar}
+\setcounter{tocdepth}{2}
+
+% Kompilasi dari root repositori (jalankan dua kali agar daftar isi terbarui):
+% pdflatex -output-directory=docs docs/laporan.tex
+% Kerangka saja: isi bab, referensi, dan kontribusi belum diisi.
+\begin{document}
+
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+    \centering
+    {\Large\bfseries LAPORAN TUGAS BESAR 1\par}
+    \vspace{0.5cm}
+    {\large IF3170 Inteligensi Artifisial\par}
+    {\large Tahun Akademik 2026/2027\par}
+    \vspace{2cm}
+    {\LARGE\bfseries Optimasi Pengisian Paket pada Truk Peti Kemas\par}
+    \vspace{0.5cm}
+    {\Large dengan Algoritma \textit{Local Search}\par}
+    \vspace{2cm}
+    {\large\bfseries Kelompok 37\par}
+    \vspace{0.7cm}
+    \begin{tabular}{ll}
+        13524001 & Samuelson Dharmawan Tanuraharja \\
+        13524037 & Nicholas Wise Saragih Sumbayak \\
+        13524136 & Neswa Eka Anggara
+    \end{tabular}
+    \vfill
+    {\large Program Studi Teknik Informatika\par}
+    {\large Sekolah Teknik Elektro dan Informatika\par}
+    {\large Institut Teknologi Bandung\par}
+    \vspace{0.5cm}
+    {\large 2026\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\hypersetup{pageanchor=true}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{Deskripsi Persoalan}
+\section{Latar Belakang dan Tujuan}
+\section{Variabel dan Batasan Persoalan}
+\section{Representasi Solusi}
+\section{Fungsi Objektif}
+
+\chapter{Pembahasan}
+\section{Implementasi Algoritma \textit{Local Search}}
+\subsection{Representasi State dan Inisialisasi}
+\subsection{Pembangkitan Tetangga}
+% Siapkan deskripsi fungsi/kelas beserta source code yang relevan di tiap subbagian.
+\subsection{Hill Climbing}
+\subsection{Simulated Annealing}
+\subsection{Genetic Algorithm}
+\subsection{Validasi Batasan dan Evaluasi Fungsi Objektif}
+
+\clearpage
+\section{Rancangan Eksperimen}
+\subsection{Data Uji dan Lingkungan Eksperimen}
+\subsection{Konfigurasi Parameter dan Pengulangan Eksperimen}
+
+\clearpage
+\section{Hasil Eksperimen dan Visualisasi Program}
+\subsection{Hill Climbing}
+\subsection{Simulated Annealing}
+\subsection{Genetic Algorithm}
+\subsection{Visualisasi State Awal dan State Akhir}
+
+\clearpage
+\section{Analisis Eksperimen}
+\subsection{Perbandingan Kualitas Solusi}
+\subsection{Perbandingan Durasi Pencarian}
+\subsection{Konsistensi Hasil Eksperimen}
+\subsection{Pengaruh Parameter Genetic Algorithm}
+
+\chapter{Kesimpulan dan Saran}
+\section{Kesimpulan}
+\section{Saran}
+
+\chapter{Pembagian Tugas Tiap Anggota Kelompok}
+\begin{table}[htbp]
+    \centering
+    \caption{Pembagian tugas anggota kelompok}
+    \begin{tabularx}{\textwidth}{|l|p{6cm}|X|}
+        \hline
+        \textbf{NIM} & \textbf{Nama} & \textbf{Tugas/Kontribusi} \\ \hline
+        13524001 & Samuelson Dharmawan Tanuraharja & \\ \hline
+        13524037 & Nicholas Wise Saragih Sumbayak & \\ \hline
+        13524136 & Neswa Eka Anggara & \\ \hline
+    \end{tabularx}
+\end{table}
+
+\chapter*{Referensi}
+\addcontentsline{toc}{chapter}{Referensi}
+% Tambahkan hanya sumber yang benar-benar digunakan dan disitasi dalam laporan.
+
+\appendix
+\chapter{Form Penggunaan Generative AI}
+% Lampirkan formulir resmi dari halaman 19 Panduan AI ITB.
+% Belum diisi: setiap anggota harus mencatat penggunaan AI yang sebenarnya.
+% Penggunaan AI dalam penyusunan kerangka laporan ini juga perlu dicatat.
+% Jangan membuat pernyataan, persetujuan, atau tanda tangan atas nama anggota.
+
+\chapter{Lampiran Lainnya (Bila Ada)}
+
+\end{document}
