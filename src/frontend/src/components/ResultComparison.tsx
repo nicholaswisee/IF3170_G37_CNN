@@ -34,6 +34,12 @@ export function ResultSummary({ experiment }: { experiment: ExperimentResult | n
             <div><dt>Final</dt><dd>{formatScore(experiment.final_score)} · {loadedCount(experiment.final_state)} loaded</dd></div>
             <div><dt>Best</dt><dd>{formatScore(experiment.best_score)} · {loadedCount(experiment.best_state)} loaded</dd></div>
             <div><dt>Runtime</dt><dd>{formatScore(experiment.runtime_ms)} ms</dd></div>
+            {experiment.algorithm === 'simulated_annealing' && (
+              <>
+                <div><dt>Iterations</dt><dd>{experiment.iterations}</dd></div>
+                <div><dt>Stuck events</dt><dd>{typeof experiment.metadata.stuck_events === 'number' ? experiment.metadata.stuck_events : '—'}</dd></div>
+              </>
+            )}
           </dl>
         </>
       )}

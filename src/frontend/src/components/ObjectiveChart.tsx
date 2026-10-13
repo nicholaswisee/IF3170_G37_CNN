@@ -2,9 +2,11 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { useReplayStore } from '../stores/replayStore'
 import { sceneColors } from '../theme'
 import { progressLabelForAlgorithm, toObjectiveChartData } from './objectiveChartData'
+import { AnnealingCharts } from './AnnealingCharts'
 
 export function ObjectiveChart() {
   const experiment = useReplayStore((state) => state.experiment)
+  if (experiment?.algorithm === 'simulated_annealing') return <AnnealingCharts history={experiment.history} />
   const isGeneticAlgorithm = experiment?.algorithm === 'genetic_algorithm'
   const data = experiment ? toObjectiveChartData(experiment.history, experiment.algorithm) : []
   const emptyMessage = !experiment

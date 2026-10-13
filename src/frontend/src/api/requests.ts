@@ -9,7 +9,6 @@ import type {
   SimulatedAnnealingParameters,
 } from '../types/experiment'
 
-// Frozen backend defaults (architecture freeze sections 27, 32, 36).
 export const defaultHillClimbingParameters: HillClimbingParameters = {
   max_iterations: 2000,
   candidates_per_iteration: 50,
@@ -63,6 +62,25 @@ export function validateGeneticAlgorithmInput(input: GeneticAlgorithmInput): str
   return validateSeed(input.seed)
 }
 
+export function validateSimulatedAnnealingInput(input: SimulatedAnnealingParameters & { seed: number }): string | null {
+  if (input.initial_temperature !== null && (!Number.isFinite(input.initial_temperature) || input.initial_temperature <= 0)) {
+    return 'Initial temperature must be positive, or empty for automatic temperature.'
+  }
+  if (!Number.isFinite(input.alpha) || input.alpha <= 0 || input.alpha >= 1) {
+    return 'Alpha must be greater than 0 and less than 1.'
+  }
+  if (!Number.isFinite(input.min_temperature) || input.min_temperature <= 0) {
+    return 'Minimum temperature must be positive.'
+  }
+  if (!Number.isInteger(input.max_iterations) || input.max_iterations < 1 || input.max_iterations > 5000) {
+    return 'Maximum iterations must be an integer from 1 to 5000.'
+  }
+  if (!Number.isSafeInteger(input.stuck_patience) || input.stuck_patience < 1) {
+    return 'Stuck patience must be a positive safe integer.'
+  }
+  return validateSeed(input.seed)
+}
+
 interface RunRequestOptions {
   algorithm: Algorithm
   problem: Problem
@@ -72,6 +90,7 @@ interface RunRequestOptions {
   includeStateHistory?: boolean
   persist?: boolean
   geneticAlgorithmParameters?: Partial<GeneticAlgorithmParameters>
+  simulatedAnnealingParameters?: Partial<SimulatedAnnealingParameters>
 }
 
 /** Build a single-run request with the full problem and default typed parameters. */
@@ -84,6 +103,7 @@ export function buildRunRequest({
   includeStateHistory = true,
   persist = true,
   geneticAlgorithmParameters,
+  simulatedAnnealingParameters,
 }: RunRequestOptions): RunExperimentRequest {
   const common = {
     problem,
@@ -97,7 +117,7 @@ export function buildRunRequest({
     case 'hill_climbing':
       return { ...common, algorithm, variant, parameters: { ...defaultHillClimbingParameters } }
     case 'simulated_annealing':
-      return { ...common, algorithm, parameters: { ...defaultSimulatedAnnealingParameters } }
+      return { ...common, algorithm, parameters: { ...defaultSimulatedAnnealingParameters, ...simulatedAnnealingParameters } }
     case 'genetic_algorithm':
       return {
         ...common,

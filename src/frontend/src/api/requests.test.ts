@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildRunRequest, defaultGeneticAlgorithmParameters, validateGeneticAlgorithmInput, validateSeed } from './requests'
+import { buildRunRequest, defaultGeneticAlgorithmParameters, defaultSimulatedAnnealingParameters, validateGeneticAlgorithmInput, validateSimulatedAnnealingInput, validateSeed } from './requests'
 import type { Problem } from '../types/experiment'
 
 const problem: Problem = { packages: [], trucks: [{ id: 'T1', width: 1, length: 1, height: 1, max_capacity: 1 }] }
@@ -55,4 +55,33 @@ test('accepts signed safe integer seeds and rejects fractional or unsafe values'
   for (const seed of [NaN, Infinity, 1.5, Number.MIN_SAFE_INTEGER - 1, Number.MAX_SAFE_INTEGER + 1]) {
     assert.notEqual(validateSeed(seed), null)
   }
+})
+
+test('builds SA requests with custom parameters and preserves other algorithms', () => {
+  const parameters = { initial_temperature: 10, alpha: 0.9, min_temperature: 0.01, max_iterations: 20, stuck_patience: 2 }
+  const request = buildRunRequest({ algorithm: 'simulated_annealing', problem, seed: 123,
+    objectiveMode: 'eta_weighted_value', persist: false, simulatedAnnealingParameters: parameters })
+  assert.deepEqual(request, { algorithm: 'simulated_annealing', problem, seed: 123,
+    objective_mode: 'eta_weighted_value', persist: false, include_state_history: true, parameters })
+  const defaults = buildRunRequest({ algorithm: 'simulated_annealing', problem, seed: 42 })
+  assert.ok(defaults.algorithm === 'simulated_annealing')
+  assert.deepEqual(defaults.parameters, defaultSimulatedAnnealingParameters)
+  assert.equal(defaults.parameters.initial_temperature, null)
+  assert.notEqual(defaults.parameters, defaultSimulatedAnnealingParameters)
+  const ga = buildRunRequest({ algorithm: 'genetic_algorithm', problem, seed: 42, simulatedAnnealingParameters: parameters })
+  assert.deepEqual(ga.parameters, defaultGeneticAlgorithmParameters)
+})
+
+test('validates SA boundaries including automatic temperature and API iteration cap', () => {
+  const valid = { ...defaultSimulatedAnnealingParameters, seed: 42 }
+  assert.equal(validateSimulatedAnnealingInput(valid), null)
+  assert.equal(validateSimulatedAnnealingInput({ ...valid, initial_temperature: 1, max_iterations: 1, stuck_patience: 1 }), null)
+  for (const invalid of [
+    { initial_temperature: 0 }, { initial_temperature: -1 }, { initial_temperature: Infinity }, { initial_temperature: NaN },
+    { alpha: 0 }, { alpha: 1 }, { alpha: NaN }, { alpha: Infinity },
+    { min_temperature: 0 }, { min_temperature: -1 }, { min_temperature: Infinity },
+    { max_iterations: 0 }, { max_iterations: 5001 }, { max_iterations: 1.5 },
+    { stuck_patience: 0 }, { stuck_patience: 2.5 }, { stuck_patience: Infinity },
+    { seed: NaN }, { seed: Number.MAX_SAFE_INTEGER + 1 },
+  ]) assert.notEqual(validateSimulatedAnnealingInput({ ...valid, ...invalid }), null, JSON.stringify(invalid))
 })
