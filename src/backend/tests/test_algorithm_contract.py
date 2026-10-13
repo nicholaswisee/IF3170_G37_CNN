@@ -91,20 +91,24 @@ def test_run_signature_matches_frozen_contract(
     }
 
 
-def test_simulated_annealing_placeholder_remains_explicitly_unimplemented(
+def test_simulated_annealing_returns_shared_search_result(
     single_truck_problem: Problem,
 ) -> None:
     rng = random.Random(42)
     initial_state = generate_random_feasible_state(single_truck_problem, rng)
-    with pytest.raises(NotImplementedError, match="not implemented yet"):
-        SimulatedAnnealing().run(
-            single_truck_problem,
-            initial_state,
-            objective_mode=ObjectiveMode.TOTAL_VALUE,
-            rng=rng,
-            parameters=ContractParameters(),
-            include_state_history=False,
-        )
+    result = SimulatedAnnealing().run(
+        single_truck_problem,
+        initial_state,
+        objective_mode=ObjectiveMode.TOTAL_VALUE,
+        rng=rng,
+        parameters=ContractParameters(),
+        include_state_history=False,
+    )
+    assert isinstance(result, SearchResult)
+    assert result.iterations <= 1
+    assert result.best_score == evaluate_objective(
+        single_truck_problem, result.best_state, ObjectiveMode.TOTAL_VALUE
+    )
 
 
 class ContractAlgorithm(SearchAlgorithm):
