@@ -2,14 +2,17 @@ import asyncio
 import csv
 import io
 import json
+import random
 
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
 from app.domain import Problem, State
 from app.experiments import recorder, runner
-from app.optimization.objective import evaluate_objective
-from app.schemas import RunExperimentRequest
+from app.optimization.algorithms import SimulatedAnnealing
+from app.optimization.initializer import generate_random_feasible_state
+from app.optimization.objective import ObjectiveMode, evaluate_objective
+from app.schemas import BatchExperimentResult, ExperimentResult, RunExperimentRequest
 
 
 def _asgi_post(path: str, payload: dict, method: str = "POST") -> tuple[int, dict]:
@@ -953,7 +956,6 @@ def test_execution_budget_accepts_ga_limits_and_rejects_next_value(
         ("hill_climbing", "steepest_ascent", "not implemented"),
         ("hill_climbing", "random_restart", "not implemented"),
         ("hill_climbing", "stochastic", "not implemented"),
-        ("simulated_annealing", None, "not implemented"),
     ],
 )
 def test_http_returns_clear_422_for_unsupported_algorithm(
@@ -1143,3 +1145,281 @@ def test_http_rejects_unrepresentable_objective_before_ga(
     )
     assert status == 422
     assert "representable" in body["detail"]
+
+
+def _sa_request(problem: Problem, **updates: object) -> dict:
+    return (
+        _request(
+            problem,
+            algorithm="simulated_annealing",
+            parameters={
+                "max_iterations": 6,
+                "initial_temperature": 10,
+                "alpha": 0.8,
+                "stuck_patience": 2,
+            },
+        )
+        | updates
+    )
+
+
+@pytest.mark.parametrize(
+    "fixture_name", ["single_truck_problem", "multi_truck_problem"]
+)
+@pytest.mark.parametrize("mode", list(ObjectiveMode))
+@pytest.mark.parametrize("snapshots", [False, True])
+def test_sa_runner_matches_direct_execution_and_replays_seed(
+    request: pytest.FixtureRequest,
+    fixture_name: str,
+    mode: ObjectiveMode,
+    snapshots: bool,
+) -> None:
+    problem = request.getfixturevalue(fixture_name)
+    parsed = TypeAdapter(RunExperimentRequest).validate_python(
+        _sa_request(problem, objective_mode=mode, include_state_history=snapshots)
+    )
+    original = parsed.model_dump_json()
+    rng = random.Random(parsed.seed)
+    initial = generate_random_feasible_state(problem, rng)
+    direct = SimulatedAnnealing().run(
+        problem,
+        initial,
+        objective_mode=mode,
+        rng=rng,
+        parameters=parsed.parameters,
+        include_state_history=snapshots,
+    )
+    result = runner.run_experiment(parsed)
+    replay = runner.run_experiment(parsed)
+    assert result.algorithm == "simulated_annealing"
+    assert result.variant is None
+    assert result.problem == problem
+    assert result.parameters == parsed.parameters.model_dump(mode="json")
+    assert result.initial_state == initial
+    assert result.initial_score == evaluate_objective(problem, initial, mode)
+    assert result.final_state == direct.final_state
+    assert result.best_state == direct.best_state
+    assert result.final_score == direct.final_score
+    assert result.best_score == direct.best_score
+    assert result.iterations == direct.iterations
+    assert result.history == direct.history
+    assert result.metadata == direct.metadata | {"persisted": False}
+    assert result.runtime_ms >= 0
+    assert result.model_dump(exclude={"id", "runtime_ms"}) == replay.model_dump(
+        exclude={"id", "runtime_ms"}
+    )
+    assert parsed.model_dump_json() == original
+    assert ExperimentResult.model_validate_json(result.model_dump_json()) == result
+
+
+@pytest.mark.parametrize("mode", list(ObjectiveMode))
+@pytest.mark.parametrize("snapshots", [False, True])
+def test_http_sa_persists_and_lists_valid_multitruck_results(
+    multi_truck_problem: Problem,
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: ObjectiveMode,
+    snapshots: bool,
+) -> None:
+    monkeypatch.setattr(runner.settings, "output_dir", str(tmp_path))
+    status, body = _asgi_post(
+        "/api/experiments/run",
+        _sa_request(
+            multi_truck_problem,
+            objective_mode=mode.value,
+            include_state_history=snapshots,
+            persist=True,
+        ),
+    )
+    assert status == 200
+    result = ExperimentResult.model_validate(body)
+    assert result.metadata["persisted"] is True
+    assert len(result.history) == result.iterations + 1
+    assert result.best_score >= result.final_score
+    for state, score in [
+        (result.initial_state, result.initial_score),
+        (result.final_state, result.final_score),
+        (result.best_state, result.best_score),
+    ]:
+        assert runner.validate_state(multi_truck_problem, state).valid
+        assert evaluate_objective(multi_truck_problem, state, mode) == score
+    for event in result.history:
+        assert (event.state_snapshot is not None) is snapshots
+        if event.state_snapshot is not None:
+            assert runner.validate_state(
+                multi_truck_problem, event.state_snapshot
+            ).valid
+            assert (
+                evaluate_objective(multi_truck_problem, event.state_snapshot, mode)
+                == event.current_score
+            )
+    saved = tmp_path / "experiments" / f"{result.id}.json"
+    assert ExperimentResult.model_validate_json(saved.read_text()) == result
+    list_status, listing = _asgi_post("/api/experiments", {}, method="GET")
+    assert list_status == 200
+    assert listing["experiments"] == [body]
+
+
+def test_sa_persist_false_creates_no_files(
+    single_truck_problem: Problem, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(runner.settings, "output_dir", str(tmp_path))
+    status, body = _asgi_post("/api/experiments/run", _sa_request(single_truck_problem))
+    assert status == 200
+    assert body["metadata"]["persisted"] is False
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    "parameters",
+    [
+        {"alpha": 0},
+        {"alpha": 1},
+        {"initial_temperature": 0},
+        {"min_temperature": 0},
+        {"max_iterations": 0},
+        {"stuck_patience": 0},
+    ],
+)
+def test_http_sa_invalid_parameters_are_rejected_before_dispatch(
+    single_truck_problem: Problem,
+    monkeypatch: pytest.MonkeyPatch,
+    parameters: dict,
+) -> None:
+    monkeypatch.setattr(
+        SimulatedAnnealing, "run", lambda *_a, **_k: pytest.fail("SA dispatched")
+    )
+    status, body = _asgi_post(
+        "/api/experiments/run", _sa_request(single_truck_problem, parameters=parameters)
+    )
+    assert status == 422
+    assert body["detail"]
+
+
+def test_sa_execution_budget_boundary_and_http_rejection(
+    single_truck_problem: Problem, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    allowed = TypeAdapter(RunExperimentRequest).validate_python(
+        _sa_request(single_truck_problem, parameters={"max_iterations": 5000})
+    )
+    runner.preflight_experiment(allowed)
+    monkeypatch.setattr(
+        runner,
+        "generate_random_feasible_state",
+        lambda *_a, **_k: pytest.fail("Initializer called"),
+    )
+    status, body = _asgi_post(
+        "/api/experiments/run",
+        _sa_request(single_truck_problem, parameters={"max_iterations": 5001}),
+    )
+    assert status == 422
+    assert "SA iterations <= 5000" in body["detail"]
+
+
+@pytest.mark.parametrize("mode", list(ObjectiveMode))
+@pytest.mark.parametrize("persist", [False, True])
+def test_http_sa_batch_runs_seed_set_and_writes_metrics_only_results(
+    multi_truck_problem: Problem,
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+    mode: ObjectiveMode,
+    persist: bool,
+) -> None:
+    monkeypatch.setattr(runner.settings, "output_dir", str(tmp_path))
+    seeds = [42, 123, 2026]
+    status, body = _asgi_post(
+        "/api/experiments/batch",
+        {
+            "problem": multi_truck_problem.model_dump(mode="json"),
+            "objective_mode": mode.value,
+            "persist": persist,
+            "runs": [
+                {
+                    "label": "SA",
+                    "algorithm": "simulated_annealing",
+                    "seed": seed,
+                    "parameters": {"max_iterations": 4, "stuck_patience": 2},
+                }
+                for seed in seeds
+            ],
+        },
+    )
+    assert status == 200
+    batch = BatchExperimentResult.model_validate(body)
+    assert batch.persisted is persist
+    assert [r.seed for r in batch.results] == seeds
+    assert batch.summary["run_count"] == 3
+    assert len(batch.groups) == 1
+    assert batch.groups[0].summary == batch.summary
+    assert batch.summary["mean_best_score"] == pytest.approx(
+        sum(r.best_score for r in batch.results) / 3
+    )
+    for result in batch.results:
+        assert result.algorithm == "simulated_annealing"
+        assert result.objective_mode is mode
+        assert result.history
+        assert all(e.state_snapshot is None for e in result.history)
+        assert "stuck_events" in result.metadata
+        assert result.metadata["persisted"] is persist
+        assert runner.validate_state(result.problem, result.best_state).valid
+        assert (
+            evaluate_objective(result.problem, result.best_state, mode)
+            == result.best_score
+        )
+        if persist:
+            saved = tmp_path / "experiments" / f"{result.id}.json"
+            assert ExperimentResult.model_validate_json(saved.read_text()) == result
+    if persist:
+        directory = tmp_path / "batches"
+        assert (
+            BatchExperimentResult.model_validate_json(
+                (directory / f"{batch.id}.json").read_text()
+            )
+            == batch
+        )
+        rows = list(
+            csv.DictReader(io.StringIO((directory / f"{batch.id}.csv").read_text()))
+        )
+        assert [int(row["seed"]) for row in rows] == seeds
+        assert all(row["algorithm"] == "simulated_annealing" for row in rows)
+    else:
+        assert list(tmp_path.iterdir()) == []
+
+
+def test_http_mixed_batch_dispatches_sa_hc_and_ga(
+    single_truck_problem: Problem,
+) -> None:
+    status, body = _asgi_post(
+        "/api/experiments/batch",
+        {
+            "problem": single_truck_problem.model_dump(mode="json"),
+            "persist": False,
+            "runs": [
+                {
+                    "label": "SA",
+                    "algorithm": "simulated_annealing",
+                    "seed": 42,
+                    "parameters": {"max_iterations": 2},
+                },
+                {
+                    "label": "HC",
+                    "algorithm": "hill_climbing",
+                    "seed": 42,
+                    "parameters": {"max_iterations": 2},
+                },
+                {
+                    "label": "GA",
+                    "algorithm": "genetic_algorithm",
+                    "seed": 42,
+                    "parameters": {"population_size": 2, "generations": 1},
+                },
+            ],
+        },
+    )
+    assert status == 200
+    assert [r["algorithm"] for r in body["results"]] == [
+        "simulated_annealing",
+        "hill_climbing",
+        "genetic_algorithm",
+    ]
+    assert body["summary"]["run_count"] == 3

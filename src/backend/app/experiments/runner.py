@@ -8,7 +8,11 @@ from app.config import settings
 from app.domain.state import State
 from app.experiments.metrics import calculate_metrics
 from app.experiments.recorder import record_result
-from app.optimization.algorithms import GeneticAlgorithm, HillClimbing
+from app.optimization.algorithms import (
+    GeneticAlgorithm,
+    HillClimbing,
+    SimulatedAnnealing,
+)
 from app.optimization.constraints import validate_state
 from app.optimization.initializer import generate_random_feasible_state
 from app.optimization.objective import (
@@ -69,6 +73,11 @@ def validate_execution_budget(request: RunExperimentRequest) -> None:
         raise ExecutionBudgetError(
             "Execution limit exceeded: Hill Climbing iterations <= 2000 and candidates <= 50."
         )
+    if (
+        isinstance(request, SimulatedAnnealingRequest)
+        and request.parameters.max_iterations > 5_000
+    ):
+        raise ExecutionBudgetError("Execution limit exceeded: SA iterations <= 5000.")
 
 
 def preflight_experiment(request: RunExperimentRequest) -> None:
@@ -81,8 +90,6 @@ def preflight_experiment(request: RunExperimentRequest) -> None:
         raise UnsupportedAlgorithmError(
             f"Hill climbing variant '{request.variant.value}' is not implemented."
         )
-    if isinstance(request, SimulatedAnnealingRequest):
-        raise UnsupportedAlgorithmError("Simulated annealing is not implemented.")
 
 
 def run_experiment(request: RunExperimentRequest) -> ExperimentResult:
@@ -104,6 +111,19 @@ def run_experiment(request: RunExperimentRequest) -> ExperimentResult:
     elif isinstance(request, HillClimbingRequest):
         initial_state = generate_random_feasible_state(request.problem, rng)
         search = HillClimbing(request.variant).run(
+            request.problem,
+            initial_state,
+            objective_mode=request.objective_mode,
+            rng=rng,
+            parameters=request.parameters,
+            include_state_history=request.include_state_history,
+        )
+        initial_score = evaluate_objective(
+            request.problem, initial_state, request.objective_mode
+        )
+    elif isinstance(request, SimulatedAnnealingRequest):
+        initial_state = generate_random_feasible_state(request.problem, rng)
+        search = SimulatedAnnealing().run(
             request.problem,
             initial_state,
             objective_mode=request.objective_mode,
