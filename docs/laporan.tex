@@ -69,17 +69,17 @@
 
 \section{Pendahuluan}
 \subsection{Latar Belakang}
-Mejiro Express, usaha logistik darat dalam studi kasus tugas besar ini, perlu menentukan paket yang akan dimuat ke dalam peti kemas truk beserta susunannya. Special Week sebagai pengemudi membutuhkan keputusan yang cepat, sedangkan paket memiliki ukuran, nilai, berat, dan sifat kerapuhan yang berbeda. Memasukkan seluruh paket belum tentu mungkin: ruang dan kapasitas angkut terbatas, paket tidak boleh saling menembus, serta susunannya harus ditopang dengan benar. Oleh karena itu, persoalannya mencakup pemilihan paket sekaligus pengaturan ruang tiga dimensi \cite{spesifikasi}.
+Mejiro Express ingin mengatur pengiriman paket dengan truk peti kemas. Special Week, pengemudinya, perlu segera memutuskan paket mana yang akan dibawa dan bagaimana paket itu disusun. Setiap paket punya ukuran, nilai, berat, dan sifat kerapuhan yang berbeda. Susunannya harus muat di dalam peti kemas, stabil, dan tidak melebihi kapasitas angkut \cite{spesifikasi}.
 
-Jumlah kombinasi pilihan paket, posisi, dan orientasi bertambah ketika jumlah paket meningkat. Menelusuri seluruh konfigurasi secara langsung menjadi kurang praktis. Tugas besar ini menggunakan \textit{local search} untuk memperbaiki konfigurasi secara bertahap dan membandingkan kualitas hasil dari beberapa metode pencarian \cite{spesifikasi,slide-local-search}.
+Pilihan posisi dan orientasi bertambah seiring banyaknya paket. Bahkan setelah paket yang akan dibawa dipilih, masih ada banyak cara untuk menatanya. Tugas ini memakai \textit{local search} (pencarian lokal) untuk mencari susunan bernilai tinggi melalui perubahan kecil pada susunan yang sudah ada.
 
 \subsection{Rumusan Persoalan dan Tujuan}
-Masukan persoalan berupa sejumlah paket berbentuk balok atau kubus dan peti kemas dengan dimensi serta kapasitas angkut tertentu. Untuk setiap paket, perlu diputuskan apakah paket dimuat; jika dimuat, perlu ditentukan posisi dan orientasinya. Keluaran yang dicari ialah konfigurasi sah dengan jumlah nilai paket termuat setinggi mungkin. Paket yang tidak dipilih tetap tercatat sebagai paket di luar peti kemas \cite{spesifikasi}.
+Masukannya berupa paket berbentuk balok atau kubus serta peti kemas dengan ukuran dan kapasitas angkut tertentu. Program harus memilih paket yang dimuat, lalu menentukan posisi dan orientasi tiap paket tersebut. Targetnya adalah memaksimalkan \textit{objective function} (fungsi objektif), yaitu total nilai paket yang berhasil dimuat dalam susunan yang sah. Paket yang tidak dimuat tetap tercatat di luar peti kemas \cite{spesifikasi}.
 
-Tujuan pekerjaan ini adalah membangun dan mengevaluasi pencarian konfigurasi menggunakan sedikitnya satu varian \textit{hill climbing}, \textit{simulated annealing}, dan \textit{genetic algorithm}. Perbandingan dilakukan melalui nilai solusi, perkembangan nilai selama iterasi, durasi pencarian, dan pengulangan percobaan sesuai ketentuan tugas \cite{spesifikasi}.
+Pekerjaan ini menerapkan sedikitnya satu varian \textit{hill climbing}, \textit{simulated annealing}, dan \textit{genetic algorithm}. Hasilnya dibandingkan dari nilai akhir, perubahan nilai selama pencarian, dan waktu yang dibutuhkan. Setiap percobaan juga diulang agar perbedaan hasil akibat pilihan awal acak dapat terlihat \cite{spesifikasi}.
 
 \subsection{Ruang Lingkup Persoalan}
-Dimensi paket dan peti kemas dinyatakan pada tiga sumbu ruang; posisi paket memakai koordinat bilangan bulat. Setiap paket dapat memiliki orientasi hasil rotasi siku-siku terhadap sumbu ruang. Konfigurasi dianggap sah apabila paket termuat seluruhnya di dalam peti kemas, tidak bertumpang tindih, tidak melayang, tidak bertumpu pada paket rapuh, dan jumlah beratnya tidak melampaui kapasitas angkut. Suatu paket boleh sepenuhnya berada di luar peti kemas \cite{spesifikasi}.
+Posisi paket memakai koordinat bilangan bulat pada ruang tiga dimensi. Paket dapat diputar sebesar $90^\circ$ terhadap sumbu ruang. Setiap paket yang dimuat harus berada sepenuhnya di dalam peti kemas, tidak bertumpang tindih, dan memiliki penopang. Paket rapuh tidak boleh menopang paket lain. Total berat muatan juga tidak boleh melampaui kapasitas truk. Paket yang tidak dimuat berada sepenuhnya di luar peti kemas \cite{spesifikasi}.
 
 \begin{figure}[htbp]
     \centering
@@ -103,45 +103,40 @@ Dimensi paket dan peti kemas dinyatakan pada tiga sumbu ruang; posisi paket mema
 
 \clearpage
 \section{Dasar Teori}
-\subsection{Optimisasi Kombinatorial dan \textit{Local Search}}
-Pada masalah optimisasi, sebuah keadaan mewakili satu kandidat jawaban dan fungsi objektif memberi nilai pada kandidat tersebut. Dalam persoalan pemuatan, yang dinilai adalah konfigurasi akhir paket, bukan urutan langkah yang menghasilkan konfigurasi itu. Karena itu, pendekatan \textit{local search} sesuai: pencarian dimulai dari konfigurasi awal, lalu mengunjungi konfigurasi tetangga untuk mencari nilai yang lebih baik \cite[Bag.~4.1]{russell-norvig}, \cite{slide-local-search}.
+\subsection{Optimisasi dan \textit{Local Search}}
+Dalam optimisasi, \textit{objective function} memberi nilai pada setiap kandidat solusi. Pencarian diarahkan ke kandidat dengan nilai setinggi mungkin. Jika ada \textit{constraint} (batasan), kandidat yang dapat dipilih harus memenuhi constraint tersebut. Dengan $\mathcal{F}$ sebagai himpunan kandidat yang sah, tujuan umum masalah maksimisasi dapat ditulis $\max_{s\in\mathcal{F}} f(s)$, dengan $f(s)$ sebagai nilai kandidat $s$ \cite{russell-norvig}.
 
-Misalkan $P$ adalah himpunan paket, $v_i$ nilai paket $i$, dan $I_i(s)$ bernilai satu jika paket $i$ termuat pada keadaan $s$ serta nol jika tidak. Fungsi objektif utama dapat ditulis sebagai
-\begin{equation}
-    \max_{s\in\mathcal{F}} f(s), \qquad
-    f(s)=\sum_{i\in P} v_i I_i(s),
-    \label{eq:objektif-utama}
-\end{equation}
-dengan $\mathcal{F}$ himpunan konfigurasi yang memenuhi seluruh batasan. Nilai yang tinggi tidak membenarkan susunan yang tidak sah; batasan menentukan apakah suatu kandidat termasuk $\mathcal{F}$ \cite{spesifikasi}. Jika lebih dari satu truk digunakan, indikator $I_i(s)$ tetap menyatakan apakah paket termuat pada salah satu truk, sehingga nilai paket dihitung sekali.
+\textit{Local search} bekerja pada satu kandidat lengkap dan memperbaikinya melalui perubahan bertahap. Yang menjadi hasil adalah konfigurasi akhirnya. Urutan perubahan selama pencarian tidak ikut menentukan nilai solusi. Pendekatan ini berguna ketika ruang kemungkinan terlalu besar untuk diperiksa satu per satu \cite{russell-norvig,slide-local-search}.
 
-\subsection{Keadaan, Tetangga, dan Lanskap Pencarian}
-Keadaan atau \textit{state} adalah deskripsi lengkap satu konfigurasi, termasuk paket yang termuat dan yang berada di luar. Tetangga ialah konfigurasi yang diperoleh melalui perubahan terbatas terhadap keadaan sekarang. Spesifikasi memperbolehkan penukaran dua paket, pemindahan sebuah paket ke koordinat lain, dan rotasi paket sebesar $90^\circ$ terhadap sumbu $x$, $y$, atau $z$. Keadaan awal dibangkitkan secara acak \cite{spesifikasi}.
+\subsection{\textit{State}, \textit{Neighbor}, dan \textit{Search Landscape}}
+\textit{State} (keadaan) adalah satu kandidat solusi yang lengkap. Pencarian dimulai dari \textit{initial state} (state awal), yang bisa dibangkitkan secara acak. Sebuah \textit{move} (langkah perubahan) menghasilkan \textit{neighbor} (tetangga), yaitu state yang berbeda dalam sebagian kecil komponennya. Kumpulan neighbor yang dapat dicapai menentukan ke mana pencarian bisa bergerak dari state saat ini \cite{slide-local-search}.
 
-Jika setiap keadaan dipandang sebagai titik dan nilainya sebagai ketinggian, pencarian membentuk suatu lanskap. Puncak lokal memiliki nilai setidaknya sebesar tetangga di sekitarnya, tetapi mungkin masih lebih rendah daripada puncak global. Dataran bernilai sama atau \textit{plateau} juga dapat membuat pencarian sulit bergerak. Bentuk lanskap bergantung pada definisi tetangga dan batasan sah, sehingga pilihan operasi perubahan ikut memengaruhi hasil pencarian \cite[Bag.~4.1]{russell-norvig}, \cite{slide-local-search}.
+Nilai setiap state dapat dibayangkan sebagai ketinggian dalam \textit{search landscape} (lanskap pencarian). \textit{Local maximum} (puncak lokal) bernilai setidaknya sama tinggi dengan semua neighbor-nya, meskipun mungkin ada state lain yang nilainya lebih tinggi. Nilai tertinggi di seluruh ruang pencarian disebut \textit{global maximum} (puncak global). Ada pula \textit{plateau} (daerah datar), yaitu kumpulan state bertetangga dengan nilai yang sama. Local maximum dan plateau menjelaskan mengapa pencarian yang selalu mengejar kenaikan nilai bisa berhenti terlalu cepat \cite{russell-norvig,slide-local-search}.
 
 \subsection{\textit{Hill Climbing}}
-\textit{Hill climbing} berpindah menuju tetangga yang nilainya lebih tinggi. Pada varian \textit{steepest-ascent}, seluruh tetangga yang dipertimbangkan dievaluasi dan dipilih yang terbaik. Pada varian stokastik, kandidat tetangga diperiksa secara acak dan perpindahan diterima jika memperbaiki nilai. Keduanya dapat berhenti pada puncak lokal karena tidak menerima penurunan nilai \cite[Bag.~4.1]{russell-norvig}, \cite{slide-local-search}.
+\textit{Hill climbing} memilih neighbor dengan nilai yang lebih baik daripada state saat ini. Dalam \textit{steepest-ascent hill climbing}, semua neighbor yang tersedia dievaluasi, lalu algoritma mengambil yang terbaik. \textit{Stochastic hill climbing} mengambil sampel neighbor secara acak dan berpindah jika nilainya naik. Kedua varian ini mudah terhenti di local maximum karena move yang menurunkan nilai ditolak \cite{russell-norvig,slide-local-search}.
 
-Varian \textit{sideways move} mengizinkan sejumlah perpindahan menuju tetangga dengan nilai sama agar pencarian dapat melintasi \textit{plateau}; batas jumlah langkah tersebut mencegah perpindahan tanpa akhir. \textit{Random-restart hill climbing} mengulangi pencarian dari keadaan awal acak yang berbeda untuk menjelajahi daerah lain pada lanskap. Dalam pemuatan paket, kedua pendekatan ini berguna ketika beberapa pertukaran atau perpindahan tidak langsung menaikkan total nilai paket termuat \cite[Bag.~4.1]{russell-norvig}, \cite{slide-local-search}.
+\textit{Hill climbing with sideways move} juga menerima move ke neighbor dengan nilai sama. Jumlah move seperti ini biasanya dibatasi supaya pencarian tidak terus berputar di plateau. Cara lain adalah \textit{random-restart hill climbing}, yang menjalankan pencarian beberapa kali dari initial state berbeda. Setiap restart memberi kesempatan untuk mencapai bagian search landscape yang belum terjelajahi \cite{russell-norvig,slide-local-search}.
 
+\clearpage
 \subsection{\textit{Simulated Annealing}}
-\textit{Simulated annealing} menerima tetangga yang lebih baik, tetapi kadang juga menerima tetangga yang lebih buruk untuk keluar dari puncak lokal. Untuk perubahan nilai $\Delta f=f(s')-f(s)<0$ pada temperatur $T>0$, peluang menerima tetangga $s'$ adalah
+\textit{Simulated annealing} menerima move yang menaikkan nilai dan sesekali menerima move yang menurunkannya. Peluang menerima penurunan ditentukan oleh \textit{temperature} (temperatur). Untuk $\Delta f=f(s')-f(s)<0$ dan $T>0$, peluang menerima neighbor $s'$ adalah
 \begin{equation}
-    \Pr(\text{terima }s')=\exp\!\left(\frac{\Delta f}{T}\right).
+    \Pr(\text{accept }s')=\exp\!\left(\frac{\Delta f}{T}\right).
     \label{eq:annealing}
 \end{equation}
-Temperatur yang lebih tinggi membuat penurunan nilai lebih mungkin diterima; ketika temperatur turun, pencarian menjadi semakin selektif. Jadwal penurunan temperatur dan batas iterasi memengaruhi keseimbangan antara menjelajahi konfigurasi baru dan mempertahankan konfigurasi bernilai tinggi \cite[Bag.~4.1]{russell-norvig}, \cite{slide-local-search}. Dalam persoalan ini, langkah yang diterima tetap harus memenuhi batasan fisik pemuatan.
+Pada temperature tinggi, algoritma lebih sering menerima penurunan nilai sehingga dapat keluar dari local maximum. Seiring temperature turun, peluang itu mengecil. \textit{Cooling schedule} (jadwal penurunan temperatur) menentukan seberapa cepat perilaku pencarian berubah. Jadwal yang terlalu cepat dapat membuat pencarian kembali terjebak sebelum sempat menjelajahi state lain \cite{russell-norvig,slide-local-search}.
 
 \subsection{\textit{Genetic Algorithm}}
-\textit{Genetic algorithm} mengolah sekumpulan keadaan sekaligus sebagai populasi. Setiap individu diberi nilai \textit{fitness}, kemudian pemilihan induk, \textit{crossover}, dan mutasi menghasilkan generasi berikutnya. Pemilihan cenderung mengutamakan individu bernilai tinggi, sedangkan \textit{crossover} menggabungkan bagian dari dua konfigurasi dan mutasi menambah keragaman pencarian \cite[Bag.~4.1]{russell-norvig}, \cite{slide-local-search}.
+\textit{Genetic algorithm} mencari solusi dengan mengelola \textit{population} (populasi) yang berisi sejumlah \textit{individual} (kandidat solusi). Setiap individual dinilai memakai \textit{fitness function} (fungsi penilaian). Melalui \textit{selection} (pemilihan induk), individual yang lebih baik mendapat peluang lebih besar untuk menghasilkan keturunan \cite{russell-norvig,slide-local-search}.
 
-Pada pemuatan paket, satu individu menggambarkan susunan lengkap. Penggabungan dan mutasi dapat menghasilkan kandidat yang melanggar batas ruang atau aturan tumpukan; karena itu, penilaian individu harus dikaitkan dengan pemeriksaan kelayakan. Ukuran populasi dan jumlah generasi menentukan banyaknya kandidat yang dijelajahi serta biaya komputasinya. Rincian representasi individu, operator yang dipakai, dan penanganan kandidat tidak sah menjadi bagian pembahasan implementasi pada Bab~3.
+Generasi baru dibentuk melalui \textit{crossover} (penggabungan bagian dari dua induk) dan \textit{mutation} (perubahan acak pada individual). Crossover mewariskan bagian dari solusi yang sudah ada, sementara mutation membantu menjaga keragaman population. Ukuran population dan banyaknya \textit{generation} (generasi) memengaruhi jumlah kandidat yang diperiksa serta waktu pencarian. Bila suatu operator menghasilkan kandidat yang melanggar constraint, kandidat itu perlu ditangani sebelum dipakai sebagai solusi \cite{russell-norvig,slide-local-search}.
 
 \clearpage
 \section{Pembahasan}
 \subsection{Implementasi Algoritma \textit{Local Search}}
 \subsubsection{Representasi State dan Inisialisasi}
-\subsubsection{Pembangkitan Tetangga}
+\subsubsection{Pembangkitan Neighbor}
 % Siapkan deskripsi fungsi/kelas beserta source code yang relevan di tiap subbagian.
 \subsubsection{Hill Climbing}
 \subsubsection{Simulated Annealing}
@@ -187,17 +182,17 @@ Pada pemuatan paket, satu individu menggambarkan susunan lengkap. Penggabungan d
     \caption{Pembagian tugas anggota kelompok}
 \end{table}
 
-\section*{Daftar Pustaka}
+\renewcommand{\refname}{Daftar Pustaka}
 \addcontentsline{toc}{section}{Daftar Pustaka}
 \begin{thebibliography}{9}
 \bibitem{spesifikasi}
-Tim Asisten Laboratorium Inteligensi Artifisial, \emph{Spesifikasi Tugas Besar 1 IF3170 Inteligensi Artifisial 2026/2027}, versi 1.4, Institut Teknologi Bandung, 24 September 2026.
+Tim Asisten Laboratorium Inteligensi Artifisial, ``Spesifikasi Tugas Besar 1 IF3170 Inteligensi Artifisial 2026/2027,'' ver. 1.4, Institut Teknologi Bandung, Bandung, Indonesia, Sep. 2026.
 
 \bibitem{russell-norvig}
-S. J. Russell dan P. Norvig, \emph{Artificial Intelligence: A Modern Approach}, edisi ke-4, Pearson, 2021, Bab 4.
+S. J. Russell and P. Norvig, \emph{Artificial Intelligence: A Modern Approach}, 4th ed. Hoboken, NJ, USA: Pearson, 2021.
 
 \bibitem{slide-local-search}
-Tim Pengajar IF3170 Inteligensi Artifisial, \emph{Beyond Classical Search}, bahan presentasi kuliah, Institut Teknologi Bandung, Semester I 2026/2027.
+Tim Pengajar IF3170 Inteligensi Artifisial, ``Beyond Classical Search,'' lecture slides, Institut Teknologi Bandung, Bandung, Indonesia, 2026.
 \end{thebibliography}
 
 \appendix
