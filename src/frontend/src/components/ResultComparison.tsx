@@ -19,6 +19,32 @@ function formatScore(score: number): string {
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(score)
 }
 
+function numberList(value: unknown): string {
+  return Array.isArray(value) && value.every((item) => typeof item === 'number')
+    ? value.map((item) => formatScore(item)).join(', ')
+    : '—'
+}
+
+function HillClimbingMetrics({ experiment }: { experiment: ExperimentResult }) {
+  const { metadata } = experiment
+  return (
+    <>
+      <div><dt>Iterations</dt><dd>{experiment.iterations}</dd></div>
+      <div><dt>Termination</dt><dd>{typeof metadata.termination_reason === 'string' ? metadata.termination_reason.replaceAll('_', ' ') : '—'}</dd></div>
+      {experiment.variant === 'sideways' && (
+        <div><dt>Sideways moves</dt><dd>{typeof metadata.sideways_moves === 'number' ? metadata.sideways_moves : '—'}</dd></div>
+      )}
+      {experiment.variant === 'random_restart' && (
+        <>
+          <div><dt>Restarts</dt><dd>{typeof metadata.restarts_performed === 'number' ? metadata.restarts_performed : '—'}</dd></div>
+          <div><dt>Iterations per restart</dt><dd>{numberList(metadata.iterations_per_restart)}</dd></div>
+          <div><dt>Best per restart</dt><dd>{numberList(metadata.best_score_per_restart)}</dd></div>
+        </>
+      )}
+    </>
+  )
+}
+
 export function ResultSummary({ experiment }: { experiment: ExperimentResult | null }) {
   return (
     <section className="result-summary" aria-labelledby="summary-heading">
@@ -34,6 +60,7 @@ export function ResultSummary({ experiment }: { experiment: ExperimentResult | n
             <div><dt>Final</dt><dd>{formatScore(experiment.final_score)} · {loadedCount(experiment.final_state)} loaded</dd></div>
             <div><dt>Best</dt><dd>{formatScore(experiment.best_score)} · {loadedCount(experiment.best_state)} loaded</dd></div>
             <div><dt>Runtime</dt><dd>{formatScore(experiment.runtime_ms)} ms</dd></div>
+            {experiment.algorithm === 'hill_climbing' && <HillClimbingMetrics experiment={experiment} />}
             {experiment.algorithm === 'simulated_annealing' && (
               <>
                 <div><dt>Iterations</dt><dd>{experiment.iterations}</dd></div>
