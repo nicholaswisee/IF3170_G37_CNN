@@ -44,6 +44,8 @@ def _check_assignments(
     package_indices = {package.id: i for i, package in enumerate(problem.packages)}
     truck_ids = {truck.id for truck in problem.trucks}
     counts = Counter(placement.package_id for placement in state.placements)
+
+    # error validation
     errors = [
         f"Missing placement for package {package.id}"
         for package in problem.packages
@@ -58,6 +60,7 @@ def _check_assignments(
         for id_ in sorted(counts)
         if counts[id_] > 1
     )
+
     candidates = sorted(
         (
             placement
@@ -67,6 +70,7 @@ def _check_assignments(
         ),
         key=lambda placement: package_indices[placement.package_id],
     )
+
     consistent = []
     for placement in candidates:
         if (placement.truck_id is None) != (placement.position is None):
@@ -87,6 +91,7 @@ def _collect_occupancies(
     problem: Problem, loaded: list[PackagePlacement]
 ) -> tuple[dict[str, np.ndarray], list[str], set[str]]:
     """Collect boundary/overlap errors; mark trucks unsafe for support checks."""
+
     package_indices = {package.id: i for i, package in enumerate(problem.packages)}
 
     occupancies = {
@@ -96,6 +101,7 @@ def _collect_occupancies(
     errors = []
     unsafe_trucks = set()
     regions = []
+
     for placement in loaded:
         truck_id, position = placement.truck_id, placement.position
         assert truck_id is not None and position is not None

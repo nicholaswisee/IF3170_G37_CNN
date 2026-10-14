@@ -1,0 +1,136 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2.5cm,headheight=16pt,headsep=18pt]{geometry}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage[hidelinks]{hyperref}
+\graphicspath{{docs/}{./}}
+
+\renewcommand{\contentsname}{Daftar Isi}
+\renewcommand{\appendixname}{Lampiran}
+\renewcommand{\tablename}{Tabel}
+\renewcommand{\figurename}{Gambar}
+\setcounter{tocdepth}{3}
+\setlength{\parindent}{1.5em}
+\setlength{\parskip}{0pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{IF3170 -- Inteligensi Artifisial}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% Kompilasi dari root repositori (jalankan dua kali agar daftar isi terbarui):
+% pdflatex -output-directory=docs docs/laporan.tex
+% Kerangka saja: isi bab, referensi, dan kontribusi belum diisi.
+\begin{document}
+
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+    \centering
+    {\Huge\bfseries Laporan Tugas Besar 1\par}
+    \vspace{0.5cm}
+    {\LARGE\scshape IF3170 Inteligensi Artifisial\par}
+    \vspace{0.3cm}
+    {\Large\scshape Optimasi Pengisian Paket pada Truk Peti Kemas\par}
+    \vspace{0.2cm}
+    {\Large\scshape dengan Algoritma Local Search\par}
+    \vspace{0.3cm}
+    {\Large\scshape Tahun Akademik 2026--2027\par}
+    \vfill
+    % Logo dari situs resmi ITB:
+    % https://itb.ac.id/assets/images/Logo%20ITB_COLOR_2026%404x.png
+    \includegraphics[width=7.5cm,keepaspectratio]{logo-itb.png}\par
+    \vfill
+    {\large\bfseries Disusun oleh:\par}
+    \vspace{0.3cm}
+    {\large Kelompok 37\par}
+    \vspace{0.3cm}
+    {\large Samuelson Dharmawan Tanuraharja -- 13524001\par}
+    {\large Nicholas Wise Saragih Sumbayak -- 13524037\par}
+    {\large Neswa Eka Anggara -- 13524136\par}
+    \vfill
+    {\large\scshape Laboratorium Inteligensi Artifisial\par}
+    {\large\scshape Program Studi Teknik Informatika\par}
+    {\large\scshape Sekolah Teknik Elektro dan Informatika\par}
+    {\large\scshape Institut Teknologi Bandung\par}
+\end{titlepage}
+
+\pagenumbering{arabic}
+\hypersetup{pageanchor=true}
+\tableofcontents
+\clearpage
+
+\section{Deskripsi Persoalan}
+\subsection{Latar Belakang dan Tujuan}
+\subsection{Variabel dan Batasan Persoalan}
+\subsection{Representasi Solusi}
+\subsection{Fungsi Objektif}
+
+\section{Pembahasan}
+\subsection{Implementasi Algoritma \textit{Local Search}}
+\subsubsection{Representasi State dan Inisialisasi}
+\subsubsection{Pembangkitan Tetangga}
+% Siapkan deskripsi fungsi/kelas beserta source code yang relevan di tiap subbagian.
+\subsubsection{Hill Climbing}
+\subsubsection{Simulated Annealing}
+\subsubsection{Genetic Algorithm}
+\subsubsection{Validasi Batasan dan Evaluasi Fungsi Objektif}
+
+\clearpage
+\subsection{Rancangan Eksperimen}
+\subsubsection{Data Uji dan Lingkungan Eksperimen}
+\subsubsection{Konfigurasi Parameter dan Pengulangan Eksperimen}
+
+\clearpage
+\subsection{Hasil Eksperimen dan Visualisasi Program}
+\subsubsection{Hill Climbing}
+\subsubsection{Simulated Annealing}
+\subsubsection{Genetic Algorithm}
+\subsubsection{Visualisasi State Awal dan State Akhir}
+
+\subsection{Analisis Eksperimen}
+\subsubsection{Perbandingan Kualitas Solusi}
+\subsubsection{Perbandingan Durasi Pencarian}
+\subsubsection{Konsistensi Hasil Eksperimen}
+\subsubsection{Pengaruh Parameter Genetic Algorithm}
+
+\clearpage
+\section{Kesimpulan dan Saran}
+\subsection{Kesimpulan}
+\subsection{Saran}
+
+\section{Pembagian Tugas Tiap Anggota Kelompok}
+\begin{table}[ht]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabularx}{\textwidth}{@{}p{7cm}lX@{}}
+        \toprule
+        \textbf{Nama Lengkap} & \textbf{NIM} & \textbf{Tugas/Kontribusi} \\
+        \midrule
+        Samuelson Dharmawan Tanuraharja & 13524001 & \\
+        Nicholas Wise Saragih Sumbayak & 13524037 & \\
+        Neswa Eka Anggara & 13524136 & \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Pembagian tugas anggota kelompok}
+\end{table}
+
+\section*{Referensi}
+\addcontentsline{toc}{section}{Referensi}
+% Tambahkan hanya sumber yang benar-benar digunakan dan disitasi dalam laporan.
+
+\appendix
+\section{Form Penggunaan Generative AI}
+% Lampirkan formulir resmi dari halaman 19 Panduan AI ITB.
+% Belum diisi: setiap anggota harus mencatat penggunaan AI yang sebenarnya.
+% Penggunaan AI dalam penyusunan kerangka laporan ini juga perlu dicatat.
+% Jangan membuat pernyataan, persetujuan, atau tanda tangan atas nama anggota.
+
+\section{Lampiran Lainnya (Bila Ada)}
+
+\end{document}

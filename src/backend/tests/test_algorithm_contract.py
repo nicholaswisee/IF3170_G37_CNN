@@ -91,25 +91,24 @@ def test_run_signature_matches_frozen_contract(
     }
 
 
-@pytest.mark.parametrize("algorithm_type", [SimulatedAnnealing, GeneticAlgorithm])
-def test_algorithm_placeholders_remain_explicitly_unimplemented(
-    single_truck_problem: Problem, algorithm_type: type[SearchAlgorithm]
+def test_simulated_annealing_returns_shared_search_result(
+    single_truck_problem: Problem,
 ) -> None:
     rng = random.Random(42)
-    initial_state = (
-        None
-        if algorithm_type is GeneticAlgorithm
-        else generate_random_feasible_state(single_truck_problem, rng)
+    initial_state = generate_random_feasible_state(single_truck_problem, rng)
+    result = SimulatedAnnealing().run(
+        single_truck_problem,
+        initial_state,
+        objective_mode=ObjectiveMode.TOTAL_VALUE,
+        rng=rng,
+        parameters=ContractParameters(),
+        include_state_history=False,
     )
-    with pytest.raises(NotImplementedError, match="not implemented yet"):
-        algorithm_type().run(
-            single_truck_problem,
-            initial_state,
-            objective_mode=ObjectiveMode.TOTAL_VALUE,
-            rng=rng,
-            parameters=ContractParameters(),
-            include_state_history=False,
-        )
+    assert isinstance(result, SearchResult)
+    assert result.iterations <= 1
+    assert result.best_score == evaluate_objective(
+        single_truck_problem, result.best_state, ObjectiveMode.TOTAL_VALUE
+    )
 
 
 class ContractAlgorithm(SearchAlgorithm):

@@ -3,7 +3,7 @@
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.domain.move import Move
 from app.domain.problem import Problem
@@ -49,6 +49,7 @@ class GeneticAlgorithmParameters(_Parameters):
     generations: int = Field(default=100, ge=1)
     crossover_probability: float = Field(default=0.80, ge=0, le=1)
     mutation_probability: float = Field(default=0.20, ge=0, le=1)
+    # Freeze sections 36 and 41 fix elitism at one; population_size is at least two.
     elite_count: int = Field(default=1, ge=1, le=1)
 
 
@@ -60,6 +61,37 @@ class _RunRequest(BaseModel):
     seed: int
     include_state_history: bool = True
     persist: bool = True
+
+    @field_validator("seed")
+    @classmethod
+    def seed_is_safe_integer(cls, value: int) -> int:
+        if abs(value) > 2**53 - 1:
+            raise ValueError("seed must be a JavaScript safe integer")
+        return value
+
+    @field_validator("problem", mode="before")
+    @classmethod
+    def problem_within_request_limits(cls, value):
+        return validate_problem_input(value)
+
+
+def validate_problem_input(value):
+    if isinstance(value, dict):
+        packages = value.get("packages")
+        trucks = value.get("trucks")
+        if (isinstance(packages, list) and len(packages) > 100) or (
+            isinstance(trucks, list) and len(trucks) > 20
+        ):
+            raise ValueError("at most 100 packages and 20 trucks are allowed")
+        for collection in (packages, trucks):
+            if isinstance(collection, list) and any(
+                isinstance(item, dict)
+                and isinstance(item.get("id"), str)
+                and len(item["id"]) > 128
+                for item in collection
+            ):
+                raise ValueError("IDs must be at most 128 characters")
+    return value
 
 
 class HillClimbingRequest(_RunRequest):
@@ -82,6 +114,44 @@ class GeneticAlgorithmRequest(_RunRequest):
     )
 
 
+class BatchRunSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: str = Field(min_length=1, max_length=128)
+    algorithm: AlgorithmName = "genetic_algorithm"
+    variant: HillClimbingVariant | None = None
+    seed: int
+    objective_mode: ObjectiveMode | None = None
+    parameters: Metadata = Field(default_factory=dict)
+
+
+class BatchExperimentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    problem: Problem
+    runs: list[BatchRunSpec] | None = Field(default=None, min_length=1, max_length=100)
+    preset: Literal["ga_mandatory"] | None = None
+    objective_mode: ObjectiveMode = ObjectiveMode.TOTAL_VALUE
+    persist: bool = True
+
+    @field_validator("problem", mode="before")
+    @classmethod
+    def problem_within_batch_limits(cls, value):
+        return validate_problem_input(value)
+
+    @model_validator(mode="after")
+    def batch_selection_is_exclusive(self):
+        if (self.runs is None) == (self.preset is None):
+            raise ValueError("provide either runs or preset, not both")
+        if (
+            self.preset == "ga_mandatory"
+            and self.objective_mode != ObjectiveMode.TOTAL_VALUE
+        ):
+            raise ValueError("ga_mandatory preset requires objective_mode total_value")
+        return self
+
+
+# Parse this union outside FastAPI with TypeAdapter(RunExperimentRequest).
 type RunExperimentRequest = Annotated[
     HillClimbingRequest | SimulatedAnnealingRequest | GeneticAlgorithmRequest,
     Field(discriminator="algorithm"),
@@ -89,6 +159,8 @@ type RunExperimentRequest = Annotated[
 
 
 class SearchEvent(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     iteration: int
     current_score: float
     best_score: float
@@ -103,6 +175,8 @@ class SearchEvent(BaseModel):
 
 
 class ExperimentResult(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     id: str
     problem: Problem
     algorithm: AlgorithmName
@@ -124,3 +198,21 @@ class ExperimentResult(BaseModel):
 
 class ExperimentListResponse(BaseModel):
     experiments: list[ExperimentResult] = Field(default_factory=list)
+
+
+class BatchGroupResult(BaseModel):
+    label: str
+    algorithm: AlgorithmName
+    variant: HillClimbingVariant | None
+    objective_mode: ObjectiveMode
+    parameters: Metadata
+    summary: Metadata
+
+
+class BatchExperimentResult(BaseModel):
+    id: str
+    requested_runs: list[BatchRunSpec]
+    results: list[ExperimentResult]
+    summary: Metadata
+    groups: list[BatchGroupResult]
+    persisted: bool

@@ -9,7 +9,6 @@ import type {
   SimulatedAnnealingParameters,
 } from '../types/experiment'
 
-// Frozen backend defaults (architecture freeze sections 27, 32, 36).
 export const defaultHillClimbingParameters: HillClimbingParameters = {
   max_iterations: 2000,
   candidates_per_iteration: 50,
@@ -33,6 +32,55 @@ export const defaultGeneticAlgorithmParameters: GeneticAlgorithmParameters = {
   elite_count: 1,
 }
 
+export interface GeneticAlgorithmInput {
+  population_size: number
+  generations: number
+  crossover_probability: number
+  mutation_probability: number
+  seed: number
+}
+
+export function validateSeed(seed: number): string | null {
+  return Number.isSafeInteger(seed)
+    ? null
+    : `Seed must be a safe integer (${Number.MIN_SAFE_INTEGER} to ${Number.MAX_SAFE_INTEGER}).`
+}
+
+export function validateGeneticAlgorithmInput(input: GeneticAlgorithmInput): string | null {
+  if (!Number.isInteger(input.population_size) || input.population_size < 2 || input.population_size > 100) {
+    return 'Population size must be an integer from 2 to 100.'
+  }
+  if (!Number.isInteger(input.generations) || input.generations < 1 || input.generations > 200) {
+    return 'Generations must be an integer from 1 to 200.'
+  }
+  if (!Number.isFinite(input.crossover_probability) || input.crossover_probability < 0 || input.crossover_probability > 1) {
+    return 'Crossover probability must be between 0 and 1.'
+  }
+  if (!Number.isFinite(input.mutation_probability) || input.mutation_probability < 0 || input.mutation_probability > 1) {
+    return 'Mutation probability must be between 0 and 1.'
+  }
+  return validateSeed(input.seed)
+}
+
+export function validateSimulatedAnnealingInput(input: SimulatedAnnealingParameters & { seed: number }): string | null {
+  if (input.initial_temperature !== null && (!Number.isFinite(input.initial_temperature) || input.initial_temperature <= 0)) {
+    return 'Initial temperature must be positive, or empty for automatic temperature.'
+  }
+  if (!Number.isFinite(input.alpha) || input.alpha <= 0 || input.alpha >= 1) {
+    return 'Alpha must be greater than 0 and less than 1.'
+  }
+  if (!Number.isFinite(input.min_temperature) || input.min_temperature <= 0) {
+    return 'Minimum temperature must be positive.'
+  }
+  if (!Number.isInteger(input.max_iterations) || input.max_iterations < 1 || input.max_iterations > 5000) {
+    return 'Maximum iterations must be an integer from 1 to 5000.'
+  }
+  if (!Number.isSafeInteger(input.stuck_patience) || input.stuck_patience < 1) {
+    return 'Stuck patience must be a positive safe integer.'
+  }
+  return validateSeed(input.seed)
+}
+
 interface RunRequestOptions {
   algorithm: Algorithm
   problem: Problem
@@ -41,6 +89,8 @@ interface RunRequestOptions {
   variant?: HillClimbingVariant
   includeStateHistory?: boolean
   persist?: boolean
+  geneticAlgorithmParameters?: Partial<GeneticAlgorithmParameters>
+  simulatedAnnealingParameters?: Partial<SimulatedAnnealingParameters>
 }
 
 /** Build a single-run request with the full problem and default typed parameters. */
@@ -52,6 +102,8 @@ export function buildRunRequest({
   variant = 'sideways',
   includeStateHistory = true,
   persist = true,
+  geneticAlgorithmParameters,
+  simulatedAnnealingParameters,
 }: RunRequestOptions): RunExperimentRequest {
   const common = {
     problem,
@@ -65,8 +117,16 @@ export function buildRunRequest({
     case 'hill_climbing':
       return { ...common, algorithm, variant, parameters: { ...defaultHillClimbingParameters } }
     case 'simulated_annealing':
-      return { ...common, algorithm, parameters: { ...defaultSimulatedAnnealingParameters } }
+      return { ...common, algorithm, parameters: { ...defaultSimulatedAnnealingParameters, ...simulatedAnnealingParameters } }
     case 'genetic_algorithm':
-      return { ...common, algorithm, parameters: { ...defaultGeneticAlgorithmParameters } }
+      return {
+        ...common,
+        algorithm,
+        parameters: {
+          ...defaultGeneticAlgorithmParameters,
+          ...geneticAlgorithmParameters,
+          elite_count: 1,
+        },
+      }
   }
 }

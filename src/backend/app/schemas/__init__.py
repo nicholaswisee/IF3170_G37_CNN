@@ -1,5 +1,9 @@
 from app.schemas.experiment import (
     AlgorithmName,
+    BatchExperimentRequest,
+    BatchExperimentResult,
+    BatchGroupResult,
+    BatchRunSpec,
     ExperimentListResponse,
     ExperimentResult,
     GeneticAlgorithmParameters,
@@ -12,9 +16,14 @@ from app.schemas.experiment import (
     SimulatedAnnealingParameters,
     SimulatedAnnealingRequest,
 )
+from app.schemas.problem import ProblemValidationResponse
 
 __all__ = [
     "AlgorithmName",
+    "BatchExperimentRequest",
+    "BatchExperimentResult",
+    "BatchGroupResult",
+    "BatchRunSpec",
     "ExperimentListResponse",
     "ExperimentResult",
     "GeneticAlgorithmParameters",
@@ -22,6 +31,7 @@ __all__ = [
     "HillClimbingParameters",
     "HillClimbingRequest",
     "HillClimbingVariant",
+    "ProblemValidationResponse",
     "RunExperimentRequest",
     "SearchEvent",
     "SimulatedAnnealingParameters",
