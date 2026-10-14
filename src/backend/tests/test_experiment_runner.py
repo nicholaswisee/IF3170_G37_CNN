@@ -951,22 +951,42 @@ def test_execution_budget_accepts_ga_limits_and_rejects_next_value(
 
 
 @pytest.mark.parametrize(
-    ("algorithm", "variant", "detail"),
-    [
-        ("hill_climbing", "steepest_ascent", "not implemented"),
-        ("hill_climbing", "random_restart", "not implemented"),
-        ("hill_climbing", "stochastic", "not implemented"),
-    ],
+    "variant", ["steepest_ascent", "stochastic", "sideways", "random_restart"]
 )
-def test_http_returns_clear_422_for_unsupported_algorithm(
-    single_truck_problem: Problem, algorithm: str, variant: str | None, detail: str
+def test_http_runs_every_hill_climbing_variant(
+    single_truck_problem: Problem, variant: str
 ) -> None:
-    payload = _request(single_truck_problem, algorithm=algorithm)
-    if variant is not None:
-        payload["variant"] = variant
+    payload = _request(
+        single_truck_problem,
+        algorithm="hill_climbing",
+        variant=variant,
+        parameters={
+            "max_iterations": 3,
+            "candidates_per_iteration": 3,
+            "max_restarts": 2,
+        },
+    )
     status, body = _asgi_post("/api/experiments/run", payload)
-    assert status == 422
-    assert detail in body["detail"].lower()
+    assert status == 200
+    assert body["variant"] == variant
+
+
+def test_hill_climbing_restart_budget_boundary(
+    single_truck_problem: Problem,
+) -> None:
+    def build(restarts: int):
+        return TypeAdapter(RunExperimentRequest).validate_python(
+            _request(
+                single_truck_problem,
+                algorithm="hill_climbing",
+                variant="random_restart",
+                parameters={"max_restarts": restarts},
+            )
+        )
+
+    runner.validate_execution_budget(build(20))
+    with pytest.raises(runner.ExecutionBudgetError):
+        runner.validate_execution_budget(build(21))
 
 
 def test_http_invalid_parameters_return_422(single_truck_problem: Problem) -> None:
