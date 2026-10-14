@@ -153,36 +153,37 @@ Generasi baru dibentuk melalui \textit{crossover} (penggabungan bagian dari dua 
 \clearpage
 \section{Pembahasan dan Implementasi}
 \subsection{Arsitektur Aplikasi}
-Aplikasi ini memiliki dua bagian yang berkomunikasi melalui HTTP. \textbf{Frontend} menerima konfigurasi problem dan menampilkan hasil pencarian, sedangkan \textbf{backend} memeriksa data, menjalankan algoritma, dan menghitung skor. Hasil pencarian berasal dari backend, sehingga keputusan apakah sebuah susunan sah tetap berada di satu tempat, yaitu validator backend.
+Pengguna menyiapkan paket dan truk melalui halaman web, memilih algoritma, lalu melihat susunan serta perkembangan skornya. Saat pencarian dijalankan, halaman tersebut mengirim konfigurasi ke backend. Backend membentuk state, menjalankan algoritma, dan mengembalikan hasil yang sudah diperiksa. Alur ini membuat tampilan dan proses pencarian memakai data problem yang sama.
 
 \subsubsection{Struktur Aplikasi}
-Kode frontend berada di \path{src/frontend/src}, sementara layanan dan algoritma berada di \path{src/backend/app}. Tabel~\ref{tab:struktur-aplikasi} menunjukkan modul yang paling dekat dengan alur pengguna, mulai dari pengisian problem sampai hasil eksperimen tampil kembali.
+Folder utama aplikasi tersusun sebagai berikut. Pohon ini hanya menampilkan direktori yang berperan dalam alur pencarian dan visualisasi.
 
-\begin{table}[htbp]
-    \centering
-    \small
-    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{4.2cm}>{\raggedright\arraybackslash}X@{}}
-        \toprule
-        \textbf{Lokasi} & \textbf{Tanggung jawab} \\
-        \midrule
-        \path{frontend/src/components} & Form problem, kontrol algoritma, grafik, dan tampilan peti kemas tiga dimensi. \\
-        \path{frontend/src/api} & Menyusun request dan membaca respons dari backend. \\
-        \path{frontend/src/stores} & Menyimpan hasil eksperimen yang sedang dilihat dan posisi replay iterasi. \\
-        \path{backend/app/api} & Endpoint untuk validasi problem, menjalankan pencarian, batch, dan membaca hasil tersimpan. \\
-        \path{backend/app/domain} & Model paket, truk, problem, state, orientasi, dan move. \\
-        \path{backend/app/optimization} & Inisialisasi state, pembangkitan neighbor, validator, objective, dan algoritma pencarian. \\
-        \path{backend/app/experiments} & Runner, metrik, batch, dan penulisan hasil eksperimen. \\
-        \path{data} dan \path{output} & Berkas masukan serta hasil run yang disimpan jika opsi persistensi diaktifkan. \\
-        \bottomrule
-    \end{tabularx}
-    \caption{Struktur utama aplikasi}
-    \label{tab:struktur-aplikasi}
-\end{table}
+\begin{lstlisting}[language={},frame=single,basicstyle=\ttfamily\footnotesize]
+.
+|-- data/
+|-- output/
+|-- src/
+    |-- backend/
+    |   |-- app/
+    |       |-- api/
+    |       |-- domain/
+    |       |-- experiments/
+    |       |-- optimization/
+    |-- frontend/
+        |-- src/
+            |-- api/
+            |-- components/
+            |-- stores/
+\end{lstlisting}
 
-Saat pengguna mengubah paket atau truk, frontend mengirim problem ke endpoint validasi. Untuk menjalankan pencarian, frontend mengirim problem, pilihan algoritma, parameter, dan \textit{seed} ke endpoint eksperimen. \path{runner.py} membentuk generator acak dari seed tersebut, menjalankan algoritma, lalu memeriksa kembali state dan skor yang dikembalikan. Responsnya memuat state awal, state akhir, state terbaik, waktu proses, dan riwayat iterasi. Frontend menggunakan riwayat itu untuk replay dan grafik. Hasil juga dapat ditulis ke \path{output/experiments} bila persistensi diminta.
+Di backend, \path{domain} mendefinisikan data, \path{optimization} memuat validator dan algoritma, sedangkan \path{experiments} mengatur eksekusi serta pencatatan hasil. Di frontend, \path{components} memuat form, grafik, dan tampilan truk. Folder \path{api} menghubungkan halaman dengan backend, lalu \path{stores} menyimpan posisi replay. Data masukan berada di \path{data}, sementara hasil run yang disimpan berada di \path{output}.
 
-\subsubsection{Teknologi yang Digunakan}
-Backend memakai \textbf{Python 3.12} dan \textbf{FastAPI} untuk API. \textbf{Pydantic} mendefinisikan model serta memeriksa input, sedangkan \textbf{NumPy} dipakai untuk occupancy grid tiga dimensi. Di sisi frontend, aplikasi dibuat dengan \textbf{React}, \textbf{TypeScript}, dan \textbf{Vite}. \textbf{React Three Fiber} bersama Three.js menampilkan paket dan peti kemas, \textbf{Recharts} menggambar perkembangan skor, dan \textbf{Zustand} menyimpan state replay.
+\subsubsection{Penjelasan Tech Stack}
+Backend ditulis dengan \textbf{Python 3.12}. \textbf{FastAPI} menyediakan endpoint untuk memvalidasi problem, menjalankan eksperimen tunggal atau batch, dan membaca hasil yang tersimpan. Model \textbf{Pydantic} memeriksa tipe serta rentang nilai saat request diterima. Sesudah itu, modul optimasi menjalankan aturan yang sama untuk semua algoritma. \textbf{NumPy} digunakan untuk occupancy grid tiga dimensi, sehingga pemeriksaan ruang terisi dapat dilakukan pada irisan sel paket.
+
+Frontend dibangun dengan \textbf{React} dan \textbf{TypeScript}. Komponen React memisahkan form problem, kontrol pencarian, visualisasi, dan ringkasan hasil. TypeScript membantu menjaga bentuk request dan respons tetap sesuai kontrak backend. \textbf{Vite} dipakai untuk menjalankan frontend selama pengembangan dan menghasilkan berkas aplikasi saat build.
+
+Untuk menampilkan hasil, \textbf{React Three Fiber} dan \textbf{Three.js} menggambar peti kemas serta posisi paket dalam ruang tiga dimensi. \textbf{Recharts} menampilkan perubahan skor selama iterasi. \textbf{Zustand} menyimpan eksperimen yang dipilih dan indeks iterasi untuk replay.
 
 \clearpage
 \subsection{Pemodelan Problem dan Constraint}
@@ -305,9 +306,85 @@ Kontribusi setiap paket termuat dihitung oleh \path{objective_contributions}. Ha
 \clearpage
 \subsection{Implementasi Algoritma \textit{Local Search}}
 \subsubsection{Inisialisasi State dan Pembangkitan Neighbor}
+Sebelum pencarian dimulai, \path{runner.py} membuat satu \textit{random number generator} dari \textit{seed} yang diterima. Generator yang sama diteruskan ke inisialisasi dan algoritma agar run dengan input serta seed yang sama dapat diulang. Hill climbing dan simulated annealing menerima satu initial state dari \path{generate_random_feasible_state}. Genetic algorithm memakai fungsi yang sama untuk membentuk anggota populasi awal.
+
+Inisialisasi memulai semua paket di luar truk, lalu mengacak urutan paket dan tujuan penempatannya. Untuk setiap truk yang dicoba, fungsi memilih orientasi dan posisi. Koordinat $x$ dan $y$ diambil dari rentang yang masih muat, sedangkan $z$ diambil dari lantai atau permukaan atas paket lain. Kandidat baru hanya disimpan bila lolos \path{validate_state}. Paket dapat tetap di luar saat target luar terpilih atau ketika percobaan penempatan gagal. Cuplikan~\ref{lst:initial-state} menunjukkan titik awal konstruksi tersebut.
+
+\begin{lstlisting}[emph={State,PackagePlacement,shuffle},caption={Pembentukan initial state dalam \texttt{initializer.py}},label={lst:initial-state}]
+state = State(
+    placements=[PackagePlacement(package_id=p.id) for p in problem.packages]
+)
+indices = list(range(len(problem.packages)))
+rng.shuffle(indices)
+\end{lstlisting}
+
+Setelah initial state tersedia, neighbor dibentuk lewat tiga move pada \path{neighbors.py}. \texttt{RELOCATE} memindahkan paket ke koordinat atau truk lain, termasuk ke luar truk. \texttt{ROTATE} mengubah orientasi paket termuat sambil mempertahankan titik posisinya. \texttt{SWAP} menukar tujuan truk dan posisi dua paket, sementara masing-masing mempertahankan orientasinya. Peluang pemilihan awalnya berturut-turut $0{,}50$, $0{,}25$, dan $0{,}25$. Setiap move bekerja pada salinan state agar state asal tidak berubah.
+
+Proposal move belum tentu memenuhi constraint. Untuk hill climbing dan simulated annealing, \path{generate_random_neighbor} mengulang proposal sampai menemukan state sah atau mencapai batas percobaan, seperti pada Cuplikan~\ref{lst:valid-neighbor}. Hill climbing dapat meminta beberapa neighbor berbeda melalui \path{sample_valid_neighbors}, sedangkan simulated annealing mengambil satu. Pada genetic algorithm, proposal mutasi yang belum sah boleh masuk ke tahap repair sebelum dinilai.
+
+\begin{lstlisting}[emph={propose_random_move,validate_state,valid},caption={Penerimaan neighbor yang sah dalam \texttt{neighbors.py}},label={lst:valid-neighbor}]
+for _ in range(config.max_attempts):
+    candidate = propose_random_move(problem, state, rng, config)
+    if candidate is not None and validate_state(problem, candidate.state).valid:
+        return candidate
+return None
+\end{lstlisting}
+
+\clearpage
 \subsubsection{Hill Climbing}
+Implementasi yang tersedia saat ini adalah \textbf{\textit{hill climbing with sideways move}} pada kelas \texttt{HillClimbing}. Pada tiap iterasi, algoritma mengambil sejumlah neighbor sah yang berbeda sesuai parameter \path{candidates_per_iteration}. Objective tiap neighbor dihitung, lalu skor tertinggi dipilih. Jika ada beberapa neighbor dengan skor yang sama, salah satunya dipilih secara acak. Cuplikan~\ref{lst:hill-choice} memperlihatkan syarat move yang dipakai.
+
+\begin{lstlisting}[emph={top_score,improved,sideways,max_sideways},caption={Keputusan move pada \texttt{hill\_climbing.py}},label={lst:hill-choice}]
+top_score = max(scores)
+improved = top_score > current_score
+sideways = (
+    top_score == current_score and consecutive_sideways < max_sideways
+)
+\end{lstlisting}
+
+Move dengan skor lebih tinggi selalu diterima. Hitungan \path{consecutive_sideways} kembali ke nol setelah move tersebut. Move dengan skor sama diterima selama hitungannya belum mencapai \path{max_sideways}. Algoritma berhenti ketika tidak ada neighbor sah, tidak ada move yang dapat diterima, atau batas iterasi tercapai. Selain state akhir, kelas ini menyimpan \path{best_state}, skor terbaik, jumlah sideways move, alasan berhenti, dan \textit{history} per iterasi. Varian hill climbing lain yang dibahas pada Bab~2 belum dijalankan oleh implementasi ini.
+
 \subsubsection{Simulated Annealing}
+Kelas \texttt{SimulatedAnnealing} memulai pencarian dari state sah yang sama jenisnya dengan hill climbing, tetapi hanya mengambil \textbf{satu neighbor acak} pada setiap iterasi. Move dengan $\Delta f\geq0$ langsung diterima. Untuk $\Delta f<0$, algoritma menggunakan peluang $\exp(\Delta f/T)$ sebagaimana dijelaskan pada Bab~2. Cuplikan~\ref{lst:annealing-accept} menunjukkan keputusan tersebut di dalam kode.
+
+\begin{lstlisting}[emph={delta,acceptance_probability,accepted,temperature},caption={Penerimaan move pada \texttt{simulated\_annealing.py}},label={lst:annealing-accept}]
+delta = candidate_score - current_score
+acceptance_probability = (
+    1.0 if delta >= 0 else math.exp(delta / temperature)
+)
+accepted = delta >= 0 or rng.random() < acceptance_probability
+if accepted:
+    current = candidate.state.model_copy(deep=True)
+    current_score = candidate_score
+\end{lstlisting}
+
+Temperatur awal dapat diberikan sebagai parameter. Jika kosong, nilainya diambil dari rata-rata value paket dengan batas bawah $1$. Setelah satu iterasi selesai, temperatur dikalikan \texttt{alpha}, yang bernilai antara nol dan satu. Pencarian berhenti saat temperatur berada di bawah \texttt{min\_temperature}, batas iterasi tercapai, atau neighbor sah tidak ditemukan. \texttt{best\_state} disimpan terpisah dari state saat ini, sebab simulated annealing dapat menerima move yang menurunkan skor. Riwayat iterasi mencatat temperatur, peluang penerimaan, keputusan move, dan skor. Parameter \texttt{stuck\_patience} dipakai untuk menghitung kejadian ketika skor terbaik tidak membaik selama sejumlah iterasi.
+
+\clearpage
 \subsubsection{Genetic Algorithm}
+Kelas \texttt{GeneticAlgorithm} memulai pencarian dengan \textbf{populasi state sah}. Setiap anggota populasi dibuat oleh \path{generate_random_feasible_state}. Satu state menjadi satu individual dan objective-nya menjadi fitness. Pemilihan induk memakai \path{roulette_select}, sehingga fitness lebih tinggi mendapat peluang lebih besar. Jika semua fitness nol, induk dipilih seragam secara acak. \path{uniform_crossover} menyusun anak dengan mengambil placement setiap paket dari salah satu dari dua induk, masing-masing dengan peluang setengah.
+
+Dalam setiap generasi, satu individual dengan fitness tertinggi disalin langsung sebagai \textit{elite}. Individual lain dibentuk melalui selection, crossover sesuai \texttt{crossover\_probability}, dan mutation sesuai \texttt{mutation\_probability}. Mutation memilih salah satu dari relocate, rotate, atau swap. Sebelum masuk ke populasi berikutnya, anak diproses oleh \path{repair_state}, seperti terlihat pada Cuplikan~\ref{lst:ga-generation}.
+
+\begin{lstlisting}[emph={champion,roulette_select,uniform_crossover,repair_state},caption={Pembentukan generasi baru pada \texttt{genetic\_algorithm.py}},label={lst:ga-generation}]
+next_population = [champion.model_copy(deep=True)]
+while len(next_population) < config.population_size:
+    parent_a = roulette_select(population, fitnesses, rng)
+    parent_b = roulette_select(population, fitnesses, rng)
+    if rng.random() < config.crossover_probability:
+        child = uniform_crossover(problem, parent_a, parent_b, rng)
+    else:
+        child = rng.choice((parent_a, parent_b)).model_copy(deep=True)
+    if rng.random() < config.mutation_probability:
+        proposal = rng.choice(
+            (propose_relocate, propose_rotate, propose_swap)
+        )(problem, child, rng)
+        if proposal is not None:
+            child = proposal.state
+    next_population.append(repair_state(problem, child, rng))
+\end{lstlisting}
+
+Repair mencoba mempertahankan placement anak yang masih sah. Paket yang tidak lagi cocok dicoba pada orientasi dan posisi lain, termasuk truk lain bila tersedia. Bila tidak ada tempat sah, paket dibiarkan di luar. Dengan cara ini, populasi yang dievaluasi tetap memenuhi constraint. Pencarian berjalan sampai jumlah generasi yang diminta, lalu mengembalikan champion generasi terakhir dan best state sepanjang run. \textit{History} mencatat fitness maksimum dan rata-rata populasi pada setiap generasi untuk keperluan analisis.
 
 \clearpage
 \subsection{Rancangan Eksperimen}
