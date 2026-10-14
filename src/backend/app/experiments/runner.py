@@ -23,7 +23,6 @@ from app.schemas.experiment import (
     ExperimentResult,
     GeneticAlgorithmRequest,
     HillClimbingRequest,
-    HillClimbingVariant,
     RunExperimentRequest,
     SimulatedAnnealingRequest,
 )
@@ -69,9 +68,10 @@ def validate_execution_budget(request: RunExperimentRequest) -> None:
     if isinstance(request, HillClimbingRequest) and (
         request.parameters.max_iterations > 2_000
         or request.parameters.candidates_per_iteration > 50
+        or request.parameters.max_restarts > 20
     ):
         raise ExecutionBudgetError(
-            "Execution limit exceeded: Hill Climbing iterations <= 2000 and candidates <= 50."
+            "Execution limit exceeded: Hill Climbing iterations <= 2000, candidates <= 50, and restarts <= 20."
         )
     if (
         isinstance(request, SimulatedAnnealingRequest)
@@ -83,13 +83,6 @@ def validate_execution_budget(request: RunExperimentRequest) -> None:
 def preflight_experiment(request: RunExperimentRequest) -> None:
     validate_execution_budget(request)
     objective_upper_bound(request.problem, request.objective_mode)
-    if (
-        isinstance(request, HillClimbingRequest)
-        and request.variant is not HillClimbingVariant.SIDEWAYS
-    ):
-        raise UnsupportedAlgorithmError(
-            f"Hill climbing variant '{request.variant.value}' is not implemented."
-        )
 
 
 def run_experiment(request: RunExperimentRequest) -> ExperimentResult:

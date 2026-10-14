@@ -32,6 +32,11 @@ export const defaultGeneticAlgorithmParameters: GeneticAlgorithmParameters = {
   elite_count: 1,
 }
 
+export interface HillClimbingInput extends HillClimbingParameters {
+  variant: HillClimbingVariant
+  seed: number
+}
+
 export interface GeneticAlgorithmInput {
   population_size: number
   generations: number
@@ -44,6 +49,35 @@ export function validateSeed(seed: number): string | null {
   return Number.isSafeInteger(seed)
     ? null
     : `Seed must be a safe integer (${Number.MIN_SAFE_INTEGER} to ${Number.MAX_SAFE_INTEGER}).`
+}
+
+/** Only the fields the chosen variant reads are validated and sent. */
+export function selectHillClimbingParameters(
+  variant: HillClimbingVariant,
+  parameters: HillClimbingParameters,
+): Partial<HillClimbingParameters> {
+  return {
+    max_iterations: parameters.max_iterations,
+    candidates_per_iteration: parameters.candidates_per_iteration,
+    ...(variant === 'sideways' ? { max_sideways: parameters.max_sideways } : {}),
+    ...(variant === 'random_restart' ? { max_restarts: parameters.max_restarts } : {}),
+  }
+}
+
+export function validateHillClimbingInput(input: HillClimbingInput): string | null {
+  if (!Number.isInteger(input.max_iterations) || input.max_iterations < 1 || input.max_iterations > 2000) {
+    return 'Maximum iterations must be an integer from 1 to 2000.'
+  }
+  if (!Number.isInteger(input.candidates_per_iteration) || input.candidates_per_iteration < 1 || input.candidates_per_iteration > 50) {
+    return 'Candidates per iteration must be an integer from 1 to 50.'
+  }
+  if (input.variant === 'sideways' && (!Number.isSafeInteger(input.max_sideways) || input.max_sideways < 0)) {
+    return 'Maximum sideways moves must be a non-negative safe integer.'
+  }
+  if (input.variant === 'random_restart' && (!Number.isInteger(input.max_restarts) || input.max_restarts < 0 || input.max_restarts > 20)) {
+    return 'Maximum restarts must be an integer from 0 to 20.'
+  }
+  return validateSeed(input.seed)
 }
 
 export function validateGeneticAlgorithmInput(input: GeneticAlgorithmInput): string | null {
@@ -89,6 +123,7 @@ interface RunRequestOptions {
   variant?: HillClimbingVariant
   includeStateHistory?: boolean
   persist?: boolean
+  hillClimbingParameters?: Partial<HillClimbingParameters>
   geneticAlgorithmParameters?: Partial<GeneticAlgorithmParameters>
   simulatedAnnealingParameters?: Partial<SimulatedAnnealingParameters>
 }
@@ -102,6 +137,7 @@ export function buildRunRequest({
   variant = 'sideways',
   includeStateHistory = true,
   persist = true,
+  hillClimbingParameters,
   geneticAlgorithmParameters,
   simulatedAnnealingParameters,
 }: RunRequestOptions): RunExperimentRequest {
@@ -115,7 +151,7 @@ export function buildRunRequest({
 
   switch (algorithm) {
     case 'hill_climbing':
-      return { ...common, algorithm, variant, parameters: { ...defaultHillClimbingParameters } }
+      return { ...common, algorithm, variant, parameters: { ...(hillClimbingParameters ?? defaultHillClimbingParameters) } }
     case 'simulated_annealing':
       return { ...common, algorithm, parameters: { ...defaultSimulatedAnnealingParameters, ...simulatedAnnealingParameters } }
     case 'genetic_algorithm':
