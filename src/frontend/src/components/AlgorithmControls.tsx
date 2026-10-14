@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { runExperiment } from '../api/client'
-import { buildRunRequest, defaultSimulatedAnnealingParameters, validateGeneticAlgorithmInput, validateSimulatedAnnealingInput, validateSeed } from '../api/requests'
+import { buildRunRequest, defaultHillClimbingParameters, defaultSimulatedAnnealingParameters, selectHillClimbingParameters, validateGeneticAlgorithmInput, validateHillClimbingInput, validateSimulatedAnnealingInput } from '../api/requests'
+import { HillClimbingParameters, type HillClimbingFormValues } from './HillClimbingParameters'
 import { AnnealingParameters, type AnnealingFormValues } from './AnnealingParameters'
 import { useReplayStore } from '../stores/replayStore'
 import type { ExperimentResult, ObjectiveMode, Problem } from '../types/experiment'
@@ -28,6 +29,13 @@ export function AlgorithmControls({ problem, onExperimentReady, configurationPen
   const [crossoverProbability, setCrossoverProbability] = useState('0.8')
   const [mutationProbability, setMutationProbability] = useState('0.2')
   const [seed, setSeed] = useState('42')
+  const [hillClimbing, setHillClimbing] = useState<HillClimbingFormValues>({
+    variant: 'sideways',
+    max_iterations: String(defaultHillClimbingParameters.max_iterations),
+    candidates_per_iteration: String(defaultHillClimbingParameters.candidates_per_iteration),
+    max_sideways: String(defaultHillClimbingParameters.max_sideways),
+    max_restarts: String(defaultHillClimbingParameters.max_restarts),
+  })
   const [annealing, setAnnealing] = useState<AnnealingFormValues>({
     initial_temperature: '',
     alpha: String(defaultSimulatedAnnealingParameters.alpha),
@@ -54,7 +62,11 @@ export function AlgorithmControls({ problem, onExperimentReady, configurationPen
       ? [populationSize, generations, crossoverProbability, mutationProbability, seed]
       : algorithm === 'simulated_annealing'
         ? [annealing.alpha, annealing.min_temperature, annealing.max_iterations, annealing.stuck_patience, seed]
-        : [seed]
+        : [
+          seed, hillClimbing.max_iterations, hillClimbing.candidates_per_iteration,
+          ...(hillClimbing.variant === 'sideways' ? [hillClimbing.max_sideways] : []),
+          ...(hillClimbing.variant === 'random_restart' ? [hillClimbing.max_restarts] : []),
+        ]
     if (inputValues.some((value) => value === '')) {
       setError('All numeric fields are required.')
       return
@@ -67,6 +79,12 @@ export function AlgorithmControls({ problem, onExperimentReady, configurationPen
       max_iterations: Number(annealing.max_iterations),
       stuck_patience: Number(annealing.stuck_patience),
     }
+    const hillClimbingParameters = {
+      max_iterations: Number(hillClimbing.max_iterations),
+      candidates_per_iteration: Number(hillClimbing.candidates_per_iteration),
+      max_sideways: Number(hillClimbing.max_sideways),
+      max_restarts: Number(hillClimbing.max_restarts),
+    }
     const validationError = algorithm === 'genetic_algorithm'
       ? validateGeneticAlgorithmInput({
         population_size: Number(populationSize),
@@ -77,7 +95,7 @@ export function AlgorithmControls({ problem, onExperimentReady, configurationPen
       })
       : algorithm === 'simulated_annealing'
         ? validateSimulatedAnnealingInput({ ...annealingParameters, seed: numericSeed })
-        : validateSeed(numericSeed)
+        : validateHillClimbingInput({ ...hillClimbingParameters, variant: hillClimbing.variant, seed: numericSeed })
     if (validationError) {
       setError(validationError)
       return
@@ -93,6 +111,10 @@ export function AlgorithmControls({ problem, onExperimentReady, configurationPen
         objectiveMode,
         seed: numericSeed,
         persist: false,
+        ...(algorithm === 'hill_climbing' ? {
+          variant: hillClimbing.variant,
+          hillClimbingParameters: selectHillClimbingParameters(hillClimbing.variant, hillClimbingParameters),
+        } : {}),
         ...(algorithm === 'simulated_annealing' ? { simulatedAnnealingParameters: annealingParameters } : {}),
         ...(algorithm === 'genetic_algorithm' ? {
           geneticAlgorithmParameters: {
@@ -132,6 +154,9 @@ export function AlgorithmControls({ problem, onExperimentReady, configurationPen
           <option value="total_value">Total value</option>
           <option value="eta_weighted_value">ETA-weighted value</option>
         </select>
+        {algorithm === 'hill_climbing' && (
+          <HillClimbingParameters values={hillClimbing} onChange={(field, value) => setHillClimbing((previous) => ({ ...previous, [field]: value }))} />
+        )}
         {algorithm === 'genetic_algorithm' && (
           <>
             <label className="field-label" htmlFor="population-size">Population size (2–100)</label>
