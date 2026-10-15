@@ -6,6 +6,10 @@
 \usepackage{fancyhdr}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{inconsolata}
 \usepackage[hidelinks]{hyperref}
 \graphicspath{{docs/}{./}}
 
@@ -16,6 +20,8 @@
 \setcounter{tocdepth}{3}
 \setlength{\parindent}{1.5em}
 \setlength{\parskip}{0pt}
+\lstset{language=Python,basicstyle=\ttfamily\footnotesize,keywordstyle=\bfseries,emphstyle=\bfseries,breaklines=true,frame=single,showstringspaces=false,columns=fullflexible}
+\renewcommand{\lstlistingname}{Cuplikan}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -26,7 +32,7 @@
 
 % Kompilasi dari root repositori (jalankan dua kali agar daftar isi terbarui):
 % pdflatex -output-directory=docs docs/laporan.tex
-% Kerangka saja: isi bab, referensi, dan kontribusi belum diisi.
+% Bab 1 dan 2 sudah diisi; rincian implementasi dan hasil eksperimen menyusul.
 \begin{document}
 
 \hypersetup{pageanchor=false}
@@ -65,21 +71,320 @@
 \tableofcontents
 \clearpage
 
-\section{Deskripsi Persoalan}
-\subsection{Latar Belakang dan Tujuan}
-\subsection{Variabel dan Batasan Persoalan}
-\subsection{Representasi Solusi}
-\subsection{Fungsi Objektif}
+\section{Pendahuluan}
+\subsection{Latar Belakang}
+Mejiro Express ingin mengatur pengiriman paket dengan truk peti kemas. Special Week, pengemudinya, perlu segera memutuskan paket mana yang akan dibawa dan bagaimana paket itu disusun. Setiap paket punya ukuran, nilai, berat, dan sifat kerapuhan yang berbeda. Susunannya harus muat di dalam peti kemas, stabil, dan tidak melebihi kapasitas angkut \cite{spesifikasi}.
 
-\section{Pembahasan}
+Pilihan posisi dan orientasi bertambah seiring banyaknya paket. Bahkan setelah paket yang akan dibawa dipilih, masih ada banyak cara untuk menatanya. Tugas ini memakai \textbf{\textit{local search}} (pencarian lokal) untuk mencari susunan bernilai tinggi melalui perubahan kecil pada susunan yang sudah ada.
+
+\subsection{Rumusan Persoalan dan Tujuan}
+Masukannya berupa paket berbentuk balok atau kubus serta peti kemas dengan ukuran dan kapasitas angkut tertentu. Program harus memilih paket yang dimuat, lalu menentukan posisi dan orientasi tiap paket tersebut. Targetnya adalah memaksimalkan \textbf{\textit{objective function}} (fungsi objektif), yaitu total nilai paket yang berhasil dimuat dalam susunan yang sah. Paket yang tidak dimuat tetap tercatat di luar peti kemas \cite{spesifikasi}.
+
+Pekerjaan ini menerapkan sedikitnya satu varian \textit{hill climbing}, \textit{simulated annealing}, dan \textit{genetic algorithm}. Hasilnya dibandingkan dari nilai akhir, perubahan nilai selama pencarian, dan waktu yang dibutuhkan. Setiap percobaan juga diulang agar perbedaan hasil akibat pilihan awal acak dapat terlihat \cite{spesifikasi}.
+
+\subsection{Ruang Lingkup Persoalan}
+Posisi paket memakai koordinat bilangan bulat pada ruang tiga dimensi. Paket dapat diputar sebesar $90^\circ$ terhadap sumbu ruang. Setiap paket yang dimuat harus berada sepenuhnya di dalam peti kemas, tidak bertumpang tindih, dan memiliki penopang. Paket rapuh tidak boleh menopang paket lain. Total berat muatan juga tidak boleh melampaui kapasitas truk. Paket yang tidak dimuat berada sepenuhnya di luar peti kemas \cite{spesifikasi}.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[scale=0.8, every node/.style={font=\small}]
+        \draw[thick] (0,0) rectangle (8,3.5);
+        \node[anchor=south west] at (0,3.5) {Peti kemas (tampak samping)};
+        \filldraw[fill=blue!18] (0.6,0) rectangle (2.6,1.1);
+        \node at (1.6,0.55) {$p_1$};
+        \filldraw[fill=green!18] (2.6,0) rectangle (5.1,1.5);
+        \node at (3.85,0.75) {$p_2$};
+        \filldraw[fill=orange!23] (2.9,1.5) rectangle (4.6,2.4);
+        \node at (3.75,1.95) {$p_3$};
+        \draw[dashed] (8.6,-0.25) rectangle (11.5,2.3);
+        \node[align=center] at (10.05,2.85) {Paket di luar};
+        \filldraw[fill=gray!18] (9.15,0.45) rectangle (10.85,1.5);
+        \node at (10,0.98) {$p_4$};
+    \end{tikzpicture}
+    \caption{Ilustrasi konseptual paket termuat dan paket di luar peti kemas. Susunan sebenarnya ditentukan dalam tiga dimensi.}
+    \label{fig:ilustrasi-pemuatan}
+\end{figure}
+
+\clearpage
+\section{Dasar Teori}
+\subsection{Optimasi dan \textit{Local Search}}
+Dalam optimasi, \textit{objective function} memberi nilai pada setiap kandidat solusi. Pencarian diarahkan ke kandidat dengan nilai setinggi mungkin. Jika ada \textbf{\textit{constraint}} (batasan), kandidat yang dapat dipilih harus memenuhi constraint tersebut. Dengan $\mathcal{F}$ sebagai himpunan kandidat yang sah, tujuan umum masalah maksimisasi dapat ditulis $\max_{s\in\mathcal{F}} f(s)$, dengan $f(s)$ sebagai nilai kandidat $s$ \cite{russell-norvig}.
+
+\textit{Local search} bekerja pada satu kandidat lengkap dan memperbaikinya melalui perubahan bertahap. Yang menjadi hasil adalah konfigurasi akhirnya. Urutan perubahan selama pencarian tidak ikut menentukan nilai solusi. Pendekatan ini berguna ketika ruang kemungkinan terlalu besar untuk diperiksa satu per satu \cite{russell-norvig,slide-local-search}.
+
+\subsection{\textit{State}, \textit{Neighbor}, dan \textit{Search Landscape}}
+\textbf{\textit{State}} (keadaan) adalah satu kandidat solusi yang lengkap. Pencarian dimulai dari \textit{initial state} (state awal), yang bisa dibangkitkan secara acak. Sebuah \textit{move} (langkah perubahan) menghasilkan \textbf{\textit{neighbor}} (tetangga), yaitu state yang berbeda dalam sebagian kecil komponennya. Kumpulan neighbor yang dapat dicapai menentukan ke mana pencarian bisa bergerak dari state saat ini \cite{slide-local-search}.
+
+Nilai setiap state dapat dibayangkan sebagai ketinggian dalam \textit{search landscape} (lanskap pencarian). \textbf{\textit{Local maximum}} (puncak lokal) bernilai setidaknya sama tinggi dengan semua neighbor-nya, meskipun mungkin ada state lain yang nilainya lebih tinggi. Nilai tertinggi di seluruh ruang pencarian disebut \textit{global maximum} (puncak global). Ada pula \textit{plateau} (daerah datar), yaitu kumpulan state bertetangga dengan nilai yang sama. Local maximum dan plateau menjelaskan mengapa pencarian yang selalu mengejar kenaikan nilai bisa berhenti terlalu cepat \cite{russell-norvig,slide-local-search}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.72\textwidth,trim=30bp 105bp 315bp 73bp,clip]{landscape-slide.pdf}
+    \caption{\textit{Search landscape} dengan global maximum, local maximum, dan plateau. Diambil dari salindia \textit{Beyond Classical Search} \cite{slide-local-search}.}
+    \label{fig:search-landscape}
+\end{figure}
+
+\subsection{\textit{Hill Climbing}}
+Seperti terlihat pada Gambar~\ref{fig:search-landscape}, pencarian yang hanya memilih kenaikan nilai dapat berhenti di local maximum. \textbf{\textit{Hill climbing}} memilih neighbor dengan nilai yang lebih baik daripada state saat ini. Dalam \textit{steepest-ascent hill climbing}, semua neighbor yang tersedia dievaluasi, lalu algoritma mengambil yang terbaik. \textit{Stochastic hill climbing} mengambil sampel neighbor secara acak dan berpindah jika nilainya naik. Kedua varian ini mudah terhenti di local maximum karena move yang menurunkan nilai ditolak \cite{russell-norvig,slide-local-search}.
+
+\textit{Hill climbing with sideways move} juga menerima move ke neighbor dengan nilai sama. Jumlah move seperti ini biasanya dibatasi supaya pencarian tidak terus berputar di plateau. Cara lain adalah \textit{random-restart hill climbing}, yang menjalankan pencarian beberapa kali dari initial state berbeda. Setiap restart memberi kesempatan untuk mencapai bagian search landscape yang belum terjelajahi \cite{russell-norvig,slide-local-search}.
+
+\subsection{\textit{Simulated Annealing}}
+Hill climbing tidak selalu bisa keluar dari local maximum dengan move yang hanya memperbaiki nilai. \textbf{\textit{Simulated annealing}} sesekali menerima move yang menurunkan nilai agar pencarian dapat berpindah ke daerah lain. Peluang menerima penurunan ditentukan oleh \textit{temperature} (temperatur). Untuk $\Delta f=f(s')-f(s)<0$ dan $T>0$, peluang menerima neighbor $s'$ adalah
+\begin{equation}
+    \Pr(\text{accept }s')=\exp\!\left(\frac{\Delta f}{T}\right).
+    \label{eq:annealing}
+\end{equation}
+Pada temperature tinggi, algoritma lebih sering menerima penurunan nilai sehingga dapat keluar dari local maximum. Seiring temperature turun, peluang itu mengecil. \textit{Cooling schedule} (jadwal penurunan temperatur) menentukan seberapa cepat perilaku pencarian berubah. Jadwal yang terlalu cepat dapat membuat pencarian kembali terjebak sebelum sempat menjelajahi state lain \cite{russell-norvig,slide-local-search}.
+
+\clearpage
+\subsection{\textit{Genetic Algorithm}}
+Jika hill climbing dan simulated annealing mengubah satu state dalam satu lintasan pencarian, \textbf{\textit{genetic algorithm}} bekerja dengan \textit{population} (populasi) yang berisi sejumlah \textit{individual} (kandidat solusi). Setiap individual dinilai memakai \textit{fitness function} (fungsi penilaian). Melalui \textit{selection} (pemilihan induk), individual yang lebih baik mendapat peluang lebih besar untuk menghasilkan keturunan \cite{russell-norvig,slide-local-search}.
+
+Generasi baru dibentuk melalui \textit{crossover} (penggabungan bagian dari dua induk) dan \textit{mutation} (perubahan acak pada individual). Crossover mewariskan bagian dari solusi yang sudah ada, sementara mutation membantu menjaga keragaman population. Ukuran population dan banyaknya \textit{generation} (generasi) memengaruhi jumlah kandidat yang diperiksa serta waktu pencarian. Bila suatu operator menghasilkan kandidat yang melanggar constraint, kandidat itu perlu ditangani sebelum dipakai sebagai solusi \cite{russell-norvig,slide-local-search}.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.94\textwidth,trim=30bp 85bp 30bp 80bp,clip]{genetic-algorithm-slide.pdf}
+    \caption{Alur selection, crossover, dan mutation pada genetic algorithm. Diambil dari salindia \textit{Beyond Classical Search} \cite{slide-local-search}.}
+    \label{fig:genetic-algorithm}
+\end{figure}
+
+\clearpage
+\section{Pembahasan dan Implementasi}
+\subsection{Arsitektur Aplikasi}
+Pengguna menyiapkan paket dan truk melalui halaman web, memilih algoritma, lalu melihat susunan serta perkembangan skornya. Saat pencarian dijalankan, halaman tersebut mengirim konfigurasi ke backend. Backend membentuk state, menjalankan algoritma, dan mengembalikan hasil yang sudah diperiksa. Alur ini membuat tampilan dan proses pencarian memakai data problem yang sama.
+
+\subsubsection{Struktur Aplikasi}
+Folder utama aplikasi tersusun sebagai berikut. Pohon ini hanya menampilkan direktori yang berperan dalam alur pencarian dan visualisasi.
+
+\begin{lstlisting}[language={},frame=single,basicstyle=\ttfamily\footnotesize]
+.
+|-- data/
+|-- output/
+|-- src/
+    |-- backend/
+    |   |-- app/
+    |       |-- api/
+    |       |-- domain/
+    |       |-- experiments/
+    |       |-- optimization/
+    |-- frontend/
+        |-- src/
+            |-- api/
+            |-- components/
+            |-- stores/
+\end{lstlisting}
+
+Di backend, \path{domain} mendefinisikan data, \path{optimization} memuat validator dan algoritma, sedangkan \path{experiments} mengatur eksekusi serta pencatatan hasil. Di frontend, \path{components} memuat form, grafik, dan tampilan truk. Folder \path{api} menghubungkan halaman dengan backend, lalu \path{stores} menyimpan posisi replay. Data masukan berada di \path{data}, sementara hasil run yang disimpan berada di \path{output}.
+
+\subsubsection{Penjelasan Tech Stack}
+Backend ditulis dengan \textbf{Python 3.12}. \textbf{FastAPI} menyediakan endpoint untuk memvalidasi problem, menjalankan eksperimen tunggal atau batch, dan membaca hasil yang tersimpan. Model \textbf{Pydantic} memeriksa tipe serta rentang nilai saat request diterima. Sesudah itu, modul optimasi menjalankan aturan yang sama untuk semua algoritma. \textbf{NumPy} digunakan untuk occupancy grid tiga dimensi, sehingga pemeriksaan ruang terisi dapat dilakukan pada irisan sel paket.
+
+Frontend dibangun dengan \textbf{React} dan \textbf{TypeScript}. Komponen React memisahkan form problem, kontrol pencarian, visualisasi, dan ringkasan hasil. TypeScript membantu menjaga bentuk request dan respons tetap sesuai kontrak backend. \textbf{Vite} dipakai untuk menjalankan frontend selama pengembangan dan menghasilkan berkas aplikasi saat build.
+
+Untuk menampilkan hasil, \textbf{React Three Fiber} dan \textbf{Three.js} menggambar peti kemas serta posisi paket dalam ruang tiga dimensi. \textbf{Recharts} menampilkan perubahan skor selama iterasi. \textbf{Zustand} menyimpan eksperimen yang dipilih dan indeks iterasi untuk replay.
+
+\clearpage
+\subsection{Pemodelan Problem dan Constraint}
+Pemodelan dimulai dari data paket dan truk. Dari data itu, program membentuk state yang mencatat posisi setiap paket. State lalu melewati pemeriksaan constraint sebelum objective dihitung. Urutan ini dipakai bersama oleh seluruh algoritma, sehingga nilai yang dibandingkan selalu berasal dari \textbf{susunan yang sah}.
+
+\subsubsection{Data Problem}
+Kelas \texttt{Problem} menyimpan dua daftar: \texttt{PackageSpec} dan \texttt{TruckSpec}. Setiap paket memiliki ID, dimensi lebar, panjang, dan tinggi, kemudian \texttt{value}, \texttt{weight}, \texttt{is\_fragile}, serta \texttt{eta}. Truk menyimpan ID, tiga dimensi ruang muat, dan kapasitas maksimum. Cuplikan~\ref{lst:package-spec} hingga~\ref{lst:problem-spec} memperlihatkan hubungan ketiga kelas tersebut.
+
+\lstinputlisting[firstline=15,lastline=25,emph={PackageSpec,Field},caption={Atribut paket pada \texttt{PackageSpec}},label={lst:package-spec}]{src/backend/app/domain/package.py}
+\lstinputlisting[firstline=6,lastline=13,emph={TruckSpec,Field},caption={Atribut truk pada \texttt{TruckSpec}},label={lst:truck-spec}]{src/backend/app/domain/truck.py}
+\lstinputlisting[firstline=7,lastline=19,emph={Problem,validate_ids_and_trucks},caption={Daftar paket dan truk dalam \texttt{Problem}},label={lst:problem-spec}]{src/backend/app/domain/problem.py}
+
+Validasi masukan dilakukan sejak model dibuat. Dimensi harus berupa bilangan bulat positif, sedangkan nilai, berat, ETA, dan kapasitas tidak boleh negatif maupun tak hingga. \texttt{Problem} menolak ID paket atau truk yang berulang dan mensyaratkan setidaknya satu truk. Karena \texttt{trucks} berupa daftar, struktur yang sama dapat dipakai untuk satu truk maupun beberapa truk. Setelah data ini tersedia, penempatan setiap paket dicatat dalam state.
+
+\subsubsection{Representasi State dan Orientasi}
+Kelas \texttt{State} berisi daftar \texttt{PackagePlacement}. Pada state yang sah, \textbf{setiap paket memiliki tepat satu placement}. Di dalamnya tersimpan ID paket dan truk, \texttt{Position}, serta \texttt{Orientation}. Koordinat \texttt{Position} menunjuk sudut kiri-bawah-belakang paket. Sumbu $x$ mengikuti lebar truk, $y$ mengikuti panjang, dan $z$ mengikuti tinggi. Paket di luar truk ditandai dengan \texttt{truck\_id} dan \texttt{position} yang sama-sama bernilai \texttt{None}. Keduanya harus terisi bersama ketika paket dimuat, sebagaimana diperiksa oleh \path{validate_assignment} pada Cuplikan~\ref{lst:placement}.
+
+\lstinputlisting[firstline=24,lastline=34,emph={PackagePlacement,validate_assignment},caption={Model penempatan paket},label={lst:placement}]{src/backend/app/domain/truck.py}
+
+Enam pilihan \texttt{Orientation} didefinisikan pada \path{app/domain/package.py}. Fungsi \path{get_oriented_dimensions} mengubah orientasi menjadi dimensi efektif $(w_i,l_i,h_i)$ tanpa mengubah dimensi asli paket. Untuk kubus atau balok dengan sisi yang sama, beberapa orientasi menghasilkan dimensi efektif identik. Fungsi \path{get_unique_orientations} menghapus pilihan duplikat tersebut saat orientasi akan diacak. State yang terbentuk kemudian diperiksa sebagai satu kesatuan, bukan per paket saja.
+
+\subsubsection{Validasi Constraint}
+Fungsi \path{validate_state} pada \path{app/optimization/constraints.py} menjadi \textbf{pemeriksa akhir setiap kandidat}. Pemeriksaan dimulai dari kelengkapan assignment. Setiap paket dalam \texttt{Problem} harus muncul sekali dalam \texttt{State}, sedangkan ID paket dan truk yang tidak dikenal ditolak. Paket yang berada di luar tidak memakai ruang maupun kapasitas truk.
+
+Validator membuat \textit{occupancy grid} (grid keterisian) NumPy bagi setiap truk. Bentuk grid mengikuti $(W_t,L_t,H_t)$, dengan sel kosong bernilai $-1$ dan sel terisi menyimpan indeks paket. Jika paket $i$ ditempatkan di truk $t$ pada $(x_i,y_i,z_i)$ dengan dimensi efektif $(w_i,l_i,h_i)$, seluruh bagian paket harus memenuhi
+\begin{equation}
+\begin{aligned}
+0\leq x_i,\quad x_i+w_i\leq W_t,\\
+0\leq y_i,\quad y_i+l_i\leq L_t,\\
+0\leq z_i,\quad z_i+h_i\leq H_t.
+\end{aligned}
+\label{eq:batas-truk}
+\end{equation}
+Dalam kode, \path{_collect_occupancies} membandingkan posisi dan dimensi paket dengan ukuran grid. Cuplikan~\ref{lst:boundary} menunjukkan pemeriksaan paket yang melewati dinding peti kemas. Setelah lolos, irisan sel yang akan ditempati diperiksa lagi. Cuplikan~\ref{lst:overlap} menolak paket ketika irisan tersebut sudah berisi indeks paket lain. Karena grid dibuat per truk, paket pada truk berbeda tidak saling bertabrakan.
+
+\begin{lstlisting}[emph={any,errors,unsafe_trucks},caption={Pemeriksaan batas peti kemas},label={lst:boundary}]
+if any(
+    start < 0 or start + size > limit
+    for start, size, limit in zip(origin, dimensions, grid.shape, strict=True)
+):
+    errors.append(
+        f"Package {placement.package_id} is out of bounds in truck {truck_id}"
+    )
+    unsafe_trucks.add(truck_id)
+    continue
+\end{lstlisting}
+\begin{lstlisting}[emph={np,any,errors,unsafe_trucks},caption={Pemeriksaan overlap pada occupancy grid},label={lst:overlap}]
+for placement, package_index, region in regions:
+    truck_id = placement.truck_id
+    assert truck_id is not None
+    cells = occupancies[truck_id][region]
+    if np.any(cells != -1):
+        errors.append(
+            f"Package {placement.package_id} overlaps another in truck {truck_id}"
+        )
+        unsafe_trucks.add(truck_id)
+        continue
+    cells[...] = package_index
+\end{lstlisting}
+
+Paket pada $z_i=0$ ditopang oleh lantai truk. Untuk paket di atas lantai, validator memeriksa sel tepat di bawah alasnya, yakni pada $z_i-1$. Paket dinyatakan \textbf{melayang} jika tidak ada satu pun sel alas yang mendapat support dari paket lain. Jika ada support tetapi salah satu paket penopang bersifat rapuh, susunan juga ditolak. Pemeriksaan ini mengikuti definisi support pada tugas, yaitu cukup ada satu titik alas yang ditopang. Validator tidak mensyaratkan seluruh alas paket bersentuhan dengan penopang. Bagian inti pemeriksaan tersebut tampak pada Cuplikan~\ref{lst:support}.
+
+\begin{lstlisting}[emph={supporters,unique,any,is_fragile},caption={Pemeriksaan support dan paket rapuh},label={lst:support}]
+w, l, _ = get_oriented_dimensions(
+    packages[placement.package_id], placement.orientation
+)
+x, y, z = position.x, position.y, position.z
+below = occupancies[truck_id][x : x + w, y : y + l, z - 1]
+supporters = np.unique(below[below >= 0])
+if supporters.size == 0:
+    support_errors.append(
+        f"Package {placement.package_id} is floating in truck {truck_id}"
+    )
+elif any(problem.packages[int(index)].is_fragile for index in supporters):
+    fragile_errors.append(
+        f"Package {placement.package_id} rests on fragile support "
+        f"in truck {truck_id}"
+    )
+\end{lstlisting}
+
+Setelah posisi dan support diperiksa, validator menghitung beban setiap truk. Untuk truk $t$, jumlah berat paket yang ditugaskan kepadanya harus memenuhi
+\begin{equation}
+\sum_{i\in P_t}\mathrm{weight}_i\leq\mathrm{max\_capacity}_t.
+\label{eq:kapasitas}
+\end{equation}
+Cuplikan~\ref{lst:capacity} menunjukkan bahwa berat dijumlahkan dengan \texttt{Decimal}. Dengan cara ini, batas seperti $0.1+0.2\leq0.3$ tidak keliru akibat pembulatan bilangan \textit{floating point}. Hasil \path{validate_state} berupa \texttt{ValidationResult} yang memuat status \texttt{valid}, daftar \texttt{errors}, dan total berat per truk. Jika assignment atau geometri sudah ambigu, pemeriksaan support dilewati karena grid tidak lagi dapat dipercaya, sementara kesalahan yang sudah ditemukan tetap dilaporkan.
+
+\begin{lstlisting}[emph={Decimal,exact_weights,max_capacity,errors},caption={Penjumlahan berat dan pemeriksaan kapasitas},label={lst:capacity}]
+exact_weights = {truck.id: Decimal(0) for truck in problem.trucks}
+for placement in loaded:
+    assert placement.truck_id is not None
+    exact_weights[placement.truck_id] += Decimal(
+        str(packages[placement.package_id].weight)
+    )
+truck_weights = {
+    truck_id: float(weight) for truck_id, weight in exact_weights.items()
+}
+for truck in problem.trucks:
+    if exact_weights[truck.id] > Decimal(str(truck.max_capacity)):
+        errors.append(
+            f"Truck {truck.id} exceeds capacity: "
+            f"{truck_weights[truck.id]} > {truck.max_capacity}"
+        )
+\end{lstlisting}
+
+\subsubsection{Objective Function}
+Setelah state dinyatakan sah, program menghitung nilainya melalui \texttt{ObjectiveMode} pada \path{app/optimization/objective.py}. \textbf{Mode utama}, \texttt{TOTAL\_VALUE}, menjumlahkan \texttt{value} seluruh paket yang dimuat pada armada:
+\begin{equation}
+f_{\mathrm{total}}(s)=\sum_{i:\,\mathrm{truck}_i\ne\mathrm{None}}\mathrm{value}_i.
+\label{eq:total-value}
+\end{equation}
+Mode tambahan, \texttt{ETA\_WEIGHTED\_VALUE}, memberi bobot lebih besar pada paket yang ETA-nya lebih dekat tanpa menambah atribut masukan:
+\begin{equation}
+f_{\mathrm{ETA}}(s)=\sum_{i:\,\mathrm{truck}_i\ne\mathrm{None}}
+\frac{\mathrm{value}_i}{\mathrm{eta}_i+1}.
+\label{eq:eta-value}
+\end{equation}
+Kontribusi setiap paket termuat dihitung oleh \path{objective_contributions}. Hasilnya dijumlahkan oleh \path{evaluate_objective} dengan \path{math.fsum}. Evaluator tidak memberikan penalti bagi pelanggaran constraint dan tidak memeriksa kelayakan state. Pemanggil harus memakai \path{validate_state} terlebih dahulu. Dengan begitu, \textbf{skor hanya dibandingkan di antara state yang sah}.
+
+\clearpage
 \subsection{Implementasi Algoritma \textit{Local Search}}
-\subsubsection{Representasi State dan Inisialisasi}
-\subsubsection{Pembangkitan Tetangga}
-% Siapkan deskripsi fungsi/kelas beserta source code yang relevan di tiap subbagian.
+\subsubsection{Inisialisasi State dan Pembangkitan Neighbor}
+Sebelum pencarian dimulai, \path{runner.py} membuat satu \textit{random number generator} dari \textit{seed} yang diterima. Generator yang sama diteruskan ke inisialisasi dan algoritma agar run dengan input serta seed yang sama dapat diulang. Hill climbing dan simulated annealing menerima satu initial state dari \path{generate_random_feasible_state}. Genetic algorithm memakai fungsi yang sama untuk membentuk anggota populasi awal.
+
+Inisialisasi memulai semua paket di luar truk, lalu mengacak urutan paket dan tujuan penempatannya. Untuk setiap truk yang dicoba, fungsi memilih orientasi dan posisi. Koordinat $x$ dan $y$ diambil dari rentang yang masih muat, sedangkan $z$ diambil dari lantai atau permukaan atas paket lain. Kandidat baru hanya disimpan bila lolos \path{validate_state}. Paket dapat tetap di luar saat target luar terpilih atau ketika percobaan penempatan gagal. Cuplikan~\ref{lst:initial-state} menunjukkan titik awal konstruksi tersebut.
+
+\begin{lstlisting}[emph={State,PackagePlacement,shuffle},caption={Pembentukan initial state dalam \texttt{initializer.py}},label={lst:initial-state}]
+state = State(
+    placements=[PackagePlacement(package_id=p.id) for p in problem.packages]
+)
+indices = list(range(len(problem.packages)))
+rng.shuffle(indices)
+\end{lstlisting}
+
+Setelah initial state tersedia, neighbor dibentuk lewat tiga move pada \path{neighbors.py}. \texttt{RELOCATE} memindahkan paket ke koordinat atau truk lain, termasuk ke luar truk. \texttt{ROTATE} mengubah orientasi paket termuat sambil mempertahankan titik posisinya. \texttt{SWAP} menukar tujuan truk dan posisi dua paket, sementara masing-masing mempertahankan orientasinya. Peluang pemilihan awalnya berturut-turut $0{,}50$, $0{,}25$, dan $0{,}25$. Setiap move bekerja pada salinan state agar state asal tidak berubah.
+
+Proposal move belum tentu memenuhi constraint. Untuk hill climbing dan simulated annealing, \path{generate_random_neighbor} mengulang proposal sampai menemukan state sah atau mencapai batas percobaan, seperti pada Cuplikan~\ref{lst:valid-neighbor}. Hill climbing dapat meminta beberapa neighbor berbeda melalui \path{sample_valid_neighbors}, sedangkan simulated annealing mengambil satu. Pada genetic algorithm, proposal mutasi yang belum sah boleh masuk ke tahap repair sebelum dinilai.
+
+\begin{lstlisting}[emph={propose_random_move,validate_state,valid},caption={Penerimaan neighbor yang sah dalam \texttt{neighbors.py}},label={lst:valid-neighbor}]
+for _ in range(config.max_attempts):
+    candidate = propose_random_move(problem, state, rng, config)
+    if candidate is not None and validate_state(problem, candidate.state).valid:
+        return candidate
+return None
+\end{lstlisting}
+
+\clearpage
 \subsubsection{Hill Climbing}
+Implementasi yang tersedia saat ini adalah \textbf{\textit{hill climbing with sideways move}} pada kelas \texttt{HillClimbing}. Pada tiap iterasi, algoritma mengambil sejumlah neighbor sah yang berbeda sesuai parameter \path{candidates_per_iteration}. Objective tiap neighbor dihitung, lalu skor tertinggi dipilih. Jika ada beberapa neighbor dengan skor yang sama, salah satunya dipilih secara acak. Cuplikan~\ref{lst:hill-choice} memperlihatkan syarat move yang dipakai.
+
+\begin{lstlisting}[emph={top_score,improved,sideways,max_sideways},caption={Keputusan move pada \texttt{hill\_climbing.py}},label={lst:hill-choice}]
+top_score = max(scores)
+improved = top_score > current_score
+sideways = (
+    top_score == current_score and consecutive_sideways < max_sideways
+)
+\end{lstlisting}
+
+Move dengan skor lebih tinggi selalu diterima. Hitungan \path{consecutive_sideways} kembali ke nol setelah move tersebut. Move dengan skor sama diterima selama hitungannya belum mencapai \path{max_sideways}. Algoritma berhenti ketika tidak ada neighbor sah, tidak ada move yang dapat diterima, atau batas iterasi tercapai. Selain state akhir, kelas ini menyimpan \path{best_state}, skor terbaik, jumlah sideways move, alasan berhenti, dan \textit{history} per iterasi. Varian hill climbing lain yang dibahas pada Bab~2 belum dijalankan oleh implementasi ini.
+
 \subsubsection{Simulated Annealing}
+Kelas \texttt{SimulatedAnnealing} memulai pencarian dari state sah yang sama jenisnya dengan hill climbing, tetapi hanya mengambil \textbf{satu neighbor acak} pada setiap iterasi. Move dengan $\Delta f\geq0$ langsung diterima. Untuk $\Delta f<0$, algoritma menggunakan peluang $\exp(\Delta f/T)$ sebagaimana dijelaskan pada Bab~2. Cuplikan~\ref{lst:annealing-accept} menunjukkan keputusan tersebut di dalam kode.
+
+\begin{lstlisting}[emph={delta,acceptance_probability,accepted,temperature},caption={Penerimaan move pada \texttt{simulated\_annealing.py}},label={lst:annealing-accept}]
+delta = candidate_score - current_score
+acceptance_probability = (
+    1.0 if delta >= 0 else math.exp(delta / temperature)
+)
+accepted = delta >= 0 or rng.random() < acceptance_probability
+if accepted:
+    current = candidate.state.model_copy(deep=True)
+    current_score = candidate_score
+\end{lstlisting}
+
+Temperatur awal dapat diberikan sebagai parameter. Jika kosong, nilainya diambil dari rata-rata value paket dengan batas bawah $1$. Setelah satu iterasi selesai, temperatur dikalikan \texttt{alpha}, yang bernilai antara nol dan satu. Pencarian berhenti saat temperatur berada di bawah \texttt{min\_temperature}, batas iterasi tercapai, atau neighbor sah tidak ditemukan. \texttt{best\_state} disimpan terpisah dari state saat ini, sebab simulated annealing dapat menerima move yang menurunkan skor. Riwayat iterasi mencatat temperatur, peluang penerimaan, keputusan move, dan skor. Parameter \texttt{stuck\_patience} dipakai untuk menghitung kejadian ketika skor terbaik tidak membaik selama sejumlah iterasi.
+
+\clearpage
 \subsubsection{Genetic Algorithm}
-\subsubsection{Validasi Batasan dan Evaluasi Fungsi Objektif}
+Kelas \texttt{GeneticAlgorithm} memulai pencarian dengan \textbf{populasi state sah}. Setiap anggota populasi dibuat oleh \path{generate_random_feasible_state}. Satu state menjadi satu individual dan objective-nya menjadi fitness. Pemilihan induk memakai \path{roulette_select}, sehingga fitness lebih tinggi mendapat peluang lebih besar. Jika semua fitness nol, induk dipilih seragam secara acak. \path{uniform_crossover} menyusun anak dengan mengambil placement setiap paket dari salah satu dari dua induk, masing-masing dengan peluang setengah.
+
+Dalam setiap generasi, satu individual dengan fitness tertinggi disalin langsung sebagai \textit{elite}. Individual lain dibentuk melalui selection, crossover sesuai \texttt{crossover\_probability}, dan mutation sesuai \texttt{mutation\_probability}. Mutation memilih salah satu dari relocate, rotate, atau swap. Sebelum masuk ke populasi berikutnya, anak diproses oleh \path{repair_state}, seperti terlihat pada Cuplikan~\ref{lst:ga-generation}.
+
+\begin{lstlisting}[emph={champion,roulette_select,uniform_crossover,repair_state},caption={Pembentukan generasi baru pada \texttt{genetic\_algorithm.py}},label={lst:ga-generation}]
+next_population = [champion.model_copy(deep=True)]
+while len(next_population) < config.population_size:
+    parent_a = roulette_select(population, fitnesses, rng)
+    parent_b = roulette_select(population, fitnesses, rng)
+    if rng.random() < config.crossover_probability:
+        child = uniform_crossover(problem, parent_a, parent_b, rng)
+    else:
+        child = rng.choice((parent_a, parent_b)).model_copy(deep=True)
+    if rng.random() < config.mutation_probability:
+        proposal = rng.choice(
+            (propose_relocate, propose_rotate, propose_swap)
+        )(problem, child, rng)
+        if proposal is not None:
+            child = proposal.state
+    next_population.append(repair_state(problem, child, rng))
+\end{lstlisting}
+
+Repair mencoba mempertahankan placement anak yang masih sah. Paket yang tidak lagi cocok dicoba pada orientasi dan posisi lain, termasuk truk lain bila tersedia. Bila tidak ada tempat sah, paket dibiarkan di luar. Dengan cara ini, populasi yang dievaluasi tetap memenuhi constraint. Pencarian berjalan sampai jumlah generasi yang diminta, lalu mengembalikan champion generasi terakhir dan best state sepanjang run. \textit{History} mencatat fitness maksimum dan rata-rata populasi pada setiap generasi untuk keperluan analisis.
 
 \clearpage
 \subsection{Rancangan Eksperimen}
@@ -120,9 +425,18 @@
     \caption{Pembagian tugas anggota kelompok}
 \end{table}
 
-\section*{Referensi}
-\addcontentsline{toc}{section}{Referensi}
-% Tambahkan hanya sumber yang benar-benar digunakan dan disitasi dalam laporan.
+\renewcommand{\refname}{Daftar Pustaka}
+\addcontentsline{toc}{section}{Daftar Pustaka}
+\begin{thebibliography}{9}
+\bibitem{spesifikasi}
+Tim Asisten Laboratorium Inteligensi Artifisial, ``Spesifikasi Tugas Besar 1 IF3170 Inteligensi Artifisial 2026/2027,'' ver. 1.4, Institut Teknologi Bandung, Bandung, Indonesia, Sep. 2026.
+
+\bibitem{russell-norvig}
+S. J. Russell and P. Norvig, \emph{Artificial Intelligence: A Modern Approach}, 4th ed. Hoboken, NJ, USA: Pearson, 2021.
+
+\bibitem{slide-local-search}
+Tim Pengajar IF3170 Inteligensi Artifisial, ``Beyond Classical Search,'' lecture slides, Institut Teknologi Bandung, Bandung, Indonesia, 2026.
+\end{thebibliography}
 
 \appendix
 \section{Form Penggunaan Generative AI}
