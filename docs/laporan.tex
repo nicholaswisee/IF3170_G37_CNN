@@ -74,19 +74,19 @@
 
 \section{Pendahuluan}
 \subsection{Latar Belakang}
-Mejiro Express ingin mengatur pengiriman paket dengan truk peti kemas. Special Week, pengemudinya, perlu segera memutuskan paket mana yang akan dibawa dan bagaimana paket itu disusun. Setiap paket punya ukuran, nilai, berat, dan sifat kerapuhan yang berbeda. Susunannya harus muat di dalam peti kemas, stabil, dan tidak melebihi kapasitas angkut \cite{spesifikasi}.
+Mejiro Express perlu menentukan paket yang akan dibawa dan susunan penempatannya di dalam truk peti kemas. Special Week, sebagai pengemudi, menghadapi paket dengan ukuran, nilai, berat, dan sifat kerapuhan yang beragam. Susunan yang dipilih harus muat di dalam peti kemas, stabil, dan tidak melampaui kapasitas angkut \cite{spesifikasi}.
 
 Pilihan posisi dan orientasi bertambah seiring banyaknya paket. Bahkan setelah paket yang akan dibawa dipilih, masih ada banyak cara untuk menatanya. Tugas ini memakai \textbf{\textit{local search}} (pencarian lokal) untuk mencari susunan bernilai tinggi melalui perubahan kecil pada susunan yang sudah ada.
 
 \subsection{Rumusan Persoalan dan Tujuan}
 Masukannya berupa paket berbentuk balok atau kubus serta peti kemas dengan ukuran dan kapasitas angkut tertentu. Program harus memilih paket yang dimuat, lalu menentukan posisi dan orientasi tiap paket tersebut. Targetnya adalah memaksimalkan \textbf{\textit{objective function}} (fungsi objektif), yaitu total nilai paket yang berhasil dimuat dalam susunan yang sah. Paket yang tidak dimuat tetap tercatat di luar peti kemas \cite{spesifikasi}.
 
-Pekerjaan ini menerapkan empat varian \textit{hill climbing} (HC), \textit{simulated annealing} (SA), dan \textit{genetic algorithm} (GA). Program mencatat state awal, state akhir, state terbaik, skor, riwayat pencarian, dan waktu eksekusi untuk mendukung perbandingan kualitas serta durasi pencarian. Pengulangan dengan seed berbeda digunakan dalam rancangan eksperimen untuk mengamati variasi hasil pencarian acak \cite{spesifikasi}.
+Pekerjaan ini menerapkan empat varian \textit{hill climbing} (HC), \textit{simulated annealing} (SA), dan \textit{genetic algorithm} (GA). State awal, state akhir, state terbaik, skor, riwayat pencarian, dan waktu eksekusi menjadi informasi pembanding kualitas dan durasi pencarian. Seed berbeda pada pengulangan eksperimen memungkinkan variasi hasil pencarian acak diamati \cite{spesifikasi}.
 
 \subsection{Ruang Lingkup Persoalan}
 Posisi paket memakai koordinat bilangan bulat pada ruang tiga dimensi. Paket dapat diputar sebesar $90^\circ$ terhadap sumbu ruang. Setiap paket yang dimuat harus berada sepenuhnya di dalam peti kemas, tidak bertumpang tindih, dan memiliki penopang. Paket rapuh tidak boleh menopang paket lain. Total berat muatan juga tidak boleh melampaui kapasitas truk. Paket yang tidak dimuat berada sepenuhnya di luar peti kemas \cite{spesifikasi}.
 
-Implementasi mendukung satu truk maupun beberapa truk dalam satu problem. Setiap paket dapat ditugaskan kepada paling banyak satu truk; nilai muatan dijumlahkan pada seluruh armada. Selain total nilai sebagai objektif utama, tersedia objektif tambahan yang membobot nilai berdasarkan ETA paket. Kedua mode memakai aturan kelayakan susunan yang sama.
+Implementasi mendukung satu atau beberapa truk dalam satu problem. Setiap paket dapat ditugaskan kepada paling banyak satu truk, sementara nilai muatan dijumlahkan pada seluruh armada. Selain objektif utama berupa total nilai, tersedia objektif tambahan yang membobot nilai berdasarkan ETA paket. Kedua mode menggunakan aturan kelayakan susunan yang sama.
 
 \begin{figure}[htbp]
     \centering
@@ -111,14 +111,14 @@ Implementasi mendukung satu truk maupun beberapa truk dalam satu problem. Setiap
 \clearpage
 \section{Dasar Teori}
 \subsection{Optimasi dan \textit{Local Search}}
-Dalam optimasi, \textit{objective function} memberi nilai pada setiap kandidat solusi. Pencarian diarahkan ke kandidat dengan nilai setinggi mungkin. Jika ada \textbf{\textit{constraint}} (batasan), kandidat yang dapat dipilih harus memenuhi constraint tersebut. Dengan $\mathcal{F}$ sebagai himpunan kandidat yang sah, tujuan umum masalah maksimisasi dapat ditulis $\max_{s\in\mathcal{F}} f(s)$, dengan $f(s)$ sebagai nilai kandidat $s$ \cite{russell-norvig}.
+Dalam optimasi, \textit{objective function} memberi nilai pada setiap kandidat solusi, dan pencarian diarahkan pada kandidat bernilai tinggi. Jika terdapat \textbf{\textit{constraint}} (batasan), kandidat yang dipertimbangkan termasuk dalam himpunan yang memenuhi batasan tersebut. Dengan $\mathcal{F}$ sebagai himpunan kandidat yang sah, tujuan umum masalah maksimisasi dapat ditulis $\max_{s\in\mathcal{F}} f(s)$, dengan $f(s)$ sebagai nilai kandidat $s$ \cite{russell-norvig}.
 
-\textit{Local search} bekerja pada satu kandidat lengkap dan memperbaikinya melalui perubahan bertahap. Yang menjadi hasil adalah konfigurasi akhirnya. Urutan perubahan selama pencarian tidak ikut menentukan nilai solusi. Pendekatan ini berguna ketika ruang kemungkinan terlalu besar untuk diperiksa satu per satu \cite{russell-norvig,slide-local-search}.
+\textit{Local search} bekerja pada satu kandidat lengkap dan memperbaikinya melalui perubahan bertahap. Nilai solusi ditentukan oleh konfigurasi akhir, bukan urutan perubahan yang membentuknya. Pendekatan ini sesuai ketika ruang kemungkinan terlalu besar untuk diperiksa satu per satu \cite{russell-norvig,slide-local-search}.
 
 \subsection{\textit{State}, \textit{Neighbor}, dan \textit{Search Landscape}}
-\textbf{\textit{State}} (keadaan) adalah satu kandidat solusi yang lengkap. Pencarian dimulai dari \textit{initial state} (state awal), yang bisa dibangkitkan secara acak. Sebuah \textit{move} (langkah perubahan) menghasilkan \textbf{\textit{neighbor}} (tetangga), yaitu state yang berbeda dalam sebagian kecil komponennya. Kumpulan neighbor yang dapat dicapai menentukan ke mana pencarian bisa bergerak dari state saat ini \cite{slide-local-search}.
+\textbf{\textit{State}} (keadaan) adalah kandidat solusi yang lengkap. Pencarian berawal dari \textit{initial state} (state awal), yang dapat dibangkitkan secara acak. Sebuah \textit{move} (langkah perubahan) menghasilkan \textbf{\textit{neighbor}} (tetangga), yaitu state yang berbeda pada sebagian komponennya. Kumpulan neighbor yang dapat dicapai menentukan arah perpindahan dari state saat ini \cite{slide-local-search}.
 
-Nilai setiap state dapat dibayangkan sebagai ketinggian dalam \textit{search landscape} (lanskap pencarian). \textbf{\textit{Local maximum}} (puncak lokal) bernilai setidaknya sama tinggi dengan semua neighbor-nya, meskipun mungkin ada state lain yang nilainya lebih tinggi. Nilai tertinggi di seluruh ruang pencarian disebut \textit{global maximum} (puncak global). Ada pula \textit{plateau} (daerah datar), yaitu kumpulan state bertetangga dengan nilai yang sama. Local maximum dan plateau menjelaskan mengapa pencarian yang selalu mengejar kenaikan nilai bisa berhenti terlalu cepat \cite{russell-norvig,slide-local-search}.
+Nilai setiap state dapat dibayangkan sebagai ketinggian dalam \textit{search landscape} (lanskap pencarian). \textbf{\textit{Local maximum}} (puncak lokal) bernilai setidaknya sama tinggi dengan seluruh neighbor-nya, walaupun state lain mungkin memiliki nilai lebih tinggi. Nilai tertinggi di seluruh ruang pencarian disebut \textit{global maximum} (puncak global). \textit{Plateau} (daerah datar) merupakan kumpulan state bertetangga dengan nilai yang sama. Puncak lokal dan plateau menjelaskan mengapa pencarian yang hanya menerima kenaikan nilai dapat berhenti sebelum mencapai nilai tertinggi keseluruhan \cite{russell-norvig,slide-local-search}.
 
 \begin{figure}[htbp]
     \centering
@@ -185,7 +185,7 @@ Folder utama aplikasi tersusun sebagai berikut. Pohon ini hanya menampilkan dire
 
 Di backend, \path{domain} mendefinisikan data, \path{optimization} memuat validator dan algoritma, sedangkan \path{experiments} mengatur eksekusi, ringkasan, dan pencatatan hasil. Di frontend, \path{components} memuat form, grafik, inspector, dan tampilan truk; \path{api} menangani request serta pemeriksaan respons, dan \path{stores} menyimpan run terpilih serta indeks riwayat. Fixture awal berada di \path{src/frontend/src/mocks}; \path{data/} belum memuat dataset. Jika persistensi diaktifkan, run tunggal disimpan sebagai JSON di \path{output/experiments/}, sedangkan batch menyimpan JSON dan CSV di \path{output/batches/}. Berkas-berkas tersebut merupakan keluaran yang dapat dibuat, bukan hasil yang telah tersedia di repositori saat ini.
 
-\subsubsection{Penjelasan Tech Stack}
+\subsubsection{Tech Stack}
 Backend ditulis dengan \textbf{Python 3.12}. \textbf{FastAPI} menyediakan endpoint untuk memvalidasi problem, menjalankan eksperimen tunggal atau batch, dan membaca hasil yang tersimpan. Model \textbf{Pydantic} memeriksa tipe serta rentang nilai saat request diterima. Sesudah itu, modul optimasi menjalankan aturan yang sama untuk semua algoritma. \textbf{NumPy} digunakan untuk occupancy grid tiga dimensi, sehingga pemeriksaan ruang terisi dapat dilakukan pada irisan sel paket.
 
 Frontend dibangun dengan \textbf{React} dan \textbf{TypeScript}. Komponen React memisahkan form problem, kontrol pencarian, visualisasi, dan ringkasan hasil. TypeScript membantu menjaga bentuk request dan respons tetap sesuai kontrak backend. \textbf{Vite} dipakai untuk menjalankan frontend selama pengembangan dan menghasilkan berkas aplikasi saat build.
@@ -206,7 +206,7 @@ Kelas \texttt{Problem} menyimpan dua daftar: \texttt{PackageSpec} dan \texttt{Tr
 Validasi masukan dilakukan sejak model dibuat. Dimensi harus berupa bilangan bulat positif, sedangkan nilai, berat, ETA, dan kapasitas tidak boleh negatif maupun tak hingga. \texttt{Problem} menolak ID paket atau truk yang berulang dan mensyaratkan setidaknya satu truk. Karena \texttt{trucks} berupa daftar, struktur yang sama dapat dipakai untuk satu truk maupun beberapa truk. Setelah data ini tersedia, penempatan setiap paket dicatat dalam state.
 
 \subsubsection{Representasi State dan Orientasi}
-Kelas \texttt{State} berisi daftar \texttt{PackagePlacement}. Pada state yang sah, \textbf{setiap paket memiliki tepat satu placement}. Di dalamnya tersimpan ID paket dan truk, \texttt{Position}, serta \texttt{Orientation}. Koordinat \texttt{Position} menunjuk sudut kiri-bawah-belakang paket. Sumbu $x$ mengikuti lebar truk, $y$ mengikuti panjang, dan $z$ mengikuti tinggi. Paket di luar truk ditandai dengan \texttt{truck\_id} dan \texttt{position} yang sama-sama bernilai \texttt{None}. Keduanya harus terisi bersama ketika paket dimuat, sebagaimana diperiksa oleh \path{validate_assignment} pada Cuplikan~\ref{lst:placement}.
+Kelas \texttt{State} berisi daftar \texttt{PackagePlacement}. Pada state yang sah, \textbf{setiap paket memiliki tepat satu placement}. Setiap placement memuat ID paket dan truk, \texttt{Position}, serta \texttt{Orientation}. Koordinat \texttt{Position} menunjuk sudut kiri-bawah-belakang paket. Sumbu $x$ mengikuti lebar truk, $y$ mengikuti panjang, dan $z$ mengikuti tinggi. Paket di luar truk memiliki \texttt{truck\_id} dan \texttt{position} bernilai \texttt{None}; untuk paket yang dimuat, keduanya berisi identitas truk dan posisi, sesuai pemeriksaan \path{validate_assignment} pada Cuplikan~\ref{lst:placement}.
 
 \lstinputlisting[firstline=24,lastline=34,emph={PackagePlacement,validate_assignment},caption={Model penempatan paket},label={lst:placement}]{src/backend/app/domain/truck.py}
 
@@ -308,7 +308,7 @@ f_{\mathrm{ETA}}(s)=\sum_{i:\,\mathrm{truck}_i\ne\mathrm{None}}
 \frac{\mathrm{value}_i}{\mathrm{eta}_i+1}.
 \label{eq:eta-value}
 \end{equation}
-Kontribusi setiap paket termuat dihitung oleh \path{objective_contributions}. Hasilnya dijumlahkan oleh \path{evaluate_objective} dengan \path{math.fsum}. Evaluator tidak memberikan penalti bagi pelanggaran constraint dan tidak memeriksa kelayakan state. Pemanggil harus memakai \path{validate_state} terlebih dahulu. Dengan begitu, \textbf{skor hanya dibandingkan di antara state yang sah}.
+Kontribusi setiap paket termuat dihitung oleh \path{objective_contributions}, lalu dijumlahkan oleh \path{evaluate_objective} dengan \path{math.fsum}. Evaluator tidak memberi penalti atas pelanggaran constraint dan tidak memeriksa kelayakan state. Dalam alur pencarian, \path{validate_state} memeriksa kelayakan sebelum skor digunakan, sehingga \textbf{skor hanya dibandingkan di antara state yang sah}.
 
 \clearpage
 \subsection{Implementasi Algoritma \textit{Local Search}}
@@ -459,19 +459,118 @@ while len(next_population) < config.population_size:
 Repair memulai dari state dengan semua paket di luar, lalu memproses paket termuat menurut koordinat $z$ dan ID. Placement yang masih layak dipertahankan; paket yang gagal ditempatkan ulang dicoba pada orientasi, posisi, dan truk lain, dan tetap di luar bila tidak ada penempatan sah. Setiap generasi mencatat maksimum dan rata-rata fitness populasi; riwayat dimulai pada generasi 0, sehingga memiliki $G+1$ catatan untuk $G$ generasi. Champion generasi terakhir menjadi state akhir, sementara state terbaik sepanjang run disimpan terpisah. Elitisme mempertahankan satu champion. Skema memakai default populasi 50, 100 generasi, peluang crossover 0,80, peluang mutasi 0,20, dan satu elite. Batas API ialah populasi 100 dan 200 generasi.
 
 \clearpage
+\section{Eksperimen dan Analisis}
 \subsection{Rancangan Eksperimen}
+Rancangan berikut belum dilaksanakan dan belum memuat hasil pengukuran. Satu run merujuk pada satu eksekusi algoritma untuk satu problem dengan satu seed.
+
 \subsubsection{Data Uji dan Lingkungan Eksperimen}
+Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket termuat tanpa pembobotan ETA. Dataset utama dirancang dengan satu truk \texttt{truck-a} berukuran $10\times8\times6$ dan kapasitas 100, serta sembilan paket fixture pada Tabel~\ref{tab:data-eksperimen} dengan atribut asli. \texttt{truck-b} dan \texttt{truck-c} tidak disertakan. Satu problem JSON menjadi snapshot tetap seluruh run agar variasi hasil dapat dikaitkan dengan algoritma, seed, atau konfigurasi.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabularx}{\textwidth}{@{}l X r r c r@{}}
+        \toprule
+        ID & Dimensi $(w,l,h)$ & Nilai & Berat & Rapuh & ETA \\
+        \midrule
+        P01 & $(4,3,2)$ & 40 & 20 & Tidak & 2 \\
+        P02 & $(3,3,2)$ & 30 & 15 & Tidak & 1 \\
+        P03 & $(2,2,1)$ & 25 & 5 & Ya & 0 \\
+        P04 & $(2,4,3)$ & 35 & 18 & Tidak & 3 \\
+        P05 & $(3,2,2)$ & 20 & 10 & Tidak & 4 \\
+        P06 & $(1,1,1)$ & 8 & 2 & Ya & 1 \\
+        P07 & $(5,4,3)$ & 50 & 30 & Tidak & 2 \\
+        P08 & $(6,6,6)$ & 60 & 40 & Tidak & 5 \\
+        P09 & $(2,2,2)$ & 12 & 6 & Tidak & 0 \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Data paket fixture untuk dataset utama yang diusulkan.}
+    \label{tab:data-eksperimen}
+\end{table}
+
+Jumlah nilai seluruh paket adalah 280, sehingga menjadi \textbf{batas atas objektif yang diketahui}, bukan nilai optimum yang telah dicapai. Eksperimen multi-truk dapat menjadi kajian tambahan, tetapi hasilnya dianalisis terpisah dari dataset utama. Dokumentasi versi sistem operasi, CPU, RAM, Python, dependensi, dan kode aplikasi mendukung reprodusibilitas serta interpretasi durasi. Seluruh run dirancang berlangsung berurutan pada perangkat dan lingkungan runtime yang sama tanpa perubahan kode atau konfigurasi lingkungan di tengah rangkaian.
+
 \subsubsection{Konfigurasi Parameter dan Pengulangan Eksperimen}
+Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 2026}. Rancangan utama mencakup empat varian HC masing-masing tiga run, tiga run SA, serta dua kelompok GA masing-masing sembilan run, sehingga jumlahnya \textbf{33 run per dataset}. Konfigurasi GA dengan populasi 50 dan 100 generasi muncul pada kedua kelompok dengan label berbeda; enam run itu tercakup dalam 18 run GA. Default UI berupa populasi 6 dan 5 generasi berbeda dari konfigurasi tetap pada Tabel~\ref{tab:konfigurasi-eksperimen}.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.3cm} X r@{}}
+        \toprule
+        Metode & Konfigurasi & Run \\
+        \midrule
+        HC steepest-ascent & Maksimum 2.000 iterasi, 50 kandidat per iterasi; tanpa sideways atau restart. & 3 \\
+        HC stochastic & Maksimum 2.000 iterasi, 50 kandidat per iterasi; pemilihan peningkat seragam. & 3 \\
+        HC sideways & Maksimum 2.000 iterasi, 50 kandidat per iterasi, maksimum 100 sideways berturut-turut. & 3 \\
+        HC random-restart & Maksimum 10 restart; 11 climb, masing-masing maksimum 2.000 iterasi dan 50 kandidat per iterasi. & 3 \\
+        SA & $T_0=30$, $\alpha=0{,}995$, $T_{\min}=0{,}001$, maksimum 5.000 iterasi, ambang stagnasi 50 iterasi. & 3 \\
+        GA: variasi generasi & Populasi tetap 50; generasi 50, 100, dan 200. & 9 \\
+        GA: variasi populasi & Generasi tetap 100; populasi 20, 50, dan 100. & 9 \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Kontrol dan jumlah run yang direncanakan.}
+    \label{tab:konfigurasi-eksperimen}
+\end{table}
+
+Setiap hasil direncanakan memiliki label run unik dan ID yang mengikat seed, parameter, mode objektif, serta problem JSON dengan keluarannya. Bukti utama per run mencakup \textbf{state awal, state akhir beserta skor objektif akhir, grafik objektif, durasi, dan jumlah iterasi aktual}. State dan skor terbaik menjadi informasi tambahan yang dibedakan dari hasil akhir, terutama untuk SA dan random-restart. Grafik memakai indeks iterasi pada sumbu horizontal dan skor objektif pada sumbu vertikal. Nilai \path{runtime_ms} mencakup inisialisasi dan pencarian, tetapi tidak mencakup validasi akhir, penulisan berkas, komunikasi HTTP, maupun rendering.
+
+Simulasi direncanakan melalui UI dengan pencatatan manual dan tangkapan layar sebagai bukti utama. Arsip JSON menjadi dokumentasi tambahan yang bersifat opsional.
+
+Pengarsipan memakai \texttt{POST} \path{/api/experiments/run}. Dengan \path{persist=true}, hasil disimpan di \path{output/experiments/}. Snapshot riwayat disertakan melalui \path{include_state_history=true}. Backend memeriksa kelayakan state sebelum memberikan respons.
+
+Preset batch \path{ga_mandatory} memuat 18 run GA dan menghasilkan JSON serta CSV saat persistensi aktif. Batch menyimpan state awal, akhir, dan terbaik tanpa snapshot per iterasi, sehingga tidak menyediakan replay spasial. Karena UI menggunakan \path{persist=false}, hasilnya tidak tersimpan permanen melalui antarmuka. Ekspor API dan salinan problem menjadi bahan pendukung opsional bagi pencatatan manual, bukan pengganti tangkapan layar.
 \clearpage
 \subsection{Hasil Eksperimen dan Visualisasi Program}
 \subsubsection{Hill Climbing}
+Empat varian HC masing-masing direncanakan dalam \textbf{tiga run dengan seed 42, 123, dan 2026}. Bukti tiap run terdiri atas tangkapan layar state awal dan state akhir yang diambil terpisah, skor objektif akhir, grafik objektif terhadap iterasi, durasi pencarian, dan jumlah iterasi aktual. Skor terbaik dan alasan terminasi memberi konteks tambahan, terpisah dari hasil akhir.
+
+\textit{Steepest-ascent} memiliki batas 2.000 iterasi dan 50 kandidat per iterasi. \textbf{Jumlah iterasi aktual} mengukur panjang pencarian; alasan terminasi membedakan tidak adanya peningkatan dalam sampel, tidak adanya neighbor sah, dan tercapainya batas iterasi. Riwayat skor memperlihatkan pola peningkatan sebelum pencarian berhenti.
+
+\textit{Stochastic hill climbing} menggunakan batas iterasi dan jumlah kandidat yang sama. Jumlah iterasi aktual dan alasan terminasi memberi konteks bagi perbandingan dengan steepest-ascent. Pemilihan acak dari seluruh kandidat peningkat menjadi mekanisme yang dikaji melalui skor akhir, panjang pencarian, dan variasi antar-seed.
+
+\textit{Sideways hill climbing} menggunakan \path{max_sideways=100}. Iterasi aktual, total sideways pada \path{sideways_moves}, serta panjang maksimum rangkaian setara pada \path{consecutive_sideways} menggambarkan pencarian plateau. Penghitung membatasi \textbf{100 sideways berturut-turut} dan kembali ke nol ketika skor meningkat. Setelah batas tercapai, move dengan skor setara ditolak, sementara peningkatan ketat tetap diterima. Bagian datar pada grafik skor dan metadata move memperlihatkan apakah perpindahan setara diikuti peningkatan.
+
+\textit{Random-restart hill climbing} menggunakan \path{max_restarts=10}, yakni sepuluh restart di luar climb awal, sehingga terdapat 11 climb. \textbf{Jumlah restart dan iterasi tiap climb} menjelaskan kontribusi setiap pencarian ulang. Keduanya tersimpan pada \path{restarts_performed} dan \path{iterations_per_restart}, sedangkan skor terbaik tiap climb tersedia pada \path{best_score_per_restart}. Batas restart dalam metadata event menandai grafik gabungan. State akhir berasal dari climb terakhir, sedangkan state terbaik merupakan yang tertinggi dari seluruh climb. Anggaran pencarian ini lebih besar daripada HC tanpa restart, sehingga perbedaan skor tidak mewakili anggaran setara.
+
 \subsubsection{Simulated Annealing}
+SA direncanakan dalam tiga run. Skor awal, akhir, dan terbaik, runtime, jumlah iterasi aktual, seed, serta alasan terminasi membentuk ringkasan tiap run. Grafik skor dan temperatur terhadap iterasi memperlihatkan perkembangan pencarian dan pendinginan. Peluang penerimaan untuk penurunan skor mengikuti \textbf{eksponensial $e^{\Delta E/T}$}, dengan $\Delta E=f(\text{candidate})-f(\text{current sebelum move})$; peluang dibatasi pada maksimum 1, sehingga move yang lebih baik atau setara memiliki peluang 1. Kolom \path{acceptance_probability} dan temperatur menjadi dasar grafik. Jika proposal neighbor tidak tersedia, nilai peluang adalah null dan ditampilkan sebagai celah, bukan nol.
+
+\textbf{Frekuensi stagnasi} diukur melalui jumlah \path{stuck_events} per run; frekuensi per 1.000 iterasi aktual memberi ukuran tambahan yang menyesuaikan panjang run. Implementasi mencatat satu kejadian setelah 50 iterasi tanpa peningkatan skor terbaik dan hanya menghitung kejadian baru setelah skor terbaik meningkat lagi. Peristiwa ini menandai episode stagnasi, bukan bukti matematis optimum lokal, serta tidak menghentikan SA. Frekuensi ternormalisasi tidak terdefinisi untuk run dengan nol iterasi.
 \subsubsection{Genetic Algorithm}
-\subsubsection{Visualisasi State Awal dan State Akhir}
+GA pada Tabel~\ref{tab:ga-rencana} memiliki dua kelompok variasi satu faktor. Kelompok pertama menggunakan \textbf{populasi tetap 50} dan memvariasikan generasi pada 50, 100, serta 200. Kelompok kedua menggunakan \textbf{generasi tetap 100} dan memvariasikan populasi pada 20, 50, serta 100. Setiap konfigurasi diulang tiga kali dengan seed yang juga digunakan pada HC dan SA. Peluang crossover 0,8, peluang mutasi 0,2, dan jumlah elite satu tetap pada seluruh konfigurasi.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \begin{tabular}{@{}l r r c@{}}
+        \toprule
+        Label kelompok & Populasi & Generasi & Seed \\
+        \midrule
+        \texttt{generations} & 50 & 50 & 42, 123, 2026 \\
+        \texttt{generations} & 50 & 100 & 42, 123, 2026 \\
+        \texttt{generations} & 50 & 200 & 42, 123, 2026 \\
+        \texttt{population\_size} & 20 & 100 & 42, 123, 2026 \\
+        \texttt{population\_size} & 50 & 100 & 42, 123, 2026 \\
+        \texttt{population\_size} & 100 & 100 & 42, 123, 2026 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Enam konfigurasi GA, masing-masing dengan tiga pengulangan.}
+    \label{tab:ga-rencana}
+\end{table}
+
+Ukuran per run mencakup state champion populasi awal dan akhir, skor objektif akhir, ukuran populasi, jumlah generasi, durasi, ID, dan seed. State serta skor terbaik sepanjang run menjadi pelengkap. Grafik utama GA menampilkan \textbf{skor maksimum dan rata-rata populasi dari generasi 0 hingga $G$}. Kurva maksimum direncanakan berwarna \texttt{\#386641}, sedangkan kurva rata-rata menggunakan garis putus-putus berwarna kontras, misalnya \texttt{\#1D4ED8}; legenda dan label sumbu membedakan keduanya. Riwayat menyediakan ringkasan maksimum dan rata-rata serta snapshot champion bila diminta, bukan snapshot seluruh anggota populasi.
+
 \subsection{Analisis Eksperimen}
+
 \subsubsection{Perbandingan Kualitas Solusi}
+
 \subsubsection{Perbandingan Durasi Pencarian}
+
 \subsubsection{Konsistensi Hasil Eksperimen}
+
 \subsubsection{Pengaruh Parameter Genetic Algorithm}
 
 \clearpage
