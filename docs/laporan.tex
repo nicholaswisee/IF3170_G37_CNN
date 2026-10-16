@@ -21,6 +21,8 @@
 \setlength{\parindent}{1.5em}
 \setlength{\parskip}{0pt}
 \lstset{language=Python,basicstyle=\ttfamily\footnotesize,keywordstyle=\bfseries,emphstyle=\bfseries,breaklines=true,frame=single,showstringspaces=false,columns=fullflexible}
+% Jalur cuplikan kode juga berlaku jika editor mengompilasi dari folder docs.
+\IfFileExists{src/backend/app/domain/package.py}{}{\lstset{inputpath=../}}
 \renewcommand{\lstlistingname}{Cuplikan}
 
 \pagestyle{fancy}
@@ -32,7 +34,6 @@
 
 % Kompilasi dari root repositori (jalankan dua kali agar daftar isi terbarui):
 % pdflatex -output-directory=docs docs/laporan.tex
-% Bab 1 dan 2 sudah diisi; rincian implementasi dan hasil eksperimen menyusul.
 \begin{document}
 
 \hypersetup{pageanchor=false}
@@ -80,10 +81,12 @@ Pilihan posisi dan orientasi bertambah seiring banyaknya paket. Bahkan setelah p
 \subsection{Rumusan Persoalan dan Tujuan}
 Masukannya berupa paket berbentuk balok atau kubus serta peti kemas dengan ukuran dan kapasitas angkut tertentu. Program harus memilih paket yang dimuat, lalu menentukan posisi dan orientasi tiap paket tersebut. Targetnya adalah memaksimalkan \textbf{\textit{objective function}} (fungsi objektif), yaitu total nilai paket yang berhasil dimuat dalam susunan yang sah. Paket yang tidak dimuat tetap tercatat di luar peti kemas \cite{spesifikasi}.
 
-Pekerjaan ini menerapkan sedikitnya satu varian \textit{hill climbing}, \textit{simulated annealing}, dan \textit{genetic algorithm}. Hasilnya dibandingkan dari nilai akhir, perubahan nilai selama pencarian, dan waktu yang dibutuhkan. Setiap percobaan juga diulang agar perbedaan hasil akibat pilihan awal acak dapat terlihat \cite{spesifikasi}.
+Pekerjaan ini menerapkan empat varian \textit{hill climbing} (HC), \textit{simulated annealing} (SA), dan \textit{genetic algorithm} (GA). Program mencatat state awal, state akhir, state terbaik, skor, riwayat pencarian, dan waktu eksekusi untuk mendukung perbandingan kualitas serta durasi pencarian. Pengulangan dengan seed berbeda digunakan dalam rancangan eksperimen untuk mengamati variasi hasil pencarian acak \cite{spesifikasi}.
 
 \subsection{Ruang Lingkup Persoalan}
 Posisi paket memakai koordinat bilangan bulat pada ruang tiga dimensi. Paket dapat diputar sebesar $90^\circ$ terhadap sumbu ruang. Setiap paket yang dimuat harus berada sepenuhnya di dalam peti kemas, tidak bertumpang tindih, dan memiliki penopang. Paket rapuh tidak boleh menopang paket lain. Total berat muatan juga tidak boleh melampaui kapasitas truk. Paket yang tidak dimuat berada sepenuhnya di luar peti kemas \cite{spesifikasi}.
+
+Implementasi mendukung satu truk maupun beberapa truk dalam satu problem. Setiap paket dapat ditugaskan kepada paling banyak satu truk; nilai muatan dijumlahkan pada seluruh armada. Selain total nilai sebagai objektif utama, tersedia objektif tambahan yang membobot nilai berdasarkan ETA paket. Kedua mode memakai aturan kelayakan susunan yang sama.
 
 \begin{figure}[htbp]
     \centering
@@ -125,9 +128,9 @@ Nilai setiap state dapat dibayangkan sebagai ketinggian dalam \textit{search lan
 \end{figure}
 
 \subsection{\textit{Hill Climbing}}
-Seperti terlihat pada Gambar~\ref{fig:search-landscape}, pencarian yang hanya memilih kenaikan nilai dapat berhenti di local maximum. \textbf{\textit{Hill climbing}} memilih neighbor dengan nilai yang lebih baik daripada state saat ini. Dalam \textit{steepest-ascent hill climbing}, semua neighbor yang tersedia dievaluasi, lalu algoritma mengambil yang terbaik. \textit{Stochastic hill climbing} mengambil sampel neighbor secara acak dan berpindah jika nilainya naik. Kedua varian ini mudah terhenti di local maximum karena move yang menurunkan nilai ditolak \cite{russell-norvig,slide-local-search}.
+Seperti terlihat pada Gambar~\ref{fig:search-landscape}, pencarian yang hanya memilih kenaikan nilai dapat berhenti di local maximum. \textbf{\textit{Hill climbing}} membandingkan neighbor dengan state saat ini. Dalam \textit{steepest-ascent hill climbing}, seluruh neighbor dievaluasi, lalu dipilih yang bernilai tertinggi jika lebih baik daripada state saat ini. \textit{Stochastic hill climbing} memilih secara acak dari neighbor yang meningkatkan nilai. Peluang pemilihannya dapat dibuat seragam atau dibobot berdasarkan besar peningkatan. Kedua varian menolak move yang tidak meningkatkan skor sehingga dapat berhenti di local maximum atau plateau \cite{russell-norvig,slide-local-search}.
 
-\textit{Hill climbing with sideways move} juga menerima move ke neighbor dengan nilai sama. Jumlah move seperti ini biasanya dibatasi supaya pencarian tidak terus berputar di plateau. Cara lain adalah \textit{random-restart hill climbing}, yang menjalankan pencarian beberapa kali dari initial state berbeda. Setiap restart memberi kesempatan untuk mencapai bagian search landscape yang belum terjelajahi \cite{russell-norvig,slide-local-search}.
+\textit{Hill climbing with sideways move} menerima neighbor dengan skor sama untuk bergerak di plateau. Jumlah move setara biasanya dibatasi agar pencarian tidak terus berputar. \textit{Random-restart hill climbing} mengulang pencarian dari initial state berbeda dan menyimpan solusi terbaik di antara pengulangan. Restart memperluas bagian search landscape yang dijelajahi, tetapi jumlah restart terbatas tidak menjamin optimum global \cite{russell-norvig,slide-local-search}.
 
 \subsection{\textit{Simulated Annealing}}
 Hill climbing tidak selalu bisa keluar dari local maximum dengan move yang hanya memperbaiki nilai. \textbf{\textit{Simulated annealing}} sesekali menerima move yang menurunkan nilai agar pencarian dapat berpindah ke daerah lain. Peluang menerima penurunan ditentukan oleh \textit{temperature} (temperatur). Untuk $\Delta f=f(s')-f(s)<0$ dan $T>0$, peluang menerima neighbor $s'$ adalah
@@ -153,7 +156,11 @@ Generasi baru dibentuk melalui \textit{crossover} (penggabungan bagian dari dua 
 \clearpage
 \section{Pembahasan dan Implementasi}
 \subsection{Arsitektur Aplikasi}
-Pengguna menyiapkan paket dan truk melalui halaman web, memilih algoritma, lalu melihat susunan serta perkembangan skornya. Saat pencarian dijalankan, halaman tersebut mengirim konfigurasi ke backend. Backend membentuk state, menjalankan algoritma, dan mengembalikan hasil yang sudah diperiksa. Alur ini membuat tampilan dan proses pencarian memakai data problem yang sama.
+Pengguna mengubah paket dan truk melalui formulir web yang dimulai dari fixture armada bawaan di \path{src/frontend/src/mocks/fleetFixture.ts}. Belum ada alur impor berkas problem.
+
+Konfigurasi diperiksa melalui endpoint \texttt{POST} \path{/api/problems/validate}. Endpoint ini memvalidasi model dan batas masukan, bukan susunan paket. Ketika run dimulai, frontend memeriksa parameter lalu mengirim problem, algoritma, seed, objektif, parameter, dan pilihan riwayat ke \texttt{POST} \path{/api/experiments/run}. Backend memvalidasi skema dan anggaran eksekusi, membangkitkan state awal, menjalankan algoritma, lalu memeriksa kelayakan state awal, akhir, dan terbaik serta kecocokan skornya sebelum membentuk respons.
+
+Run dari UI memakai \path{persist=false}. Hasil yang disimpan dapat dimuat kembali melalui \path|GET /api/experiments|. Endpoint preset GA dan batch tersedia melalui \path|GET /api/experiments/presets/genetic_algorithm| dan \path|POST /api/experiments/batch|. Problem yang sedang diedit untuk run berikutnya terpisah dari problem asli milik run yang sedang ditampilkan.
 
 \subsubsection{Struktur Aplikasi}
 Folder utama aplikasi tersusun sebagai berikut. Pohon ini hanya menampilkan direktori yang berperan dalam alur pencarian dan visualisasi.
@@ -176,7 +183,7 @@ Folder utama aplikasi tersusun sebagai berikut. Pohon ini hanya menampilkan dire
             |-- stores/
 \end{lstlisting}
 
-Di backend, \path{domain} mendefinisikan data, \path{optimization} memuat validator dan algoritma, sedangkan \path{experiments} mengatur eksekusi serta pencatatan hasil. Di frontend, \path{components} memuat form, grafik, dan tampilan truk. Folder \path{api} menghubungkan halaman dengan backend, lalu \path{stores} menyimpan posisi replay. Data masukan berada di \path{data}, sementara hasil run yang disimpan berada di \path{output}.
+Di backend, \path{domain} mendefinisikan data, \path{optimization} memuat validator dan algoritma, sedangkan \path{experiments} mengatur eksekusi, ringkasan, dan pencatatan hasil. Di frontend, \path{components} memuat form, grafik, inspector, dan tampilan truk; \path{api} menangani request serta pemeriksaan respons, dan \path{stores} menyimpan run terpilih serta indeks riwayat. Fixture awal berada di \path{src/frontend/src/mocks}; \path{data/} belum memuat dataset. Jika persistensi diaktifkan, run tunggal disimpan sebagai JSON di \path{output/experiments/}, sedangkan batch menyimpan JSON dan CSV di \path{output/batches/}. Berkas-berkas tersebut merupakan keluaran yang dapat dibuat, bukan hasil yang telah tersedia di repositori saat ini.
 
 \subsubsection{Penjelasan Tech Stack}
 Backend ditulis dengan \textbf{Python 3.12}. \textbf{FastAPI} menyediakan endpoint untuk memvalidasi problem, menjalankan eksperimen tunggal atau batch, dan membaca hasil yang tersimpan. Model \textbf{Pydantic} memeriksa tipe serta rentang nilai saat request diterima. Sesudah itu, modul optimasi menjalankan aturan yang sama untuk semua algoritma. \textbf{NumPy} digunakan untuk occupancy grid tiga dimensi, sehingga pemeriksaan ruang terisi dapat dilakukan pada irisan sel paket.
@@ -332,17 +339,82 @@ return None
 
 \clearpage
 \subsubsection{Hill Climbing}
-Implementasi yang tersedia saat ini adalah \textbf{\textit{hill climbing with sideways move}} pada kelas \texttt{HillClimbing}. Pada tiap iterasi, algoritma mengambil sejumlah neighbor sah yang berbeda sesuai parameter \path{candidates_per_iteration}. Objective tiap neighbor dihitung, lalu skor tertinggi dipilih. Jika ada beberapa neighbor dengan skor yang sama, salah satunya dipilih secara acak. Cuplikan~\ref{lst:hill-choice} memperlihatkan syarat move yang dipakai.
+Keempat varian hill climbing diimplementasikan dalam kelas \texttt{HillClimbing} pada \path{app/optimization/algorithms/hill_climbing.py}. Setiap iterasi mengambil sampel neighbor sah melalui \path{sample_valid_neighbors}, kemudian menghitung objective-nya. Jumlah sampel diatur oleh \path{candidates_per_iteration}, dengan nilai default 50. Pembangkitan dibatasi hingga jumlah kandidat dikali \path{max_attempts} percobaan, dengan default 30, sehingga sampel yang diperoleh dapat lebih sedikit dari permintaan. Perbedaan tiap varian terletak pada cara memilih kandidat dan melanjutkan pencarian. Cuplikan berikut merangkum bagian implementasi yang digunakan masing-masing varian, dengan pencatatan riwayat tidak ditampilkan.
 
-\begin{lstlisting}[emph={top_score,improved,sideways,max_sideways},caption={Keputusan move pada \texttt{hill\_climbing.py}},label={lst:hill-choice}]
+\textit{Steepest-ascent hill climbing} memilih neighbor dengan skor tertinggi dari sampel pada setiap iterasi. Jika beberapa kandidat memiliki skor tertinggi yang sama, salah satunya dipilih secara acak. Perpindahan hanya dilakukan apabila skor tersebut lebih tinggi daripada skor state saat ini, seperti dirangkum pada Cuplikan~\ref{lst:hc-steepest}. Ketika tidak ada peningkatan dalam sampel, pencarian berhenti dengan alasan \texttt{local\_optimum}. Karena pemeriksaan memakai sampel terbatas, kondisi ini belum membuktikan bahwa seluruh neighborhood tidak memiliki solusi yang lebih baik.
+
+\begin{lstlisting}[emph={top_score,current_score,pool,rng},caption={Inti pemilihan neighbor pada steepest-ascent},label={lst:hc-steepest}]
 top_score = max(scores)
-improved = top_score > current_score
-sideways = (
-    top_score == current_score and consecutive_sideways < max_sideways
-)
+if top_score <= current_score:
+    termination_reason = "local_optimum"
+    break
+pool = [
+    (n, score)
+    for n, score in zip(neighbors, scores)
+    if score == top_score
+]
+selected, selected_score = rng.choice(pool)
+current, current_score = selected.state, selected_score
 \end{lstlisting}
 
-Move dengan skor lebih tinggi selalu diterima. Hitungan \path{consecutive_sideways} kembali ke nol setelah move tersebut. Move dengan skor sama diterima selama hitungannya belum mencapai \path{max_sideways}. Algoritma berhenti ketika tidak ada neighbor sah, tidak ada move yang dapat diterima, atau batas iterasi tercapai. Selain state akhir, kelas ini menyimpan \path{best_state}, skor terbaik, jumlah sideways move, alasan berhenti, dan \textit{history} per iterasi. Varian hill climbing lain yang dibahas pada Bab~2 belum dijalankan oleh implementasi ini.
+\textit{Stochastic hill climbing} mengumpulkan semua neighbor sampel yang skornya lebih tinggi daripada state saat ini, lalu memilih satu secara acak dengan peluang seragam. Kandidat yang terpilih dapat memiliki skor lebih rendah daripada kandidat terbaik dalam sampel, selama tetap memperbaiki state saat ini. Cuplikan~\ref{lst:hc-stochastic} memperlihatkan penyaringan kandidat peningkat dan pemilihannya. Jika kumpulan tersebut kosong, pencarian berhenti dengan alasan \texttt{local\_optimum}; jumlah kandidat peningkat yang ditemukan juga dicatat dalam riwayat.
+
+\begin{lstlisting}[emph={is_stochastic,pool,current_score,rng},caption={Pemilihan acak dari neighbor peningkat pada stochastic},label={lst:hc-stochastic}]
+if is_stochastic:
+    pool = [
+        (n, score)
+        for n, score in zip(neighbors, scores)
+        if score > current_score
+    ]
+    if not pool:
+        termination_reason = "local_optimum"
+        break
+    selected, selected_score = rng.choice(pool)
+    current, current_score = selected.state, selected_score
+\end{lstlisting}
+
+\textit{Hill climbing with sideways move} memilih kandidat terbaik seperti steepest-ascent, tetapi juga mengizinkan perpindahan dengan skor yang sama untuk menelusuri plateau. Perpindahan setara dibatasi oleh \path{max_sideways}, yang secara default bernilai 100 kali berturut-turut. Setiap peningkatan skor mengembalikan hitungan tersebut ke nol, sedangkan perpindahan setara menambahnya satu, sebagaimana ditunjukkan pada Cuplikan~\ref{lst:hc-sideways}. Jika kandidat terbaik tetap setara setelah batas positif ini tercapai, pencarian berhenti dengan alasan \texttt{max\_sideways}. Saat batas bernilai nol, kandidat setara langsung ditolak dengan alasan \texttt{local\_optimum}. Move yang menurunkan skor selalu ditolak, dan jumlah sideways move disimpan dalam hasil pencarian.
+
+\begin{lstlisting}[emph={top_score,max_sideways,consecutive_sideways,improved},caption={Penerimaan dan penghitungan sideways move},label={lst:hc-sideways}]
+if top_score > current_score or (
+    top_score == current_score and consecutive_sideways < max_sideways
+):
+    pool = [
+        (n, score)
+        for n, score in zip(neighbors, scores)
+        if score == top_score
+    ]
+    selected, selected_score = rng.choice(pool)
+    improved = selected_score > current_score
+    current, current_score = selected.state, selected_score
+    if improved:
+        consecutive_sideways = 0
+    else:
+        consecutive_sideways += 1
+        sideways_moves += 1
+\end{lstlisting}
+
+\textit{Random-restart hill climbing} menjalankan steepest-ascent beberapa kali dari state awal yang berbeda. Climb pertama memakai initial state dari runner; setiap restart berikutnya membangkitkan state sah baru melalui \path{generate_random_feasible_state}. Dengan default \path{max_restarts} sebesar 10, algoritma menjalankan 11 climb, masing-masing dengan batas \path{max_iterations} sendiri. Cuplikan~\ref{lst:hc-restart} menunjukkan pengulangan climb dan pemilihan hasil terbaiknya. State akhir diambil dari climb terakhir, sedangkan state terbaik diambil dari seluruh climb. Riwayat digabung dengan indeks iterasi berurutan, penanda restart, dan skor terbaik kumulatif; hasil juga mencatat jumlah iterasi serta skor terbaik tiap climb. Setelah semua restart selesai, alasan terminasi keseluruhan adalah \texttt{max\_restarts}.
+
+\begin{lstlisting}[emph={max_restarts,generate_random_feasible_state,STEEPEST_ASCENT,climbs,best},caption={Pengulangan steepest-ascent pada random restart},label={lst:hc-restart}]
+start = initial_state
+for restart in range(config.max_restarts + 1):
+    if restart > 0:
+        start = generate_random_feasible_state(problem, rng)
+    climb = self._climb(
+        problem,
+        start,
+        variant=HillClimbingVariant.STEEPEST_ASCENT,
+        objective_mode=objective_mode,
+        rng=rng,
+        config=config,
+        include_state_history=include_state_history,
+    )
+    climbs.append(climb)
+best = max(climbs, key=lambda climb: climb.best_score)
+\end{lstlisting}
+
+Setiap climb juga berhenti jika tidak ada neighbor sah (\path{no_valid_neighbor}) atau batas iterasi tercapai (\path{max_iterations}). State saat ini dan state terbaik disimpan terpisah. Melalui API, pencarian dibatasi hingga 2.000 iterasi per climb, 50 kandidat per iterasi, dan 20 restart.
 
 \subsubsection{Simulated Annealing}
 Kelas \texttt{SimulatedAnnealing} memulai pencarian dari state sah yang sama jenisnya dengan hill climbing, tetapi hanya mengambil \textbf{satu neighbor acak} pada setiap iterasi. Move dengan $\Delta f\geq0$ langsung diterima. Untuk $\Delta f<0$, algoritma menggunakan peluang $\exp(\Delta f/T)$ sebagaimana dijelaskan pada Bab~2. Cuplikan~\ref{lst:annealing-accept} menunjukkan keputusan tersebut di dalam kode.
@@ -358,11 +430,11 @@ if accepted:
     current_score = candidate_score
 \end{lstlisting}
 
-Temperatur awal dapat diberikan sebagai parameter. Jika kosong, nilainya diambil dari rata-rata value paket dengan batas bawah $1$. Setelah satu iterasi selesai, temperatur dikalikan \texttt{alpha}, yang bernilai antara nol dan satu. Pencarian berhenti saat temperatur berada di bawah \texttt{min\_temperature}, batas iterasi tercapai, atau neighbor sah tidak ditemukan. \texttt{best\_state} disimpan terpisah dari state saat ini, sebab simulated annealing dapat menerima move yang menurunkan skor. Riwayat iterasi mencatat temperatur, peluang penerimaan, keputusan move, dan skor. Parameter \texttt{stuck\_patience} dipakai untuk menghitung kejadian ketika skor terbaik tidak membaik selama sejumlah iterasi.
+Temperatur awal dapat diberikan sebagai parameter. Jika kosong, nilainya diambil dari rata-rata value paket dengan batas bawah $1$. Setelah satu iterasi selesai, temperatur dikalikan \texttt{alpha}, yang bernilai antara nol dan satu. Pencarian berhenti saat temperatur berada di bawah \texttt{min\_temperature}, batas iterasi tercapai, atau neighbor sah tidak ditemukan. \texttt{best\_state} disimpan terpisah dari state saat ini, sebab simulated annealing dapat menerima move yang menurunkan skor. Riwayat iterasi mencatat temperatur, peluang penerimaan, keputusan move, dan skor. Parameter \texttt{stuck\_patience} hanya menandai dan menghitung kejadian ketika skor terbaik tidak membaik cukup lama; parameter ini tidak menghentikan pencarian.
 
 \clearpage
 \subsubsection{Genetic Algorithm}
-Kelas \texttt{GeneticAlgorithm} memulai pencarian dengan \textbf{populasi state sah}. Setiap anggota populasi dibuat oleh \path{generate_random_feasible_state}. Satu state menjadi satu individual dan objective-nya menjadi fitness. Pemilihan induk memakai \path{roulette_select}, sehingga fitness lebih tinggi mendapat peluang lebih besar. Jika semua fitness nol, induk dipilih seragam secara acak. \path{uniform_crossover} menyusun anak dengan mengambil placement setiap paket dari salah satu dari dua induk, masing-masing dengan peluang setengah.
+Kelas \texttt{GeneticAlgorithm} memulai pencarian dengan \textbf{populasi state sah}. Runner tidak memberikan initial state tunggal; algoritma membangkitkan populasi awal, lalu champion populasi tersebut dicatat sebagai \texttt{initial\_state} dan \texttt{initial\_score} pada hasil. Satu state menjadi satu individual dan objective-nya menjadi fitness. Pemilihan induk memakai \path{roulette_select}, sehingga fitness lebih tinggi mendapat peluang lebih besar. Jika semua fitness nol, induk dipilih seragam secara acak. \path{uniform_crossover} menyusun anak dengan mengambil placement setiap paket dari salah satu dari dua induk, masing-masing dengan peluang setengah.
 
 Dalam setiap generasi, satu individual dengan fitness tertinggi disalin langsung sebagai \textit{elite}. Individual lain dibentuk melalui selection, crossover sesuai \texttt{crossover\_probability}, dan mutation sesuai \texttt{mutation\_probability}. Mutation memilih salah satu dari relocate, rotate, atau swap. Sebelum masuk ke populasi berikutnya, anak diproses oleh \path{repair_state}, seperti terlihat pada Cuplikan~\ref{lst:ga-generation}.
 
@@ -384,20 +456,18 @@ while len(next_population) < config.population_size:
     next_population.append(repair_state(problem, child, rng))
 \end{lstlisting}
 
-Repair mencoba mempertahankan placement anak yang masih sah. Paket yang tidak lagi cocok dicoba pada orientasi dan posisi lain, termasuk truk lain bila tersedia. Bila tidak ada tempat sah, paket dibiarkan di luar. Dengan cara ini, populasi yang dievaluasi tetap memenuhi constraint. Pencarian berjalan sampai jumlah generasi yang diminta, lalu mengembalikan champion generasi terakhir dan best state sepanjang run. \textit{History} mencatat fitness maksimum dan rata-rata populasi pada setiap generasi untuk keperluan analisis.
+Repair memulai dari state dengan semua paket di luar, lalu memproses paket termuat menurut koordinat $z$ dan ID. Placement yang masih layak dipertahankan; paket yang gagal ditempatkan ulang dicoba pada orientasi, posisi, dan truk lain, dan tetap di luar bila tidak ada penempatan sah. Setiap generasi mencatat maksimum dan rata-rata fitness populasi; riwayat dimulai pada generasi 0, sehingga memiliki $G+1$ catatan untuk $G$ generasi. Champion generasi terakhir menjadi state akhir, sementara state terbaik sepanjang run disimpan terpisah. Elitisme mempertahankan satu champion. Skema memakai default populasi 50, 100 generasi, peluang crossover 0,80, peluang mutasi 0,20, dan satu elite. Batas API ialah populasi 100 dan 200 generasi.
 
 \clearpage
 \subsection{Rancangan Eksperimen}
 \subsubsection{Data Uji dan Lingkungan Eksperimen}
 \subsubsection{Konfigurasi Parameter dan Pengulangan Eksperimen}
-
 \clearpage
 \subsection{Hasil Eksperimen dan Visualisasi Program}
 \subsubsection{Hill Climbing}
 \subsubsection{Simulated Annealing}
 \subsubsection{Genetic Algorithm}
 \subsubsection{Visualisasi State Awal dan State Akhir}
-
 \subsection{Analisis Eksperimen}
 \subsubsection{Perbandingan Kualitas Solusi}
 \subsubsection{Perbandingan Durasi Pencarian}
