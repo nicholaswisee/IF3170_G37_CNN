@@ -1,0 +1,10 @@
+% Atribusi Unicode dirender sekali agar laporan utama tetap memakai pdfLaTeX.
+% Regenerasi dari folder docs: lualatex special-week-credit.tex
+\documentclass[border=0pt]{standalone}
+\usepackage{fontspec}
+\setmainfont{Noto Serif CJK JP}
+\newfontfamily\emojifont{Noto Color Emoji}[Renderer=HarfBuzz]
+\begin{document}
+\fontsize{10}{12}\selectfont
+真夏の银堡垒{\emojifont 🐴}C108土曜日 東地区 ホ-10a
+\end{document}
