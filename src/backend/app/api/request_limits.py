@@ -1,8 +1,10 @@
 import json
 
+from app.limits import MAX_REQUEST_BYTES
+
 
 class RunBodyLimitMiddleware:
-    def __init__(self, app, max_bytes: int = 256 * 1024) -> None:
+    def __init__(self, app, max_bytes: int = MAX_REQUEST_BYTES) -> None:
         self.app = app
         self.max_bytes = max_bytes
 
@@ -29,7 +31,7 @@ class RunBodyLimitMiddleware:
             size += len(chunk)
             if size > self.max_bytes:
                 body = json.dumps(
-                    {"detail": "Request body exceeds 262144 bytes."}
+                    {"detail": f"Request body exceeds {self.max_bytes} bytes."}
                 ).encode()
                 await send(
                     {

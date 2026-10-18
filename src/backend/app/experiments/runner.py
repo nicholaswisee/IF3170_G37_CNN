@@ -4,6 +4,7 @@ from pathlib import Path
 from time import perf_counter
 from uuid import uuid4
 
+from app import limits
 from app.config import settings
 from app.domain.state import State
 from app.experiments.metrics import calculate_metrics
@@ -38,46 +39,57 @@ class ExecutionBudgetError(ValueError):
 
 def validate_execution_budget(request: RunExperimentRequest) -> None:
     problem = request.problem
-    if len(problem.packages) > 100 or len(problem.trucks) > 20:
+    if len(problem.packages) > limits.MAX_PACKAGES or len(problem.trucks) > (
+        limits.MAX_TRUCKS
+    ):
         raise ExecutionBudgetError(
-            "Execution limit exceeded: at most 100 packages and 20 trucks."
+            f"Execution limit exceeded: at most {limits.MAX_PACKAGES} packages "
+            f"and {limits.MAX_TRUCKS} trucks."
         )
-    if abs(request.seed) > 2**53 - 1:
+    if abs(request.seed) > limits.MAX_SAFE_SEED:
         raise ExecutionBudgetError(
             "Execution limit exceeded: seed must be a JavaScript safe integer."
         )
-    if any(len(package.id) > 128 for package in problem.packages) or any(
-        len(truck.id) > 128 for truck in problem.trucks
+    if any(len(package.id) > limits.MAX_ID_LENGTH for package in problem.packages) or (
+        any(len(truck.id) > limits.MAX_ID_LENGTH for truck in problem.trucks)
     ):
         raise ExecutionBudgetError(
-            "Execution limit exceeded: IDs must be at most 128 characters."
+            "Execution limit exceeded: IDs must be at most "
+            f"{limits.MAX_ID_LENGTH} characters."
         )
     if (
         sum(truck.width * truck.length * truck.height for truck in problem.trucks)
-        > 100_000
+        > limits.MAX_TOTAL_TRUCK_VOLUME
     ):
         raise ExecutionBudgetError(
-            "Execution limit exceeded: aggregate truck volume is 100000 cells."
+            "Execution limit exceeded: aggregate truck volume is "
+            f"{limits.MAX_TOTAL_TRUCK_VOLUME} cells."
         )
     if isinstance(request, GeneticAlgorithmRequest) and (
-        request.parameters.population_size > 100 or request.parameters.generations > 200
+        request.parameters.population_size > limits.GA_MAX_POPULATION
+        or request.parameters.generations > limits.GA_MAX_GENERATIONS
     ):
         raise ExecutionBudgetError(
-            "Execution limit exceeded: GA population <= 100 and generations <= 200."
+            f"Execution limit exceeded: GA population <= {limits.GA_MAX_POPULATION} "
+            f"and generations <= {limits.GA_MAX_GENERATIONS}."
         )
     if isinstance(request, HillClimbingRequest) and (
-        request.parameters.max_iterations > 2_000
-        or request.parameters.candidates_per_iteration > 50
-        or request.parameters.max_restarts > 20
+        request.parameters.max_iterations > limits.HC_MAX_ITERATIONS
+        or request.parameters.candidates_per_iteration > limits.HC_MAX_CANDIDATES
+        or request.parameters.max_restarts > limits.HC_MAX_RESTARTS
     ):
         raise ExecutionBudgetError(
-            "Execution limit exceeded: Hill Climbing iterations <= 2000, candidates <= 50, and restarts <= 20."
+            "Execution limit exceeded: Hill Climbing iterations <= "
+            f"{limits.HC_MAX_ITERATIONS}, candidates <= {limits.HC_MAX_CANDIDATES}, "
+            f"and restarts <= {limits.HC_MAX_RESTARTS}."
         )
     if (
         isinstance(request, SimulatedAnnealingRequest)
-        and request.parameters.max_iterations > 5_000
+        and request.parameters.max_iterations > limits.SA_MAX_ITERATIONS
     ):
-        raise ExecutionBudgetError("Execution limit exceeded: SA iterations <= 5000.")
+        raise ExecutionBudgetError(
+            f"Execution limit exceeded: SA iterations <= {limits.SA_MAX_ITERATIONS}."
+        )
 
 
 def preflight_experiment(request: RunExperimentRequest) -> None:
