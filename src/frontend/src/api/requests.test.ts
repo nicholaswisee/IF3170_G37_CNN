@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { buildRunRequest, defaultGeneticAlgorithmParameters, defaultSimulatedAnnealingParameters, validateGeneticAlgorithmInput, validateSimulatedAnnealingInput, validateSeed } from './requests'
+import { createProblemForm, parseProblemForm } from '../modals/problemForm'
+import { readLimitsFixture } from '../testing/fixtures'
 import type { Problem } from '../types/experiment'
-import { createProblemForm, parseProblemForm } from '../components/problemForm'
+import { buildRunRequest, defaultDrafts, parseParameters, parseSeed, visibleFields } from './requests'
 
+const limits = readLimitsFixture()
 const problem: Problem = { packages: [], trucks: [{ id: 'T1', width: 1, length: 1, height: 1, max_capacity: 1 }] }
 
 test('configured packages and trucks reach every algorithm with the selected objective', () => {
@@ -17,93 +19,81 @@ test('configured packages and trucks reach every algorithm with the selected obj
   const parsed = parseProblemForm(createProblemForm(configured))
   assert.ok(parsed.problem)
   for (const algorithm of ['hill_climbing', 'simulated_annealing', 'genetic_algorithm'] as const) {
-    assert.equal(buildRunRequest({ algorithm, problem: parsed.problem, seed: 42 }).objective_mode, 'total_value')
+    const { parameters } = parseParameters(algorithm, 'sideways', defaultDrafts(limits, algorithm), limits)
     for (const objectiveMode of ['total_value', 'eta_weighted_value'] as const) {
-      const request = buildRunRequest({ algorithm, problem: parsed.problem, seed: 123, objectiveMode })
+      const request = buildRunRequest({ algorithm, problem: parsed.problem, seed: 123, objectiveMode, parameters })
       assert.deepEqual(request.problem, configured)
       assert.equal(request.objective_mode, objectiveMode)
       assert.equal(request.seed, 123)
+      assert.equal(request.algorithm, algorithm)
     }
   }
 })
 
-test('keeps official GA defaults unless callers provide overrides', () => {
-  const request = buildRunRequest({ algorithm: 'genetic_algorithm', problem, seed: 42 })
-  assert.deepEqual(request.parameters, defaultGeneticAlgorithmParameters)
-  assert.deepEqual(defaultGeneticAlgorithmParameters, {
-    population_size: 50, generations: 100, crossover_probability: 0.8,
-    mutation_probability: 0.2, elite_count: 1,
-  })
+test('backend defaults are valid and complete, including fixed GA elitism', () => {
+  for (const algorithm of ['hill_climbing', 'simulated_annealing', 'genetic_algorithm'] as const) {
+    const parsed = parseParameters(algorithm, 'random_restart', defaultDrafts(limits, algorithm), limits)
+    assert.equal(parsed.error, null, algorithm)
+    assert.deepEqual(Object.keys(parsed.parameters).sort(), Object.keys(limits.parameters[algorithm]).sort())
+  }
+  const ga = parseParameters('genetic_algorithm', 'sideways', defaultDrafts(limits, 'genetic_algorithm'), limits)
+  assert.equal(ga.parameters.elite_count, 1)
+  assert.equal(ga.parameters.population_size, 50)
+  const sa = parseParameters('simulated_annealing', 'sideways', defaultDrafts(limits, 'simulated_annealing'), limits)
+  assert.equal(sa.parameters.initial_temperature, null, 'an empty nullable field means automatic temperature')
 })
 
-test('builds the Section 6D GA smoke request with supplied parameter overrides', () => {
-  const request = buildRunRequest({
-    algorithm: 'genetic_algorithm', problem, seed: 42, persist: false,
-    geneticAlgorithmParameters: {
-      population_size: 6, generations: 5, crossover_probability: 0.8,
-      mutation_probability: 0.2, elite_count: 99,
-    },
-  })
-  assert.deepEqual(request, {
-    algorithm: 'genetic_algorithm', problem, seed: 42, objective_mode: 'total_value',
-    include_state_history: true, persist: false,
-    parameters: { population_size: 6, generations: 5, crossover_probability: 0.8, mutation_probability: 0.2, elite_count: 1 },
-  })
+test('only the fields a Hill Climbing variant reads are shown, and fixed fields never are', () => {
+  const keys = (variant: Parameters<typeof visibleFields>[1]) => visibleFields('hill_climbing', variant, limits).map((field) => field.key)
+  assert.deepEqual(keys('steepest_ascent'), ['max_iterations', 'candidates_per_iteration'])
+  assert.deepEqual(keys('sideways'), ['max_iterations', 'candidates_per_iteration', 'max_sideways'])
+  assert.deepEqual(keys('random_restart'), ['max_iterations', 'candidates_per_iteration', 'max_restarts'])
+  assert.ok(!visibleFields('genetic_algorithm', 'sideways', limits).some((field) => field.key === 'elite_count'))
 })
 
-test('rejects invalid GA form values including non-integers and non-finite probabilities', () => {
-  assert.equal(validateGeneticAlgorithmInput({ population_size: 2, generations: 1, crossover_probability: 0, mutation_probability: 1, seed: -9007199254740991 }), null)
-  assert.equal(validateGeneticAlgorithmInput({ population_size: 100, generations: 200, crossover_probability: 0, mutation_probability: 1, seed: 2147483648 }), null)
-  for (const input of [
-    { population_size: 1, generations: 1, crossover_probability: 0, mutation_probability: 0, seed: 42 },
-    { population_size: 6, generations: 0, crossover_probability: 0, mutation_probability: 0, seed: 42 },
-    { population_size: 6, generations: 5, crossover_probability: NaN, mutation_probability: 0, seed: 42 },
-    { population_size: 6, generations: 5, crossover_probability: 0, mutation_probability: Infinity, seed: 42 },
-    { population_size: 6, generations: 5, crossover_probability: -0.01, mutation_probability: 0, seed: 42 },
-    { population_size: 6, generations: 5, crossover_probability: 1.01, mutation_probability: 0, seed: 42 },
-    { population_size: 6, generations: 5, crossover_probability: 0, mutation_probability: -0.01, seed: 42 },
-    { population_size: 6, generations: 5, crossover_probability: 0, mutation_probability: 1.01, seed: 42 },
-    { population_size: 101, generations: 5, crossover_probability: 0, mutation_probability: 0, seed: 42 },
-    { population_size: 6, generations: 201, crossover_probability: 0, mutation_probability: 0, seed: 42 },
-    { population_size: 6.5, generations: 5, crossover_probability: 0, mutation_probability: 0, seed: 42 },
-    { population_size: 6, generations: 5.5, crossover_probability: 0, mutation_probability: 0, seed: 42 },
-  ]) assert.notEqual(validateGeneticAlgorithmInput(input), null)
+test('rejects values outside the backend ranges with the field label and allowed range', () => {
+  const highestIterations = limits.parameters.hill_climbing.max_iterations.maximum
+  assert.ok(highestIterations !== null)
+  const hc = parseParameters('hill_climbing', 'sideways', { ...defaultDrafts(limits, 'hill_climbing'), max_iterations: String(highestIterations + 1) }, limits)
+  assert.deepEqual(hc.invalid, ['max_iterations'])
+  assert.equal(hc.error, `Max iterations must be 1 to ${highestIterations}`)
+
+  const sa = defaultDrafts(limits, 'simulated_annealing')
+  for (const [key, value] of [['alpha', '1'], ['alpha', '0'], ['min_temperature', '0'], ['initial_temperature', '-2'], ['stuck_patience', '2.5']]) {
+    const parsed = parseParameters('simulated_annealing', 'sideways', { ...sa, [key]: value }, limits)
+    assert.deepEqual(parsed.invalid, [key], `${key}=${value}`)
+  }
+  const ga = parseParameters('genetic_algorithm', 'sideways', { ...defaultDrafts(limits, 'genetic_algorithm'), population_size: '1', mutation_probability: '1.5' }, limits)
+  assert.deepEqual(ga.invalid, ['population_size', 'mutation_probability'])
+  assert.match(ga.error ?? '', /^Population size must be 2 to \d+$/)
+})
+
+test('hidden variant fields are sent with the backend default even if their draft is invalid', () => {
+  const drafts = { ...defaultDrafts(limits, 'hill_climbing'), max_restarts: '999' }
+  const parsed = parseParameters('hill_climbing', 'sideways', drafts, limits)
+  assert.equal(parsed.error, null)
+  assert.equal(parsed.parameters.max_restarts, limits.parameters.hill_climbing.max_restarts.default)
 })
 
 test('accepts signed safe integer seeds and rejects fractional or unsafe values', () => {
   for (const seed of [Number.MIN_SAFE_INTEGER, -42, 42, 2147483648, Number.MAX_SAFE_INTEGER]) {
-    assert.equal(validateSeed(seed), null)
+    assert.equal(parseSeed(String(seed), limits).error, null, String(seed))
   }
-  for (const seed of [NaN, Infinity, 1.5, Number.MIN_SAFE_INTEGER - 1, Number.MAX_SAFE_INTEGER + 1]) {
-    assert.notEqual(validateSeed(seed), null)
+  for (const text of ['', 'abc', '1.5', String(Number.MAX_SAFE_INTEGER + 2)]) {
+    assert.notEqual(parseSeed(text, limits).error, null, text)
   }
 })
 
-test('builds SA requests with custom parameters and preserves other algorithms', () => {
-  const parameters = { initial_temperature: 10, alpha: 0.9, min_temperature: 0.01, max_iterations: 20, stuck_patience: 2 }
-  const request = buildRunRequest({ algorithm: 'simulated_annealing', problem, seed: 123,
-    objectiveMode: 'eta_weighted_value', persist: false, simulatedAnnealingParameters: parameters })
-  assert.deepEqual(request, { algorithm: 'simulated_annealing', problem, seed: 123,
-    objective_mode: 'eta_weighted_value', persist: false, include_state_history: true, parameters })
-  const defaults = buildRunRequest({ algorithm: 'simulated_annealing', problem, seed: 42 })
-  assert.ok(defaults.algorithm === 'simulated_annealing')
-  assert.deepEqual(defaults.parameters, defaultSimulatedAnnealingParameters)
-  assert.equal(defaults.parameters.initial_temperature, null)
-  assert.notEqual(defaults.parameters, defaultSimulatedAnnealingParameters)
-  const ga = buildRunRequest({ algorithm: 'genetic_algorithm', problem, seed: 42, simulatedAnnealingParameters: parameters })
-  assert.deepEqual(ga.parameters, defaultGeneticAlgorithmParameters)
-})
-
-test('validates SA boundaries including automatic temperature and API iteration cap', () => {
-  const valid = { ...defaultSimulatedAnnealingParameters, seed: 42 }
-  assert.equal(validateSimulatedAnnealingInput(valid), null)
-  assert.equal(validateSimulatedAnnealingInput({ ...valid, initial_temperature: 1, max_iterations: 1, stuck_patience: 1 }), null)
-  for (const invalid of [
-    { initial_temperature: 0 }, { initial_temperature: -1 }, { initial_temperature: Infinity }, { initial_temperature: NaN },
-    { alpha: 0 }, { alpha: 1 }, { alpha: NaN }, { alpha: Infinity },
-    { min_temperature: 0 }, { min_temperature: -1 }, { min_temperature: Infinity },
-    { max_iterations: 0 }, { max_iterations: 5001 }, { max_iterations: 1.5 },
-    { stuck_patience: 0 }, { stuck_patience: 2.5 }, { stuck_patience: Infinity },
-    { seed: NaN }, { seed: Number.MAX_SAFE_INTEGER + 1 },
-  ]) assert.notEqual(validateSimulatedAnnealingInput({ ...valid, ...invalid }), null, JSON.stringify(invalid))
+test('builds the request shape of the API contract', () => {
+  const request = buildRunRequest({
+    algorithm: 'simulated_annealing', problem, seed: 42, objectiveMode: 'eta_weighted_value', persist: false,
+    parameters: { initial_temperature: null, alpha: 0.9, min_temperature: 0.01, max_iterations: 20, stuck_patience: 2 },
+  })
+  assert.deepEqual(request, {
+    algorithm: 'simulated_annealing', problem, seed: 42, objective_mode: 'eta_weighted_value', include_state_history: true, persist: false,
+    parameters: { initial_temperature: null, alpha: 0.9, min_temperature: 0.01, max_iterations: 20, stuck_patience: 2 },
+  })
+  const hc = buildRunRequest({ algorithm: 'hill_climbing', problem, seed: 1, variant: 'stochastic', parameters: {} })
+  assert.ok(hc.algorithm === 'hill_climbing')
+  assert.equal(hc.variant, 'stochastic')
 })
