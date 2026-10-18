@@ -1,6 +1,8 @@
 import type {
   ExperimentResult,
+  Limits,
   Move,
+  NumericRange,
   OptimizationState,
   PackagePlacement,
   PackageSpec,
@@ -103,6 +105,34 @@ function isSearchEvent(value: unknown): value is SearchEvent {
     && isNullableNumber(value.acceptance_probability)
     && (value.state_snapshot === null || isOptimizationState(value.state_snapshot))
     && isRecord(value.metadata)
+}
+
+function isNumericRange(value: unknown): value is NumericRange {
+  return isRecord(value)
+    && typeof value.integer === 'boolean'
+    && typeof value.nullable === 'boolean'
+    && isNullableNumber(value.minimum)
+    && isNullableNumber(value.exclusive_minimum)
+    && isNullableNumber(value.maximum)
+    && isNullableNumber(value.exclusive_maximum)
+    && isNullableNumber(value.default)
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && (value as number) > 0
+}
+
+export function isLimits(value: unknown): value is Limits {
+  if (!isRecord(value) || !isRecord(value.problem) || !isRecord(value.parameters)) return false
+  const { problem, parameters } = value
+  return isPositiveInteger(problem.max_packages)
+    && isPositiveInteger(problem.max_trucks)
+    && isPositiveInteger(problem.max_id_length)
+    && isPositiveInteger(problem.max_total_truck_volume)
+    && isNumericRange(value.seed)
+    && isPositiveInteger(value.max_request_bytes)
+    && [...algorithms].every((algorithm) => isRecord(parameters[algorithm])
+      && Object.values(parameters[algorithm]).every(isNumericRange))
 }
 
 export function isExperimentResult(value: unknown): value is ExperimentResult {

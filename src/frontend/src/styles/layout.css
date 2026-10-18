@@ -1,0 +1,564 @@
+/*
+ * Layout: a full-bleed 3D stage with no page scroll. Glass controls float on
+ * the four edges and the Setup and Results panels slide in from the sides.
+ * --pw and --gap must match PANEL_FOOTPRINT in App.tsx (352 + 12).
+ */
+
+.app {
+  --pw: 352px;
+  --gap: 12px;
+  --edge-l: max(16px, env(safe-area-inset-left, 0px));
+  --edge-r: max(16px, env(safe-area-inset-right, 0px));
+  --edge-t: max(16px, env(safe-area-inset-top, 0px));
+  --edge-b: max(16px, env(safe-area-inset-bottom, 0px));
+  --inset-l: var(--edge-l);
+  --inset-r: var(--edge-r);
+  /* Room the playback bar leaves for the Layers tile when Setup is closed. */
+  --layers-room: 76px;
+
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 0%, var(--stage-top) 0%, var(--stage-mid) 55%, var(--stage-bottom) 100%);
+}
+
+.app.setup-open {
+  --inset-l: calc(var(--edge-l) + var(--pw) + var(--gap));
+  --layers-room: 0px;
+}
+
+.app.results-open {
+  --inset-r: calc(var(--edge-r) + var(--pw) + var(--gap));
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  cursor: grab;
+}
+
+.stage canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* Top bar */
+.topbar {
+  position: absolute;
+  top: var(--edge-t);
+  left: var(--edge-l);
+  right: var(--edge-r);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.topbar > * {
+  pointer-events: auto;
+}
+
+.search-pill {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  width: var(--pw);
+  height: 50px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+}
+
+.brand {
+  padding-right: 6px;
+  font: 600 15px var(--font-display);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.search {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.07);
+  color: var(--ink-3);
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+}
+
+.search input::placeholder {
+  color: var(--ink-3);
+}
+
+.search input::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+
+/*
+ * A horizontal scroller also clips vertically, which would cut the floating
+ * glass shadows. Padding gives the shadows room inside the scroller and equal
+ * negative margins keep the row where it was. The padding is transparent to
+ * clicks so it never blocks the search pill or the scene.
+ */
+.chips {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+  margin: -12px -18px -34px -14px;
+  padding: 12px 18px 34px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  pointer-events: none;
+}
+
+.chips > * {
+  pointer-events: auto;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 15px;
+  border-radius: var(--r-pill);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.chip .icon {
+  color: var(--ink-2);
+}
+
+.chip[aria-pressed="true"] .icon {
+  color: var(--accent);
+}
+
+.chip-separator {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 22px;
+  background: var(--hair);
+}
+
+.top-actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
+/* Side panels */
+.panel {
+  position: absolute;
+  top: calc(var(--edge-t) + 64px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: var(--pw);
+  overflow: hidden;
+  border-radius: var(--r-panel);
+  transition: transform 0.5s var(--spring), opacity 0.3s ease;
+}
+
+.panel-left {
+  left: var(--edge-l);
+  bottom: calc(var(--edge-b) + 80px);
+}
+
+.panel-right {
+  right: var(--edge-r);
+  bottom: var(--edge-b);
+}
+
+.app:not(.setup-open) .panel-left {
+  transform: translateX(calc(-100% - 40px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app:not(.results-open) .panel-right {
+  transform: translateX(calc(100% + 40px));
+  opacity: 0;
+  pointer-events: none;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px 10px 20px;
+}
+
+.panel-head h2 {
+  flex: 1;
+  margin: 0;
+  font: 700 22px var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.panel-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 20px 10px;
+}
+
+.panel-tabs {
+  padding: 0 14px 10px;
+}
+
+.panel-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 4px 14px 16px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+}
+
+/* Sections keep their natural height and the panel body scrolls instead. */
+.panel-body > *,
+.sheet-body > * {
+  flex-shrink: 0;
+}
+
+.panel-foot {
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--hair);
+}
+
+/* Centered lanes between the open panels */
+.center-lane {
+  position: absolute;
+  left: var(--inset-l);
+  right: var(--inset-r);
+  z-index: 26;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  transition: left 0.5s var(--spring), right 0.5s var(--spring);
+}
+
+.center-lane > * {
+  pointer-events: auto;
+}
+
+.lane-top {
+  top: calc(var(--edge-t) + 66px);
+}
+
+.lane-bottom {
+  bottom: var(--edge-b);
+  left: calc(var(--inset-l) + var(--layers-room));
+  right: calc(var(--inset-r) + 60px);
+}
+
+.toast-lane {
+  bottom: calc(var(--edge-b) + 70px);
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Bottom corners */
+.map-controls {
+  position: absolute;
+  right: var(--inset-r);
+  bottom: var(--edge-b);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: right 0.5s var(--spring);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border-radius: var(--r-pill);
+}
+
+.control-group .icon-btn {
+  color: var(--ink);
+}
+
+.control-divider {
+  height: 1px;
+  margin: 2px 8px;
+  background: var(--hair);
+}
+
+.layers {
+  position: absolute;
+  left: var(--edge-l);
+  bottom: var(--edge-b);
+  z-index: 25;
+}
+
+.layers-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-radius: 18px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.popover {
+  position: absolute;
+  bottom: 76px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 300px;
+  padding: 14px;
+  border-radius: 24px;
+  transform-origin: bottom left;
+  animation: pop 0.4s var(--spring);
+}
+
+.popover h3 {
+  margin: 0;
+  padding: 0 4px;
+  font: 600 15px var(--font-display);
+}
+
+.glass-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.package-card {
+  position: absolute;
+  top: calc(var(--edge-t) + 136px);
+  right: var(--inset-r);
+  z-index: 27;
+  width: 288px;
+  padding: 14px;
+  border-radius: 24px;
+  animation: pop 0.4s var(--spring);
+  transition: right 0.5s var(--spring);
+}
+
+.hover-tip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Modal sheets */
+.modal-root {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px var(--edge-r) 24px var(--edge-l);
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(228, 232, 239, 0.45);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fade 0.3s;
+}
+
+.sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(980px, 100%);
+  max-height: 100%;
+  overflow: hidden;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.86);
+  animation: sheet-in 0.5s var(--spring);
+}
+
+.sheet.small {
+  width: min(540px, 100%);
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px 12px 24px;
+}
+
+.sheet-head h2 {
+  flex: 1;
+  margin: 0;
+  font: 700 22px var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.sheet-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 4px 24px 18px;
+  overflow: auto;
+}
+
+.sheet-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px 18px 24px;
+  border-top: 1px solid var(--hair);
+}
+
+.spacer {
+  flex: 1;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.85) translateY(-6px);
+    opacity: 0;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(24px) scale(0.97);
+    opacity: 0;
+  }
+}
+
+/* Phones: panels become full-width floating sheets and open one at a time. */
+@media (max-width: 760px) {
+  .app,
+  .app.setup-open,
+  .app.results-open {
+    --pw: calc(100vw - 32px);
+    --inset-l: var(--edge-l);
+    --inset-r: var(--edge-r);
+    --layers-room: 0px;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  .search-pill {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .brand {
+    display: none;
+  }
+
+  .chips {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .panel,
+  .panel-left {
+    top: calc(var(--edge-t) + 110px);
+    bottom: calc(var(--edge-b) + 140px);
+  }
+
+  .lane-top {
+    top: calc(var(--edge-t) + 112px);
+  }
+
+  .lane-bottom {
+    left: var(--edge-l);
+    right: var(--edge-r);
+  }
+
+  /* On phones toasts drop from the top so they never cover the camera buttons. */
+  .toast-lane {
+    top: calc(var(--edge-t) + 112px);
+    bottom: auto;
+    flex-direction: column;
+  }
+
+  .layers {
+    bottom: calc(var(--edge-b) + 70px);
+  }
+
+  .layers-tile {
+    width: 52px;
+    height: 52px;
+  }
+
+  .map-controls {
+    right: var(--edge-r);
+    bottom: calc(var(--edge-b) + 70px);
+  }
+
+  .package-card {
+    top: auto;
+    right: var(--edge-r);
+    bottom: calc(var(--edge-b) + 140px);
+    left: var(--edge-l);
+    width: auto;
+  }
+
+  .playback .view-seg,
+  .playback .speed {
+    display: none;
+  }
+}

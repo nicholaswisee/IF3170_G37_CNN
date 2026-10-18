@@ -1,0 +1,527 @@
+/* Panel content: inset grouped lists, stats, tags, charts, tables, and 3D labels. */
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 8px 6px;
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.section-title .btn,
+.section-note {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.section-note {
+  font-weight: 500;
+}
+
+.section-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.group {
+  overflow: hidden;
+  border: 1px solid var(--row-rim);
+  border-radius: var(--r-card);
+  background: var(--row);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 6px 12px 6px 14px;
+}
+
+.row + .row {
+  border-top: 1px solid var(--hair);
+}
+
+.row-label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.row-label small {
+  color: var(--ink-3);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.row-value {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.param-row {
+  flex-wrap: wrap;
+}
+
+/* Below this width the controls drop under the label instead of squeezing it. */
+.param-row .row-label {
+  min-width: 150px;
+}
+
+.param-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.caption {
+  margin: 6px 8px 0;
+  color: var(--ink-3);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.empty {
+  margin: 0;
+  padding: 18px 14px;
+  color: var(--ink-3);
+  font-size: 13px;
+  text-align: center;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px;
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: var(--r-pill);
+  background: var(--fill);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag.blue {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.tag.green {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.tag.red {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.tag.orange {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.tag.inline {
+  margin-left: 6px;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--row-rim);
+  border-radius: 16px;
+  background: var(--row);
+}
+
+.stat b {
+  overflow-wrap: anywhere;
+  font: 700 20px var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.stat span {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.stat.best b {
+  color: var(--accent-ink);
+}
+
+.load-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+}
+
+.load-row + .load-row {
+  border-top: 1px solid var(--hair);
+}
+
+.load-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.load-top small {
+  color: var(--ink-3);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.load-bar,
+.capacity-bar {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--fill-2);
+}
+
+.load-bar i,
+.capacity-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--good);
+  transition: width 0.5s var(--spring);
+}
+
+.load-bar i.high,
+.capacity-bar i.high {
+  background: var(--capacity-high);
+}
+
+.step-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+}
+
+.step-hero p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.recent {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent button,
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 13px;
+  text-align: left;
+}
+
+.recent button + button,
+.list-row + .list-row {
+  border-top: 1px solid var(--hair);
+}
+
+.recent button:hover,
+.list-row:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.recent button[aria-current="true"] {
+  background: rgba(10, 122, 255, 0.06);
+  color: var(--accent-ink);
+}
+
+.recent .num {
+  flex: none;
+  width: 34px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.recent .ids {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.recent .route {
+  flex: none;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.list-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.list-main b {
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.list-main small {
+  color: var(--ink-3);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.swatch {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.package-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.package-card-head .swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.package-card-head h3 {
+  flex: 1;
+  margin: 0;
+  font: 700 18px var(--font-display);
+}
+
+/* Charts */
+.charts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.charts.large {
+  gap: 16px;
+}
+
+.chart-card {
+  margin: 0;
+  padding: 12px 12px 8px;
+  border: 1px solid var(--row-rim);
+  border-radius: var(--r-card);
+  background: var(--row);
+}
+
+.chart-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.chart-head b {
+  flex: 1;
+  font-size: 14px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0 0 6px;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: 12px;
+  list-style: none;
+}
+
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 5px;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+
+/* Tables in sheets */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--r-card);
+  background: var(--row);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+th {
+  padding: 10px 8px;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+td {
+  padding: 6px 8px;
+  border-top: 1px solid var(--hair);
+  white-space: nowrap;
+}
+
+tr[aria-current="true"] td {
+  background: rgba(10, 122, 255, 0.06);
+}
+
+td input[type="text"] {
+  width: 100%;
+  min-width: 64px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  outline: none;
+  background: var(--fill);
+}
+
+td:first-child input[type="text"] {
+  min-width: 120px;
+}
+
+td input:focus {
+  border-color: var(--accent);
+  background: #fff;
+}
+
+td input[aria-invalid="true"] {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+}
+
+.editor-tabs {
+  max-width: 380px;
+}
+
+.keys {
+  display: flex;
+  gap: 4px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+/*
+ * Floating labels above trucks and the Dock (see scene/SceneLabels.tsx). They
+ * sit behind the transparent canvas and show through depth holes, so scene
+ * objects in front cover them. Positions are set every frame from the camera.
+ * The 14px radius must match LABEL_RADIUS_PX.
+ */
+.scene-labels {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.truck-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 11px 8px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+  text-align: left;
+  white-space: nowrap;
+  visibility: hidden;
+  will-change: transform;
+  transition: opacity 0.3s;
+}
+
+.truck-label b {
+  font-size: 13px;
+}
+
+.truck-label small {
+  color: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.truck-label .capacity-bar {
+  width: 120px;
+  height: 4px;
+}
+
+.truck-label.dim {
+  opacity: 0.35;
+}
+
+
+.truck-label.dock {
+  background: rgba(255, 255, 255, 0.75);
+}
