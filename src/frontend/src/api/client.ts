@@ -1,10 +1,11 @@
 import type {
   ExperimentListResponse,
   ExperimentResult,
+  Limits,
   Problem,
   RunExperimentRequest,
 } from '../types/experiment'
-import { isExperimentResult } from './validation'
+import { isExperimentResult, isLimits } from './validation'
 import { formatApiError } from './errors'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
@@ -24,6 +25,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>
+}
+
+export async function getLimits(): Promise<Limits> {
+  const response = await request<unknown>('/api/limits')
+  if (!isLimits(response)) throw new Error('The backend sent limits in an unexpected format.')
+  return response
 }
 
 export async function validateProblem(problem: Problem): Promise<void> {

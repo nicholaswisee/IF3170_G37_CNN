@@ -1,0 +1,165 @@
+/*
+ * Liquid glass materials (iOS 26 and 27 style).
+ * - .glass: floating surfaces over the 3D stage. Frosted, saturated, with a
+ *   specular rim that is bright at the top left and bottom right, an inner
+ *   glow on top, a thickness shade at the bottom, and a fine dark outer edge.
+ * - Inner glass: buttons that sit on a panel.
+ * - Tinted glass: the primary action and selected options.
+ */
+
+.glass {
+  position: relative;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, calc(var(--glass-alpha) + 0.16)) 0%,
+    rgba(255, 255, 255, calc(var(--glass-alpha) - 0.08)) 100%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%) brightness(1.04);
+  backdrop-filter: blur(20px) saturate(200%) brightness(1.04);
+  border: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.5),
+    inset 0 12px 16px -14px rgba(255, 255, 255, 0.95),
+    inset 0 -12px 18px -16px rgba(40, 60, 95, 0.18),
+    0 0 0 0.5px rgba(28, 28, 30, 0.13),
+    0 8px 26px rgba(30, 40, 60, 0.1),
+    0 1px 2px rgba(30, 40, 60, 0.07);
+}
+
+/* Specular rim drawn as a masked gradient border. */
+.glass::before,
+.btn::before,
+.pill-opt::before,
+.stepper::before,
+.speed::before,
+.exit-btn::before,
+.play-main::before,
+.lock-badge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  padding: 1.2px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.4) 20%,
+    rgba(255, 255, 255, 0) 42%,
+    rgba(255, 255, 255, 0) 62%,
+    rgba(255, 255, 255, 0.5) 84%,
+    rgba(255, 255, 255, 0.95) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/*
+ * Interactive glass: a soft light follows the pointer (set by useGlassPointer).
+ * It sits above the glass fill but below the label, so text and icons stay crisp.
+ */
+.interactive {
+  isolation: isolate;
+}
+
+.interactive::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(90px circle at var(--mx, 50%) var(--my, -40%), rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.interactive:hover::after {
+  opacity: 1;
+}
+
+.btn,
+.pill-opt,
+.stepper,
+.speed,
+.exit-btn,
+.play-main,
+.lock-badge {
+  position: relative;
+}
+
+/* Inner glass. */
+.btn-plain,
+.pill-opt,
+.stepper,
+.speed,
+.exit-btn {
+  border: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.64));
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -9px 12px -10px rgba(40, 60, 95, 0.16),
+    0 0 0 0.5px rgba(28, 28, 30, 0.14),
+    0 2px 6px rgba(30, 40, 60, 0.08);
+}
+
+/* Tinted glass. */
+.btn-primary,
+.play-main,
+.pill-opt[aria-pressed="true"],
+.lock-badge {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(180deg, #5aacff 0%, #1683ff 52%, #0a6fe6 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 10px 14px -10px rgba(255, 255, 255, 0.5),
+    inset 0 -8px 12px -10px rgba(0, 30, 90, 0.35),
+    0 0 0 0.5px rgba(0, 60, 150, 0.35),
+    0 6px 18px rgba(10, 122, 255, 0.28);
+}
+
+.btn-tinted,
+.chip[aria-pressed="true"] {
+  border: 0;
+  color: var(--accent-ink);
+  background: linear-gradient(180deg, rgba(238, 245, 255, 0.95), rgba(204, 225, 255, 0.74));
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -8px 12px -10px rgba(10, 80, 180, 0.22),
+    0 0 0 0.5px rgba(10, 122, 255, 0.4),
+    0 4px 14px rgba(10, 122, 255, 0.14);
+}
+
+/* Glass grows a little when pressed, like iOS interactive glass. */
+.btn,
+.pill-opt,
+.icon-btn,
+.chip,
+.speed,
+.layers-tile {
+  transition: scale 0.45s var(--spring), background 0.25s, color 0.25s, box-shadow 0.25s, filter 0.2s;
+}
+
+.btn:active:not(:disabled),
+.pill-opt:active:not(:disabled),
+.icon-btn:active:not(:disabled),
+.chip:active,
+.speed:active:not(:disabled),
+.layers-tile:active {
+  scale: 1.06;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: #fff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .glass {
+    box-shadow: 0 0 0 1.5px rgba(28, 28, 30, 0.5);
+  }
+}

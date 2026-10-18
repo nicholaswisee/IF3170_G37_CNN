@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import test from 'node:test'
-import { isExperimentResult } from './validation'
+import { isExperimentResult, isLimits } from './validation'
 import type { ExperimentResult } from '../types/experiment'
 
 function readFixture(): ExperimentResult {
@@ -98,4 +98,16 @@ test('accepts signed safe response seeds and rejects unsafe integer seeds', () =
   for (const seed of [Number.MIN_SAFE_INTEGER - 1, Number.MAX_SAFE_INTEGER + 1]) {
     assert.equal(isExperimentResult({ ...fixture, seed }), false, `accepts unsafe seed ${seed}`)
   }
+})
+
+test('accepts the backend limits fixture and rejects malformed limits', () => {
+  const limits: unknown = JSON.parse(readFileSync(resolve(process.cwd(), '../backend/tests/fixtures/limits.json'), 'utf8'))
+  assert.equal(isLimits(limits), true)
+  const valid = limits as Record<string, Record<string, unknown>>
+  assert.equal(isLimits({ ...valid, problem: { ...valid.problem, max_trucks: 0 } }), false)
+  assert.equal(isLimits({ ...valid, parameters: { ...valid.parameters, genetic_algorithm: undefined } }), false)
+  const brokenRange = structuredClone(valid) as { parameters: Record<string, Record<string, Record<string, unknown>>> }
+  brokenRange.parameters.hill_climbing.max_iterations.maximum = 'many'
+  assert.equal(isLimits(brokenRange), false)
+  assert.equal(isLimits(null), false)
 })

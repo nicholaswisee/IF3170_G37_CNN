@@ -5,6 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app import limits
 from app.domain.move import Move
 from app.domain.problem import Problem
 from app.domain.state import State
@@ -65,7 +66,7 @@ class _RunRequest(BaseModel):
     @field_validator("seed")
     @classmethod
     def seed_is_safe_integer(cls, value: int) -> int:
-        if abs(value) > 2**53 - 1:
+        if abs(value) > limits.MAX_SAFE_SEED:
             raise ValueError("seed must be a JavaScript safe integer")
         return value
 
@@ -79,18 +80,23 @@ def validate_problem_input(value):
     if isinstance(value, dict):
         packages = value.get("packages")
         trucks = value.get("trucks")
-        if (isinstance(packages, list) and len(packages) > 100) or (
-            isinstance(trucks, list) and len(trucks) > 20
+        if (isinstance(packages, list) and len(packages) > limits.MAX_PACKAGES) or (
+            isinstance(trucks, list) and len(trucks) > limits.MAX_TRUCKS
         ):
-            raise ValueError("at most 100 packages and 20 trucks are allowed")
+            raise ValueError(
+                f"at most {limits.MAX_PACKAGES} packages and "
+                f"{limits.MAX_TRUCKS} trucks are allowed"
+            )
         for collection in (packages, trucks):
             if isinstance(collection, list) and any(
                 isinstance(item, dict)
                 and isinstance(item.get("id"), str)
-                and len(item["id"]) > 128
+                and len(item["id"]) > limits.MAX_ID_LENGTH
                 for item in collection
             ):
-                raise ValueError("IDs must be at most 128 characters")
+                raise ValueError(
+                    f"IDs must be at most {limits.MAX_ID_LENGTH} characters"
+                )
     return value
 
 
