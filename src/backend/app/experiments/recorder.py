@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import IO
 
+from app.schemas.config import SavedConfig
 from app.schemas.experiment import BatchExperimentResult, ExperimentResult
 
 
@@ -16,6 +17,10 @@ def _write_persistence_temp(file: IO[str], payload: str) -> None:
 
 def record_result(result: ExperimentResult, destination: Path) -> None:
     _publish(destination, result.model_dump_json())
+
+
+def record_config(config: SavedConfig, destination: Path) -> None:
+    _publish(destination, config.model_dump_json())
 
 
 def record_batch(batch: BatchExperimentResult, directory: Path) -> None:

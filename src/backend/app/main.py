@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.configs import router as configs_router
 from app.api.experiments import router as experiments_router
 from app.api.health import router as health_router
 from app.api.limits import router as limits_router
@@ -36,3 +37,4 @@ app.include_router(health_router)
 app.include_router(limits_router)
 app.include_router(problems_router)
 app.include_router(experiments_router)
+app.include_router(configs_router)

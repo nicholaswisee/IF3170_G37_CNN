@@ -17,6 +17,7 @@ class RunBodyLimitMiddleware:
                 "/api/experiments/run",
                 "/api/experiments/batch",
                 "/api/problems/validate",
+                "/api/configs",
             )
         ):
             await self.app(scope, receive, send)
