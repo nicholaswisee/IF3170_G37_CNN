@@ -151,3 +151,29 @@ export interface ExperimentResult {
 export interface ExperimentListResponse {
   experiments: ExperimentResult[]
 }
+
+/** Bounds of one numeric input from GET /api/limits; null bounds are open. */
+export interface NumericRange {
+  integer: boolean
+  nullable: boolean
+  minimum: number | null
+  exclusive_minimum: number | null
+  maximum: number | null
+  exclusive_maximum: number | null
+  default: number | null
+}
+
+export interface ProblemLimits {
+  max_packages: number
+  max_trucks: number
+  max_id_length: number
+  max_total_truck_volume: number
+}
+
+/** Backend `LimitsResponse`: the only source of input limits for the UI. */
+export interface Limits {
+  problem: ProblemLimits
+  seed: NumericRange
+  max_request_bytes: number
+  parameters: Record<Algorithm, Record<string, NumericRange>>
+}

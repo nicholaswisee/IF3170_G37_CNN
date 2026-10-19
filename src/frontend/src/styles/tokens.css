@@ -1,0 +1,109 @@
+/*
+ * Design tokens. White based iOS style with liquid glass controls.
+ * Three.js and chart colors live in theme.ts.
+ */
+:root {
+  --stage-top: #fdfdfe;
+  --stage-mid: #f2f4f8;
+  --stage-bottom: #e4e8ef;
+  --ink: #1c1c1e;
+  --ink-2: #48494f;
+  --ink-3: #8b8e96;
+  --accent: #0a7aff;
+  --accent-ink: #0062d6;
+  --accent-soft: rgba(10, 122, 255, 0.12);
+  --good: #1f9d4c;
+  --good-soft: rgba(31, 157, 76, 0.12);
+  --warn: #d97a00;
+  --warn-soft: rgba(255, 149, 0, 0.14);
+  --bad: #e0383e;
+  --bad-soft: rgba(224, 56, 62, 0.12);
+  --switch-on: #34c759;
+  --capacity-high: #ff9500;
+  --hair: rgba(28, 28, 30, 0.09);
+  --fill: rgba(118, 118, 128, 0.12);
+  --fill-2: rgba(118, 118, 128, 0.2);
+  --row: rgba(255, 255, 255, 0.66);
+  --row-rim: rgba(255, 255, 255, 0.75);
+
+  /* Glass tint, changed live by the Layers menu like the iOS 27 transparency slider. */
+  --glass-alpha: 0.5;
+
+  --r-panel: 28px;
+  --r-card: 20px;
+  --r-pill: 999px;
+
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", system-ui, sans-serif;
+
+  /* Springy ease used for panels, thumbs, and presses. */
+  --spring: linear(0, 0.006, 0.025 2.8%, 0.101 6.1%, 0.539 18.9%, 0.721 25.3%, 0.849 31.5%, 0.937 38.1%, 0.968 41.8%, 0.991 45.7%, 1.006 50.1%, 1.015 55%, 1.017 63.9%, 1.001);
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+  background: var(--stage-bottom);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 14px;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.icon {
+  display: block;
+  flex: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

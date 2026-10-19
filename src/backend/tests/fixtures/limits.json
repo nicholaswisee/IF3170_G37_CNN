@@ -1,0 +1,152 @@
+{
+  "problem": {
+    "max_packages": 100,
+    "max_trucks": 20,
+    "max_id_length": 128,
+    "max_total_truck_volume": 100000
+  },
+  "seed": {
+    "integer": true,
+    "nullable": false,
+    "minimum": -9007199254740991.0,
+    "exclusive_minimum": null,
+    "maximum": 9007199254740991.0,
+    "exclusive_maximum": null,
+    "default": 42.0
+  },
+  "max_request_bytes": 262144,
+  "parameters": {
+    "hill_climbing": {
+      "max_iterations": {
+        "integer": true,
+        "nullable": false,
+        "minimum": null,
+        "exclusive_minimum": 0.0,
+        "maximum": 2000.0,
+        "exclusive_maximum": null,
+        "default": 2000.0
+      },
+      "candidates_per_iteration": {
+        "integer": true,
+        "nullable": false,
+        "minimum": null,
+        "exclusive_minimum": 0.0,
+        "maximum": 50.0,
+        "exclusive_maximum": null,
+        "default": 50.0
+      },
+      "max_sideways": {
+        "integer": true,
+        "nullable": false,
+        "minimum": 0.0,
+        "exclusive_minimum": null,
+        "maximum": null,
+        "exclusive_maximum": null,
+        "default": 100.0
+      },
+      "max_restarts": {
+        "integer": true,
+        "nullable": false,
+        "minimum": 0.0,
+        "exclusive_minimum": null,
+        "maximum": 20.0,
+        "exclusive_maximum": null,
+        "default": 10.0
+      }
+    },
+    "simulated_annealing": {
+      "initial_temperature": {
+        "integer": false,
+        "nullable": true,
+        "minimum": null,
+        "exclusive_minimum": 0.0,
+        "maximum": null,
+        "exclusive_maximum": null,
+        "default": null
+      },
+      "alpha": {
+        "integer": false,
+        "nullable": false,
+        "minimum": null,
+        "exclusive_minimum": 0.0,
+        "maximum": null,
+        "exclusive_maximum": 1.0,
+        "default": 0.995
+      },
+      "min_temperature": {
+        "integer": false,
+        "nullable": false,
+        "minimum": null,
+        "exclusive_minimum": 0.0,
+        "maximum": null,
+        "exclusive_maximum": null,
+        "default": 0.001
+      },
+      "max_iterations": {
+        "integer": true,
+        "nullable": false,
+        "minimum": null,
+        "exclusive_minimum": 0.0,
+        "maximum": 5000.0,
+        "exclusive_maximum": null,
+        "default": 5000.0
+      },
+      "stuck_patience": {
+        "integer": true,
+        "nullable": false,
+        "minimum": null,
+        "exclusive_minimum": 0.0,
+        "maximum": null,
+        "exclusive_maximum": null,
+        "default": 50.0
+      }
+    },
+    "genetic_algorithm": {
+      "population_size": {
+        "integer": true,
+        "nullable": false,
+        "minimum": 2.0,
+        "exclusive_minimum": null,
+        "maximum": 100.0,
+        "exclusive_maximum": null,
+        "default": 50.0
+      },
+      "generations": {
+        "integer": true,
+        "nullable": false,
+        "minimum": 1.0,
+        "exclusive_minimum": null,
+        "maximum": 200.0,
+        "exclusive_maximum": null,
+        "default": 100.0
+      },
+      "crossover_probability": {
+        "integer": false,
+        "nullable": false,
+        "minimum": 0.0,
+        "exclusive_minimum": null,
+        "maximum": 1.0,
+        "exclusive_maximum": null,
+        "default": 0.8
+      },
+      "mutation_probability": {
+        "integer": false,
+        "nullable": false,
+        "minimum": 0.0,
+        "exclusive_minimum": null,
+        "maximum": 1.0,
+        "exclusive_maximum": null,
+        "default": 0.2
+      },
+      "elite_count": {
+        "integer": true,
+        "nullable": false,
+        "minimum": 1.0,
+        "exclusive_minimum": null,
+        "maximum": 1.0,
+        "exclusive_maximum": null,
+        "default": 1.0
+      }
+    }
+  }
+}
