@@ -24,7 +24,12 @@
 \setcounter{tocdepth}{3}
 \setlength{\parindent}{1.5em}
 \setlength{\parskip}{0pt}
-\lstset{language=Python,basicstyle=\ttfamily\footnotesize,keywordstyle=\bfseries,emphstyle=\bfseries,breaklines=true,frame=single,showstringspaces=false,columns=fullflexible,floatplacement=htbp,float=htbp,float=true}
+\lstset{language=Python,basicstyle=\ttfamily\footnotesize,keywordstyle=\bfseries,emphstyle=\bfseries,breaklines=true,frame=single,showstringspaces=false,columns=fullflexible,aboveskip=3pt,belowskip=3pt,floatplacement=htbp,float=htbp,float=true}
+\makeatletter
+\setlength{\@fpsep}{10pt}
+\makeatother
+\setlength{\textfloatsep}{10pt}
+\setlength{\intextsep}{10pt}
 \captionsetup{font=small,labelfont=bf,labelsep=period,skip=6pt}
 \raggedbottom
 \clubpenalty=10000
@@ -105,7 +110,7 @@ Keputusan pemilihan dan penempatan saling berkaitan. Memuat suatu paket menguran
 \end{figure}
 \FloatBarrier
 
-\Needspace{17\baselineskip}
+\Needspace{7\baselineskip}
 \subsection{Rumusan Persoalan dan Tujuan}
 Persoalan menerima paket berbentuk balok atau kubus serta peti kemas dengan ukuran dan kapasitas angkut tertentu. Setiap paket dapat dipilih untuk dimuat atau dibiarkan di luar, dan paket yang dimuat perlu ditempatkan dengan posisi serta orientasi yang sesuai. Tujuannya adalah memperoleh susunan yang memenuhi batas ruang, kapasitas berat, dan aturan penopang, dengan total nilai paket termuat sebesar mungkin \cite{spesifikasi}.
 
@@ -255,7 +260,7 @@ Generasi baru dibentuk melalui \textit{crossover} (penggabungan bagian dari dua 
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.94\textwidth,trim=30bp 85bp 30bp 80bp,clip]{genetic-algorithm-slide.pdf}
+    \includegraphics[width=0.82\textwidth,trim=30bp 150bp 30bp 80bp,clip]{genetic-algorithm-slide.pdf}
     \caption{Alur selection, crossover, dan mutation pada genetic algorithm. Diambil dari salindia \textit{Beyond Classical Search} \cite{slide-local-search}.}
     \label{fig:genetic-algorithm}
 \end{figure}
