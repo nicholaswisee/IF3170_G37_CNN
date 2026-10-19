@@ -279,10 +279,16 @@
 }
 
 .toast-lane {
-  bottom: calc(var(--edge-b) + 70px);
+  bottom: calc(var(--edge-b) + var(--toast-lift, 0px));
   flex-direction: column-reverse;
   align-items: center;
   gap: 8px;
+  transition: left 0.5s var(--spring), right 0.5s var(--spring), bottom 0.5s var(--spring);
+}
+
+/* Toasts sit on the bottom edge and only lift above the playback bar while it is shown. */
+.presence:not([data-leaving]):has(.lane-bottom) + .toast-lane {
+  --toast-lift: 70px;
 }
 
 /* Bottom corners */
