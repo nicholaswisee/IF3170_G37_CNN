@@ -38,6 +38,9 @@ const ICONS = {
   dice: <><rect x="3" y="3" width="18" height="18" rx="4" /><circle cx="8.5" cy="8.5" r="1.2" {...filled} /><circle cx="15.5" cy="15.5" r="1.2" {...filled} /><circle cx="12" cy="12" r="1.2" {...filled} /></>,
   trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
   fragile: <path d="M8 3h8l-1 7a3 3 0 0 1-6 0zM12 13v7M8.5 21h7" />,
+  upload: <path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />,
+  download: <path d="M12 3v12M7 10l5 5 5-5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" />,
+  folder: <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
   refresh: <><path d="M21 12a9 9 0 0 1-15.5 6.3L3 16" /><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8" /><path d="M21 3v5h-5M3 21v-5h5" /></>,
 } satisfies Record<string, ReactElement>
 

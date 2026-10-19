@@ -534,6 +534,8 @@ input[type="range"]:disabled {
   height: 58px;
   padding: 0 8px;
   border-radius: var(--r-pill);
+  /* Rises from the bottom edge when a run opens; see playback-in in layout.css. */
+  animation: playback-in 0.55s var(--spring);
 }
 
 .play-main {

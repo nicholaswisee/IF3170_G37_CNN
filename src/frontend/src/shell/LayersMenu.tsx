@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Icon } from '../ui/Icon'
 import { GlassSwitch } from '../ui/GlassSwitch'
+import { Presence } from '../ui/Presence'
 import { Segmented } from '../ui/Segmented'
 import type { ColorMode } from '../viewer/sceneModel'
 
@@ -57,34 +58,36 @@ export function LayersMenu({ colorMode, onColorMode, toggles, onToggle, glass, o
   const glassPercent = ((glass - GLASS_MIN) / (GLASS_MAX - GLASS_MIN)) * 100
   return (
     <div className="layers" ref={root}>
-      {open && (
-        <div className="popover glass" role="dialog" aria-label="Layers">
-          <h3>Color packages by</h3>
-          <Segmented label="Color packages by" options={COLOR_OPTIONS} value={colorMode} onChange={onColorMode} />
-          <div className="group">
-            {(Object.keys(TOGGLE_LABELS) as (keyof LayerToggles)[]).map((key) => (
-              <div className="row" key={key}>
-                <label className="row-label" htmlFor={`layer-${key}`}><span>{TOGGLE_LABELS[key]}</span></label>
-                <GlassSwitch id={`layer-${key}`} checked={toggles[key]} onChange={(value) => onToggle(key, value)} />
-              </div>
-            ))}
+      <Presence>
+        {open && (
+          <div className="popover glass" role="dialog" aria-label="Layers">
+            <h3>Color packages by</h3>
+            <Segmented label="Color packages by" options={COLOR_OPTIONS} value={colorMode} onChange={onColorMode} />
+            <div className="group">
+              {(Object.keys(TOGGLE_LABELS) as (keyof LayerToggles)[]).map((key) => (
+                <div className="row" key={key}>
+                  <label className="row-label" htmlFor={`layer-${key}`}><span>{TOGGLE_LABELS[key]}</span></label>
+                  <GlassSwitch id={`layer-${key}`} checked={toggles[key]} onChange={(value) => onToggle(key, value)} />
+                </div>
+              ))}
+            </div>
+            <h3>Glass</h3>
+            <div className="glass-range">
+              <span>Clear</span>
+              <input
+                type="range"
+                min={GLASS_MIN * 100}
+                max={GLASS_MAX * 100}
+                value={Math.round(glass * 100)}
+                aria-label="Glass tint"
+                style={{ '--fill': `${glassPercent}%` } as CSSProperties}
+                onChange={(event) => onGlass(Number(event.currentTarget.value) / 100)}
+              />
+              <span>Tinted</span>
+            </div>
           </div>
-          <h3>Glass</h3>
-          <div className="glass-range">
-            <span>Clear</span>
-            <input
-              type="range"
-              min={GLASS_MIN * 100}
-              max={GLASS_MAX * 100}
-              value={Math.round(glass * 100)}
-              aria-label="Glass tint"
-              style={{ '--fill': `${glassPercent}%` } as CSSProperties}
-              onChange={(event) => onGlass(Number(event.currentTarget.value) / 100)}
-            />
-            <span>Tinted</span>
-          </div>
-        </div>
-      )}
+        )}
+      </Presence>
       <button className="layers-tile glass interactive" type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
         <Icon name="layers" size={22} />Layers
       </button>

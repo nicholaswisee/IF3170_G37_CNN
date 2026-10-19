@@ -1,3 +1,4 @@
+import type { ConfigSummary, ConfigUpload, SavedConfig } from '../types/config'
 import type {
   ExperimentListResponse,
   ExperimentResult,
@@ -5,12 +6,13 @@ import type {
   Problem,
   RunExperimentRequest,
 } from '../types/experiment'
-import { isExperimentResult, isLimits } from './validation'
+import { isConfigSummary, isExperimentResult, isLimits, isSavedConfig } from './validation'
 import { formatApiError } from './errors'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replace(/\/$/, '')
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+/** Sends the request and throws a readable error for any non-2xx status. */
+async function send(path: string, init?: RequestInit): Promise<Response> {
   const response = await fetch(`${apiBaseUrl}${path}`, init)
 
   if (!response.ok) {
@@ -24,6 +26,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(formatApiError(response.status, detail))
   }
 
+  return response
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await send(path, init)
   return response.json() as Promise<T>
 }
 
@@ -53,6 +60,35 @@ export async function listExperiments(): Promise<ExperimentListResponse> {
   }
 
   return { experiments: response.experiments }
+}
+
+export async function listConfigs(): Promise<ConfigSummary[]> {
+  const response: unknown = await request<unknown>('/api/configs')
+  if (typeof response !== 'object' || response === null || !('configs' in response)
+    || !Array.isArray(response.configs) || !response.configs.every(isConfigSummary)) {
+    throw new Error('Invalid configuration list response.')
+  }
+  return response.configs
+}
+
+export async function getConfig(id: string): Promise<SavedConfig> {
+  const response = await request<unknown>(`/api/configs/${encodeURIComponent(id)}`)
+  if (!isSavedConfig(response)) throw new Error('Invalid configuration response.')
+  return response
+}
+
+export async function uploadConfig(upload: ConfigUpload): Promise<SavedConfig> {
+  const response = await request<unknown>('/api/configs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(upload),
+  })
+  if (!isSavedConfig(response)) throw new Error('Invalid configuration response.')
+  return response
+}
+
+export async function deleteConfig(id: string): Promise<void> {
+  await send(`/api/configs/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
 
 export function runExperiment(requestBody: RunExperimentRequest): Promise<ExperimentResult> {

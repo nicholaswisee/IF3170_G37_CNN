@@ -22,6 +22,8 @@ interface SetupPanelProps {
   open: boolean
   problem: Problem
   isExampleProblem: boolean
+  /** Name of the saved configuration the problem was loaded from, if it is unchanged. */
+  configName: string | null
   /** True while the scene shows a run instead of this configured problem. */
   viewingRun: boolean
   limits: Limits | null
@@ -29,12 +31,13 @@ interface SetupPanelProps {
   running: boolean
   onRetryLimits: () => void
   onEditProblem: () => void
+  onOpenConfigs: () => void
   onPreviewProblem: () => void
   onRun: (request: RunExperimentRequest, label: string) => void
 }
 
 /** Left panel: what to solve and how. Ranges and defaults come from the backend limits. */
-export function SetupPanel({ open, problem, isExampleProblem, viewingRun, limits, limitsError, running, onRetryLimits, onEditProblem, onPreviewProblem, onRun }: SetupPanelProps) {
+export function SetupPanel({ open, problem, isExampleProblem, configName, viewingRun, limits, limitsError, running, onRetryLimits, onEditProblem, onOpenConfigs, onPreviewProblem, onRun }: SetupPanelProps) {
   const toast = useToast()
   const [algorithm, setAlgorithm] = useState<Algorithm>('simulated_annealing')
   const [variant, setVariant] = useState<HillClimbingVariant>('sideways')
@@ -87,6 +90,7 @@ export function SetupPanel({ open, problem, isExampleProblem, viewingRun, limits
       <div className="panel-head">
         <h2>Setup</h2>
         {isExampleProblem && <span className="tag orange">Example problem</span>}
+        {configName && <span className="tag blue truncate" title={configName}>{configName}</span>}
       </div>
       <div className="panel-body">
         <section>
@@ -94,6 +98,7 @@ export function SetupPanel({ open, problem, isExampleProblem, viewingRun, limits
             <span>Problem</span>
             <span className="section-actions">
               {viewingRun && <button className="btn btn-plain btn-sm" type="button" onClick={onPreviewProblem}>Preview</button>}
+              <button className="btn btn-plain btn-sm" type="button" onClick={onOpenConfigs}><Icon name="folder" size={14} />Configs</button>
               <button className="btn btn-tinted btn-sm" type="button" onClick={onEditProblem}><Icon name="edit" size={14} />Edit</button>
             </span>
           </div>

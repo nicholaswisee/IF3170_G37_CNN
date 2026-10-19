@@ -150,6 +150,14 @@
   margin-left: 6px;
 }
 
+.tag.truncate {
+  display: inline-block;
+  max-width: 180px;
+  overflow: hidden;
+  line-height: 22px;
+  text-overflow: ellipsis;
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;
@@ -431,6 +439,58 @@ td {
 
 tr[aria-current="true"] td {
   background: rgba(10, 122, 255, 0.06);
+}
+
+/* Configurations sheet */
+.dropzone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--fill-2);
+  border-radius: var(--r-card);
+  background: var(--row);
+  color: var(--ink-2);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.dropzone.dragging {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.dropzone-text {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dropzone-text small,
+.config-name small {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.config-name small {
+  display: block;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.btn-danger {
+  color: #fff;
+  background: var(--bad);
 }
 
 td input[type="text"] {

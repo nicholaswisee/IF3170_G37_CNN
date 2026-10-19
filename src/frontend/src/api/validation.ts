@@ -1,3 +1,4 @@
+import type { ConfigSummary, SavedConfig } from '../types/config'
 import type {
   ExperimentResult,
   Limits,
@@ -50,7 +51,7 @@ function isTruckSpec(value: unknown): value is TruckSpec {
     && isFiniteNumber(value.max_capacity)
 }
 
-function isProblem(value: unknown): value is Problem {
+export function isProblem(value: unknown): value is Problem {
   return isRecord(value)
     && Array.isArray(value.packages)
     && value.packages.every(isPackageSpec)
@@ -133,6 +134,25 @@ export function isLimits(value: unknown): value is Limits {
     && isPositiveInteger(value.max_request_bytes)
     && [...algorithms].every((algorithm) => isRecord(parameters[algorithm])
       && Object.values(parameters[algorithm]).every(isNumericRange))
+}
+
+function hasConfigFields(value: Record<string, unknown>): boolean {
+  return typeof value.id === 'string'
+    && typeof value.name === 'string'
+    && typeof value.description === 'string'
+    && typeof value.builtin === 'boolean'
+    && (value.created_at === null || typeof value.created_at === 'string')
+}
+
+export function isSavedConfig(value: unknown): value is SavedConfig {
+  return isRecord(value) && hasConfigFields(value) && isProblem(value.problem)
+}
+
+export function isConfigSummary(value: unknown): value is ConfigSummary {
+  return isRecord(value)
+    && hasConfigFields(value)
+    && Number.isSafeInteger(value.truck_count)
+    && Number.isSafeInteger(value.package_count)
 }
 
 export function isExperimentResult(value: unknown): value is ExperimentResult {

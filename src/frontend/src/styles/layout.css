@@ -482,6 +482,70 @@
   }
 }
 
+/*
+ * Closing animations. ui/Presence.tsx keeps a closed popup mounted for 260 ms
+ * with data-leaving set, so every exit below must finish within that time.
+ */
+.presence {
+  display: contents;
+}
+
+.presence[data-leaving] * {
+  pointer-events: none !important;
+}
+
+.presence[data-leaving] .scrim {
+  animation: fade-out 0.24s ease forwards;
+}
+
+.presence[data-leaving] .sheet {
+  animation: sheet-out 0.24s ease-in forwards;
+}
+
+.presence[data-leaving] .popover,
+.presence[data-leaving] .package-card,
+.presence[data-leaving] .lock-bar {
+  animation: pop-out 0.22s ease-in forwards;
+}
+
+.presence[data-leaving] .playback {
+  animation: playback-out 0.26s ease-in forwards;
+}
+
+@keyframes pop-out {
+  to {
+    transform: scale(0.9) translateY(-6px);
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes sheet-out {
+  to {
+    transform: translateY(24px) scale(0.97);
+    opacity: 0;
+  }
+}
+
+@keyframes playback-in {
+  from {
+    transform: translateY(calc(100% + var(--edge-b)));
+    opacity: 0;
+  }
+}
+
+@keyframes playback-out {
+  to {
+    transform: translateY(calc(100% + var(--edge-b)));
+    opacity: 0;
+  }
+}
+
 /* Phones: panels become full-width floating sheets and open one at a time. */
 @media (max-width: 760px) {
   .app,

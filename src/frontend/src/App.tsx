@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
 import { getLimits, listExperiments, runExperiment, validateProblem } from './api/client'
 import { bestEventIndex } from './charts/chartData'
 import { ChartsView } from './charts/ChartsView'
 import { ALGORITHM_LABELS, formatNumber, formatWhole } from './copy/format'
 import { mockProblem } from './mocks/fleetFixture'
+import { ConfigManager } from './modals/ConfigManager'
 import { HelpSheet } from './modals/HelpSheet'
 import { ProblemEditor } from './modals/ProblemEditor'
 import { SavedRuns } from './modals/SavedRuns'
@@ -19,8 +20,10 @@ import { PackageCard } from './shell/PackageCard'
 import { PlaybackBar } from './shell/PlaybackBar'
 import { TopBar } from './shell/TopBar'
 import { packageTransitionSeconds, selectReplayState, usePlaybackTicker, useReplayStore } from './stores/replayStore'
+import type { SavedConfig } from './types/config'
 import type { ExperimentResult, Limits, OptimizationState, Problem, RunExperimentRequest } from './types/experiment'
 import { Modal } from './ui/Modal'
+import { Presence } from './ui/Presence'
 import { ToastProvider, ToastViewport } from './ui/toast'
 import { useToast } from './ui/toastContext'
 import { useGlassPointer } from './ui/useGlassPointer'
@@ -30,7 +33,7 @@ const MOBILE_QUERY = '(max-width: 760px)'
 // Panel width plus the gap to the stage, kept in sync with --pw and --gap in layout.css.
 const PANEL_FOOTPRINT = 364
 
-type ModalName = 'problem' | 'runs' | 'charts' | 'help'
+type ModalName = 'problem' | 'configs' | 'runs' | 'charts' | 'help'
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong'
@@ -57,6 +60,8 @@ function Workspace() {
 
   const [configuredProblem, setConfiguredProblem] = useState<Problem>(mockProblem)
   const [isExampleProblem, setIsExampleProblem] = useState(true)
+  // The saved configuration the configured problem came from; cleared once the problem is edited.
+  const [activeConfig, setActiveConfig] = useState<{ id: string; name: string } | null>(null)
   const [limits, setLimits] = useState<Limits | null>(null)
   const [limitsError, setLimitsError] = useState<string | null>(null)
   const [experiments, setExperiments] = useState<ExperimentResult[]>([])
@@ -188,7 +193,7 @@ function Workspace() {
     }
   }
 
-  const applyProblem = async (next: Problem) => {
+  const applyProblem = async (next: Problem, source?: { config: SavedConfig; verb: string }) => {
     try {
       await validateProblem(next)
     } catch (error) {
@@ -197,11 +202,13 @@ function Workspace() {
     }
     setConfiguredProblem(next)
     setIsExampleProblem(false)
+    setActiveConfig(source ? { id: source.config.id, name: source.config.name } : null)
     setLockedTruckId(null)
     setCardPackageId(null)
     useReplayStore.getState().reset()
     setModal(null)
-    toast.show(`Problem applied. ${next.trucks.length} trucks and ${next.packages.length} packages are ready`, 'success')
+    const ready = `${next.trucks.length} trucks and ${next.packages.length} packages are ready`
+    toast.show(source ? `${source.verb} ${source.config.name}. ${ready}` : `Problem applied. ${ready}`, 'success')
   }
 
   const previewProblem = () => {
@@ -257,6 +264,33 @@ function Workspace() {
   const appClass = ['app', setupOpen && 'setup-open', resultsOpen && 'results-open'].filter(Boolean).join(' ')
   const lockedTruck = lockedIndex >= 0 ? problem.trucks[lockedIndex] : null
 
+  // One sheet at a time, rendered through Presence so it can animate out after it closes.
+  const closeSheet = () => setModal(null)
+  let sheet: ReactNode = null
+  if (modal === 'problem') {
+    sheet = <ProblemEditor initialProblem={configuredProblem} limits={limits} onApply={(next) => applyProblem(next)} onClose={closeSheet} />
+  } else if (modal === 'configs') {
+    sheet = (
+      <ConfigManager
+        limits={limits}
+        activeConfig={activeConfig}
+        onApply={(config, verb) => applyProblem(config.problem, { config, verb })}
+        onDeleted={(id) => setActiveConfig((current) => current?.id === id ? null : current)}
+        onClose={closeSheet}
+      />
+    )
+  } else if (modal === 'runs') {
+    sheet = <SavedRuns experiments={experiments} activeId={experiment?.id ?? null} loading={loadingRuns} onRefresh={refreshRuns} onOpen={openRun} onClose={closeSheet} />
+  } else if (modal === 'charts' && experiment) {
+    sheet = (
+      <Modal title="Charts" onClose={closeSheet}>
+        <ChartsView experiment={experiment} cursor={shownEvent?.iteration ?? null} large />
+      </Modal>
+    )
+  } else if (modal === 'help') {
+    sheet = <HelpSheet onClose={closeSheet} />
+  }
+
   return (
     <div className={appClass} style={{ '--glass-alpha': glass } as CSSProperties}>
       <FleetScene
@@ -299,12 +333,14 @@ function Workspace() {
         open={setupOpen}
         problem={configuredProblem}
         isExampleProblem={isExampleProblem}
+        configName={activeConfig?.name ?? null}
         viewingRun={experiment !== null}
         limits={limits}
         limitsError={limitsError}
         running={running}
         onRetryLimits={() => void fetchLimits()}
         onEditProblem={() => setModal('problem')}
+        onOpenConfigs={() => setModal('configs')}
         onPreviewProblem={previewProblem}
         onRun={(request, label) => void run(request, label)}
       />
@@ -327,19 +363,22 @@ function Workspace() {
         onExpandCharts={() => setModal('charts')}
       />
 
-      {lockedTruck && (
-        <LockBar
-          truck={lockedTruck}
-          position={lockedIndex + 1}
-          total={problem.trucks.length}
-          loadWeight={loads[lockedTruck.id]?.weight ?? 0}
-          onPrevious={() => stepTruck(-1)}
-          onNext={() => stepTruck(1)}
-          onExit={() => setLockedTruckId(null)}
-        />
-      )}
+      <Presence>
+        {lockedTruck && (
+          <LockBar
+            truck={lockedTruck}
+            position={lockedIndex + 1}
+            total={problem.trucks.length}
+            loadWeight={loads[lockedTruck.id]?.weight ?? 0}
+            onPrevious={() => stepTruck(-1)}
+            onNext={() => stepTruck(1)}
+            onExit={() => setLockedTruckId(null)}
+          />
+        )}
+      </Presence>
 
-      <PlaybackBar shownEvent={shownEvent} />
+      {/* The transport only rises in once there is a run to replay. */}
+      <Presence>{experiment && <PlaybackBar shownEvent={shownEvent} />}</Presence>
       <ToastViewport />
 
       <LayersMenu
@@ -363,18 +402,11 @@ function Workspace() {
         nextViewName={CAMERA_PRESETS[(cameraPreset + 1) % CAMERA_PRESETS.length].name}
       />
 
-      {activeCard && <PackageCard problem={problem} state={shownState} packageId={activeCard} colorMode={colorMode} onClose={() => setCardPackageId(null)} />}
+      <Presence>
+        {activeCard && <PackageCard problem={problem} state={shownState} packageId={activeCard} colorMode={colorMode} onClose={() => setCardPackageId(null)} />}
+      </Presence>
 
-      {modal === 'problem' && <ProblemEditor initialProblem={configuredProblem} limits={limits} onApply={applyProblem} onClose={() => setModal(null)} />}
-      {modal === 'runs' && (
-        <SavedRuns experiments={experiments} activeId={experiment?.id ?? null} loading={loadingRuns} onRefresh={refreshRuns} onOpen={openRun} onClose={() => setModal(null)} />
-      )}
-      {modal === 'charts' && experiment && (
-        <Modal title="Charts" onClose={() => setModal(null)}>
-          <ChartsView experiment={experiment} cursor={shownEvent?.iteration ?? null} large />
-        </Modal>
-      )}
-      {modal === 'help' && <HelpSheet onClose={() => setModal(null)} />}
+      <Presence>{sheet}</Presence>
     </div>
   )
 }
