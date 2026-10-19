@@ -574,10 +574,10 @@ Repair memulai dari state dengan semua paket di luar, lalu memproses paket termu
 \clearpage
 \section{Eksperimen dan Analisis}
 \subsection{Rancangan Eksperimen}
-Bagian ini menyajikan rancangan pengujian yang hasil pengukurannya belum dihimpun dalam laporan. Satu run merujuk pada satu eksekusi algoritma untuk satu problem dengan satu seed.
+Bagian ini menyajikan rancangan dan hasil pengujian manual melalui UI. Hasil pengujian mencakup 15 run: 12 run Hill Climbing (HC) dan tiga run Simulated Annealing (SA). Sebanyak 18 run Genetic Algorithm (GA) masih belum memiliki data pengukuran. Satu run merujuk pada satu eksekusi algoritma untuk satu problem dengan satu seed.
 
 \subsubsection{Data Uji dan Lingkungan Eksperimen}
-Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket termuat tanpa pembobotan ETA. Dataset utama yang diusulkan merupakan snapshot tereduksi dari fixture armada tiga truk di UI: satu truk \texttt{truck-a} berukuran $10\times8\times6$ dan berkapasitas 100, serta sembilan paket fixture pada Tabel~\ref{tab:data-eksperimen} dengan atribut asli. \texttt{truck-b} dan \texttt{truck-c} sengaja tidak disertakan dalam dataset usulan satu truk. Snapshot problem JSON yang sama direncanakan untuk seluruh run agar variasi hasil dapat dikaitkan dengan algoritma, seed, atau konfigurasi; berkas snapshot tersebut belum tersedia sebagai dataset di \path{data/}.
+Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket termuat tanpa pembobotan ETA. Dataset pengujian terdiri atas satu truk \texttt{truck-a} berukuran $10\times8\times6$ dan berkapasitas 100, serta sembilan paket pada Tabel~\ref{tab:data-eksperimen} dengan atribut asli. Dataset yang sama digunakan untuk membandingkan hasil antaralgoritma, seed, dan konfigurasi.
 
 \begin{table}[htbp]
     \centering
@@ -598,14 +598,14 @@ Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket t
         P09 & $(2,2,2)$ & 12 & 6 & Tidak & 0 \\
         \bottomrule
     \end{tabularx}
-    \caption{Data paket fixture untuk dataset utama yang diusulkan.}
+    \caption{Data paket pada dataset pengujian.}
     \label{tab:data-eksperimen}
 \end{table}
 
-Jumlah nilai seluruh paket adalah 280, sehingga menjadi \textbf{batas atas objektif yang diketahui}, bukan nilai optimum yang telah dicapai. Kajian multi-truk dapat dilakukan terpisah dari dataset utama. Dokumentasi versi sistem operasi, CPU, RAM, Python, dependensi, dan kode aplikasi mendukung reprodusibilitas serta interpretasi durasi. Seluruh run dirancang berlangsung berurutan pada perangkat dan lingkungan runtime yang sama tanpa perubahan kode atau konfigurasi lingkungan di tengah rangkaian.
+Jumlah nilai seluruh paket adalah 280, sehingga menjadi \textbf{batas atas objektif yang diketahui}, bukan nilai optimum yang telah dicapai. Pengujian difokuskan pada satu truk dengan batas kapasitas 100 kg.
 
 \subsubsection{Konfigurasi Parameter dan Pengulangan Eksperimen}
-Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 2026}. Rancangan utama mencakup empat varian HC masing-masing tiga run, tiga run SA, serta dua kelompok GA masing-masing sembilan run, sehingga jumlahnya \textbf{33 run per dataset}. Konfigurasi GA dengan populasi 50 dan 100 generasi muncul pada kedua kelompok dengan label berbeda; enam run itu tercakup dalam 18 run GA. Nilai awal parameter GA pada UI mengikuti default yang dikirim backend melalui \path|GET /api/limits|, saat ini populasi 50 dan 100 generasi. Frontend menggunakan nilai dan rentang tersebut untuk mengisi serta memvalidasi form sebelum mengirim run; konfigurasi pada Tabel~\ref{tab:konfigurasi-eksperimen} tetap merupakan rancangan pengujian tersendiri.
+Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 2026}. Rancangan utama mencakup empat varian HC masing-masing tiga run, tiga run SA, serta dua kelompok GA masing-masing sembilan run, sehingga jumlahnya \textbf{33 run per dataset}. Konfigurasi GA dengan populasi 50 dan 100 generasi muncul pada kedua kelompok dengan label berbeda; enam run itu tercakup dalam 18 run GA. Konfigurasi parameter setiap metode dirangkum pada Tabel~\ref{tab:konfigurasi-eksperimen}.
 
 \begin{table}[htbp]
     \centering
@@ -628,19 +628,79 @@ Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 20
     \label{tab:konfigurasi-eksperimen}
 \end{table}
 
-Setiap hasil direncanakan memiliki label run unik dan ID yang mengikat seed, parameter, mode objektif, serta problem JSON dengan keluarannya. Bukti utama per run mencakup \textbf{state awal, state akhir beserta skor objektif akhir, grafik objektif, durasi, dan jumlah iterasi aktual}. State dan skor terbaik menjadi informasi tambahan yang dibedakan dari hasil akhir, terutama untuk SA dan random-restart. Grafik memakai indeks iterasi pada sumbu horizontal dan skor objektif pada sumbu vertikal. Nilai \path{runtime_ms} mencakup inisialisasi dan pencarian, tetapi tidak mencakup validasi akhir, penulisan berkas, komunikasi HTTP, maupun rendering.
+Metrik pengujian meliputi skor objektif awal, akhir, dan terbaik, runtime, jumlah iterasi aktual, serta berat dan jumlah paket termuat pada state akhir. Skor terbaik dibedakan dari skor akhir karena solusi terakhir tidak selalu menjadi solusi terbaik sepanjang pencarian. Runtime mencakup inisialisasi dan pencarian, sedangkan validasi akhir, penyimpanan hasil, komunikasi HTTP, dan rendering tidak termasuk di dalamnya.
 
-Simulasi direncanakan melalui UI dengan pencatatan manual dan tangkapan layar sebagai bukti utama. Arsip JSON dapat disimpan melalui opsi \textit{Save run} di UI atau melalui API, dan menjadi dokumentasi tambahan.
-
-Pengarsipan melalui API memakai \texttt{POST} \path{/api/experiments/run}; persistensi aktif secara default dan dapat dikendalikan oleh opsi \texttt{persist}. Run disimpan sebagai JSON di subdirektori \path{experiments/} dari direktori keluaran yang dikonfigurasi melalui \texttt{output\_dir} (default \path{output/}). Snapshot riwayat disertakan melalui \path{include_state_history=true}. Backend memeriksa kelayakan state sebelum memberikan respons.
-
-Preset batch \path{ga_mandatory} memuat 18 run GA. Saat persistensi aktif, run individual disimpan di subdirektori \path{experiments/}, sedangkan ringkasan batch disimpan sebagai JSON dan CSV di subdirektori \path{batches/} dari direktori keluaran yang dikonfigurasi. Batch menyimpan state awal, akhir, dan terbaik tanpa snapshot per iterasi, sehingga tidak menyediakan replay spasial. UI juga dapat menyimpan run melalui opsi \textit{Save run}. Ekspor API dan salinan problem menjadi bahan pendukung bagi pencatatan manual, bukan pengganti tangkapan layar.
 \subsection{Hasil Eksperimen dan Visualisasi Program}
-Sesuai keluaran solusi pada Subbab~\ref{sec:representasi}, tampilan hasil memisahkan state awal, akhir, dan terbaik: ringkasan menampilkan skor awal/akhir/terbaik, sedangkan pemilihan state menampilkan susunan paket terkait. Visualisasi memperlihatkan paket termuat dan paket di luar (termasuk daftar paket luar), geometri truk, serta muatan dan kapasitas berat beserta jumlah paket. Grafik menampilkan skor saat ini dan skor terbaik sepanjang iterasi. Tampilan ini menyajikan state dan metrik yang tersedia; pemeriksaan kelayakan geometri dilakukan oleh validator backend, bukan oleh visualisasi. Uraian berikut belum memuat hasil pengukuran dari rancangan eksperimen.
+Pengujian mencakup empat varian HC dan SA dengan objektif Total value. Hasil setiap run meliputi skor awal, akhir, dan terbaik. Visualisasi menunjukkan susunan paket pada state akhir beserta jumlah paket dan berat muatannya. Grafik membandingkan skor dan runtime antaralgoritma.
 \subsubsection{Hill Climbing}
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l r r r r r r r@{}}
+\toprule
+Metode & Seed & Awal & Akhir & Terbaik & ms & Iterasi & kg \\
+\midrule
+Steepest-ascent & 42 & 188 & 208 & 208 & 403 & 2 & 100 \\
+Steepest-ascent & 123 & 68 & 170 & 170 & 632 & 5 & 76 \\
+Steepest-ascent & 2026 & 93 & 208 & 208 & 488 & 4 & 100 \\
+Stochastic & 42 & 188 & 208 & 208 & 370 & 2 & 100 \\
+Stochastic & 123 & 68 & 170 & 170 & 653 & 5 & 76 \\
+Stochastic & 2026 & 93 & 170 & 170 & 607 & 5 & 76 \\
+Sideways & 42 & 188 & 208 & 208 & 16530 & 102 & 100 \\
+Sideways & 123 & 68 & 208 & 208 & 16996 & 108 & 100 \\
+Sideways & 2026 & 93 & 208 & 208 & 16100 & 104 & 100 \\
+Random-restart & 42 & 188 & 190 & 208 & 5064 & 49 & 96 \\
+Random-restart & 123 & 68 & 190 & 208 & 4135 & 42 & 91 \\
+Random-restart & 2026 & 93 & 208 & 208 & 4794 & 42 & 100 \\
+\bottomrule
+\end{tabular}
+\caption{Hasil pengukuran manual 12 run HC. Kolom kg adalah berat muatan akhir; seluruh run berakhir dengan tujuh paket termuat.}
+\label{tab:hasil-hc}
+\end{table}
+
+Steepest-ascent dan stochastic berhenti dengan alasan \textit{Local optimum} pada seluruh seed. Steepest-ascent menghasilkan skor akhir 208, 170, dan 208, sedangkan stochastic menghasilkan 208, 170, dan 170. Status tersebut berarti tidak ditemukan peningkatan pada kandidat yang diperiksa saat penghentian, sehingga tidak membuktikan optimum global.
+
+Sideways mencapai skor akhir 208 pada ketiga seed dan berhenti karena \textit{Max sideways}. Jumlah iterasi aktual 102, 108, dan 104 lebih kecil daripada batas 2.000 iterasi. Ringkasan UI mencatat jumlah sideways total 100, 101, dan 100; angka total ini perlu dibedakan dari batas 100 sideways berturut-turut pada konfigurasi.
+
+Random-restart menjalankan 10 restart dan berhenti karena \textit{Max restarts}. Skor terbaik selalu 208, tetapi skor akhir pada seed 42 dan 123 adalah 190. Selisih tersebut menunjukkan perlunya membedakan solusi terakhir dengan solusi terbaik sepanjang seluruh climb. Pada dua run tersebut berat muatan akhir masing-masing 96 kg dan 91 kg, meskipun nilai akhir sama. Ketiga seed tetap memuat tujuh paket pada state akhir.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/RR42.png}
+\caption{Random-restart seed 42: skor akhir 190, skor terbaik 208, 49 iterasi, dan 10 restart. Pilihan Final menampilkan muatan akhir 96 kg.}
+\label{fig:rr-manual}
+\end{figure}
+
 \subsubsection{Simulated Annealing}
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l r r r r r r r@{}}
+\toprule
+Metode & Seed & Awal & Akhir & Terbaik & ms & Iterasi & kg \\
+\midrule
+SA & 42 & 188 & 208 & 208 & 889 & 856 & 100 \\
+SA & 123 & 68 & 208 & 208 & 2014 & 2057 & 100 \\
+SA & 2026 & 93 & 208 & 208 & 1998 & 2057 & 100 \\
+\bottomrule
+\end{tabular}
+\caption{Hasil pengukuran manual tiga run SA. Seluruh state akhir memuat tujuh paket.}
+\label{tab:hasil-sa}
+\end{table}
+
+SA mencapai skor akhir dan terbaik 208 pada seluruh seed. Seed 42 berhenti karena \textit{No valid neighbor} setelah 856 iterasi, dengan suhu akhir yang ditampilkan 0,41. Seed 123 dan 2026 berhenti karena \textit{Temperature minimum} setelah 2.057 iterasi, dengan suhu akhir ditampilkan 0,001. Jumlah \textit{stuck events} masing-masing adalah 2, 2, dan 3; metrik ini bukan jumlah iterasi stagnasi berturut-turut. Penghentian aktual pada ketiga run terjadi sebelum batas 5.000 iterasi.
+
+Konfigurasi SA menggunakan $T_0=30$, $\alpha=0{,}995$, $T_{\min}=0{,}001$, dan ambang stagnasi 50.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/SA42.png}
+\caption{SA seed 42: pengaturan parameter, state akhir, skor awal/akhir/terbaik, runtime, dan alasan penghentian.}
+\label{fig:sa-manual}
+\end{figure}
+
 \subsubsection{Genetic Algorithm}
-Subbagian ini dan tabel berikut memuat konfigurasi yang direncanakan, bukan hasil pengukuran.
+Hasil 18 run GA belum tersedia. Subbagian ini dan tabel berikut memuat konfigurasi yang direncanakan; perbandingan hasil GA dengan HC dan SA belum dapat dilakukan.
 \begin{table}[H]
     \centering
     \small
@@ -662,13 +722,55 @@ Subbagian ini dan tabel berikut memuat konfigurasi yang direncanakan, bukan hasi
 
 \subsection{Analisis Eksperimen}
 
+Seluruh ringkasan dihitung dari tiga seed per metode. Simpangan baku yang digunakan adalah simpangan baku populasi deskriptif, $\sigma=\sqrt{\sum_{i=1}^{3}(x_i-\bar{x})^2/3}$. Jumlah pengulangan ini terbatas dan tidak digunakan untuk menyatakan signifikansi statistik.
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l r r r r r@{}}
+\toprule
+Metode & $\bar f_{akhir}$ & $\sigma_{akhir}$ & $\bar f_{terbaik}$ & $\bar t$ (s) & $\bar I$ \\
+\midrule
+Steepest-ascent & 195.33 & 17.91 & 195.33 & 0.508 & 3.67 \\
+Stochastic & 182.67 & 17.91 & 182.67 & 0.543 & 4.00 \\
+Sideways & 208.00 & 0.00 & 208.00 & 16.542 & 104.67 \\
+Random-restart & 196.00 & 8.49 & 208.00 & 4.664 & 44.33 \\
+SA & 208.00 & 0.00 & 208.00 & 1.634 & 1656.67 \\
+\bottomrule
+\end{tabular}
+\caption{Ringkasan deskriptif tiga seed per metode: rata-rata skor akhir, simpangan baku populasi skor akhir, rata-rata skor terbaik, runtime, dan iterasi aktual.}
+\label{tab:ringkasan-manual}
+\end{table}
+
 \subsubsection{Perbandingan Kualitas Solusi}
+Sideways dan SA memiliki rata-rata skor akhir tertinggi, yaitu 208. Steepest-ascent memiliki rata-rata 195,33, random-restart 196,00, dan stochastic 182,67. Jika yang dibandingkan adalah skor terbaik sepanjang pencarian, random-restart juga mencapai 208 pada seluruh seed. Selisih rata-rata skor terbaik dan akhir random-restart sebesar 12 poin berasal dari dua run yang berakhir pada skor 190.
+
+Skor maksimum teramati 208 setara dengan 74,29\% dari jumlah nilai seluruh paket (280). Angka 280 adalah batas atas longgar yang mengabaikan kapasitas dan geometri, sehingga rasio tersebut tidak boleh ditafsirkan sebagai rasio terhadap optimum yang terbukti. Jumlah paket akhir sama-sama tujuh pada seluruh run, tetapi nilai dan berat akhir berbeda; jumlah paket saja tidak cukup untuk membandingkan kualitas objektif Total value.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/perbandingan-skor.pdf}
+\caption{Perbandingan rata-rata skor akhir dan terbaik berdasarkan tiga seed. Grafik ini merupakan agregasi hasil akhir, bukan grafik lintasan per iterasi.}
+\label{fig:skor-manual}
+\end{figure}
 
 \subsubsection{Perbandingan Durasi Pencarian}
+Rata-rata runtime steepest-ascent dan stochastic masing-masing 0,508 detik dan 0,543 detik. SA membutuhkan rata-rata 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Sideways mencapai skor akhir 208 pada semua seed, tetapi membutuhkan waktu lebih lama daripada SA pada pengukuran ini.
+
+Jumlah iterasi antaralgoritma tidak langsung menunjukkan biaya komputasi yang setara. HC menggunakan hingga 50 kandidat per iterasi pada konfigurasi pengujian, sedangkan satu langkah SA memiliki mekanisme sampling yang berbeda. Dengan demikian, 2.057 iterasi SA tidak otomatis lebih mahal daripada sekitar 100 iterasi sideways. Durasi yang dibandingkan adalah waktu komputasi aplikasi untuk inisialisasi dan pencarian.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/perbandingan-durasi.pdf}
+\caption{Runtime tercatat untuk setiap seed dan metode, dikonversi dari milidetik ke detik.}
+\label{fig:durasi-manual}
+\end{figure}
 
 \subsubsection{Konsistensi Hasil Eksperimen}
+Skor awal pada seed 42, 123, dan 2026 adalah 188, 68, dan 93 untuk seluruh metode yang diuji. Dengan skor awal yang sama pada setiap seed, perbedaan peningkatan skor dapat dibandingkan antaralgoritma. Kesamaan skor awal tidak dengan sendirinya menunjukkan kesamaan susunan paket.
+
+Sideways dan SA memiliki simpangan baku skor akhir nol pada tiga seed ini. Steepest-ascent dan stochastic memiliki simpangan baku 17,91, sedangkan random-restart memiliki simpangan baku skor akhir 8,49. Jika yang dinilai skor terbaik, random-restart juga memiliki simpangan baku nol. Hasil tersebut menunjukkan konsistensi pada sampel yang diamati dan tidak menjamin perilaku yang sama untuk seed atau dataset lain.
 
 \subsubsection{Pengaruh Parameter Genetic Algorithm}
+Pengaruh variasi generasi dan populasi belum dapat dianalisis karena hasil 18 run GA belum tersedia. Tabel konfigurasi GA tetap menjadi acuan pengujian lanjutan. Analisis perlu membedakan kelompok variasi generasi dan variasi populasi, termasuk konfigurasi populasi 50 dan generasi 100 yang muncul di kedua kelompok.
 
 \clearpage
 \section{Kesimpulan dan Saran}
@@ -712,5 +814,88 @@ Tim Pengajar IF3170 Inteligensi Artifisial, ``Beyond Classical Search,'' lecture
 % Jangan membuat pernyataan, persetujuan, atau tanda tangan atas nama anggota.
 
 \section{Lampiran Lainnya (Bila Ada)}
+
+
+\clearpage
+\section{Bukti Pengujian Manual}
+Tangkapan layar berikut memperlihatkan state akhir, skor objektif, runtime, dan jumlah iterasi setiap run, melengkapi Gambar~\ref{fig:rr-manual} dan Gambar~\ref{fig:sa-manual}.
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/steep42.png}
+\caption{Bukti Steepest-ascent seed 42: skor akhir 208, skor terbaik 208, runtime 403 ms, dan 2 iterasi.}
+\label{fig:bukti-HC-STEEP-S42}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/steep123.png}
+\caption{Bukti Steepest-ascent seed 123: skor akhir 170, skor terbaik 170, runtime 632 ms, dan 5 iterasi.}
+\label{fig:bukti-HC-STEEP-S123}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/steep2026.png}
+\caption{Bukti Steepest-ascent seed 2026: skor akhir 208, skor terbaik 208, runtime 488 ms, dan 4 iterasi.}
+\label{fig:bukti-HC-STEEP-S2026}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/stochastic42.png}
+\caption{Bukti Stochastic seed 42: skor akhir 208, skor terbaik 208, runtime 370 ms, dan 2 iterasi.}
+\label{fig:bukti-HC-STOCH-S42}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/stochastic123.png}
+\caption{Bukti Stochastic seed 123: skor akhir 170, skor terbaik 170, runtime 653 ms, dan 5 iterasi.}
+\label{fig:bukti-HC-STOCH-S123}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/stochastic2026.png}
+\caption{Bukti Stochastic seed 2026: skor akhir 170, skor terbaik 170, runtime 607 ms, dan 5 iterasi.}
+\label{fig:bukti-HC-STOCH-S2026}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/sideways42.png}
+\caption{Bukti Sideways seed 42: skor akhir 208, skor terbaik 208, runtime 16530 ms, dan 102 iterasi.}
+\label{fig:bukti-HC-SIDE-S42}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/sideways123.png}
+\caption{Bukti Sideways seed 123: skor akhir 208, skor terbaik 208, runtime 16996 ms, dan 108 iterasi.}
+\label{fig:bukti-HC-SIDE-S123}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/sideways2026.png}
+\caption{Bukti Sideways seed 2026: skor akhir 208, skor terbaik 208, runtime 16100 ms, dan 104 iterasi.}
+\label{fig:bukti-HC-SIDE-S2026}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/RR123.png}
+\caption{Bukti Random-restart seed 123: skor akhir 190, skor terbaik 208, runtime 4135 ms, dan 42 iterasi.}
+\label{fig:bukti-HC-RESTART-S123}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/RR2026.png}
+\caption{Bukti Random-restart seed 2026: skor akhir 208, skor terbaik 208, runtime 4794 ms, dan 42 iterasi.}
+\label{fig:bukti-HC-RESTART-S2026}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/SA123.png}
+\caption{Bukti SA seed 123: skor akhir 208, skor terbaik 208, runtime 2014 ms, dan 2057 iterasi.}
+\label{fig:bukti-SA-S123}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{hasil-test/SA2026.png}
+\caption{Bukti SA seed 2026: skor akhir 208, skor terbaik 208, runtime 1998 ms, dan 2057 iterasi.}
+\label{fig:bukti-SA-S2026}
+\end{figure}
 
 \end{document}

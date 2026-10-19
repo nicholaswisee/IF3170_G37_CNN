@@ -48,5 +48,6 @@ docs/**/*.xdv
 docs/**/*.dvi
 
 # Browser and runtime artifacts
+/data/configs/
 .playwright-mcp/
 *.log

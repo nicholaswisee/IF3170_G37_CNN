@@ -1,0 +1,16 @@
+id,method,seed,initial,final,best,runtime_ms,iterations,loaded,weight,reason,stuck,screenshot
+HC-STEEP-S42,Steepest-ascent,42,188,208,208,403,2,7,100,Local optimum,,steep42.png
+HC-STEEP-S123,Steepest-ascent,123,68,170,170,632,5,7,76,Local optimum,,steep123.png
+HC-STEEP-S2026,Steepest-ascent,2026,93,208,208,488,4,7,100,Local optimum,,steep2026.png
+HC-STOCH-S42,Stochastic,42,188,208,208,370,2,7,100,Local optimum,,stochastic42.png
+HC-STOCH-S123,Stochastic,123,68,170,170,653,5,7,76,Local optimum,,stochastic123.png
+HC-STOCH-S2026,Stochastic,2026,93,170,170,607,5,7,76,Local optimum,,stochastic2026.png
+HC-SIDE-S42,Sideways,42,188,208,208,16530,102,7,100,Max sideways,,sideways42.png
+HC-SIDE-S123,Sideways,123,68,208,208,16996,108,7,100,Max sideways,,sideways123.png
+HC-SIDE-S2026,Sideways,2026,93,208,208,16100,104,7,100,Max sideways,,sideways2026.png
+HC-RESTART-S42,Random-restart,42,188,190,208,5064,49,7,96,Max restarts,,RR42.png
+HC-RESTART-S123,Random-restart,123,68,190,208,4135,42,7,91,Max restarts,,RR123.png
+HC-RESTART-S2026,Random-restart,2026,93,208,208,4794,42,7,100,Max restarts,,RR2026.png
+SA-S42,SA,42,188,208,208,889,856,7,100,No valid neighbor,2,SA42.png
+SA-S123,SA,123,68,208,208,2014,2057,7,100,Temperature minimum,2,SA123.png
+SA-S2026,SA,2026,93,208,208,1998,2057,7,100,Temperature minimum,3,SA2026.png
