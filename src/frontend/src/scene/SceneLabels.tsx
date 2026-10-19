@@ -14,11 +14,18 @@ import type { SceneTag } from './sceneTags'
  * anything nearer the camera draws over the hole and covers the label pixel by
  * pixel. Glass walls in front tint the label; objects behind never cover it.
  * Pointer events reach the holes through the normal scene picking.
+ *
+ * The hole slides toward the camera along the anchor's sight line by the
+ * label's reach, so the label reads as standing in front of its own truck or
+ * Dock instead of cutting through the boxes inside it. Sliding along the sight
+ * line keeps its screen position unchanged.
  */
 
 export interface SceneLabel {
   key: string
   anchor: Vec3
+  /** World distance from the anchor to the far edge of what the label names; nothing within it covers the label. */
+  reach: number
   tag: SceneTag
   title: string
   detail: string
@@ -55,6 +62,13 @@ const holeFragmentShader = /* glsl */ `
 
 const anchorPoint = new Vector3()
 const viewPoint = new Vector3()
+const holePoint = new Vector3()
+const cameraPoint = new Vector3()
+
+// The camera flight and the damped orbit controls run at -1, so labels and holes
+// follow this frame's camera, not the last. Priorities above zero would take over
+// rendering, which is why the camera moves earlier instead of the labels later.
+const LABEL_FRAME_PRIORITY = 0
 
 /** The depth holes, rendered inside the Canvas. Positions the DOM labels every frame. */
 export function LabelHoles({ labels, elements }: { labels: SceneLabel[]; elements: RefObject<Map<string, HTMLElement>> }) {
@@ -62,6 +76,9 @@ export function LabelHoles({ labels, elements }: { labels: SceneLabel[]; element
 
   useFrame(({ camera, size }) => {
     const perspective = camera as PerspectiveCamera
+    // The renderer refreshes the view matrix only when it draws, which is after this callback.
+    camera.updateMatrixWorld()
+    cameraPoint.setFromMatrixPosition(camera.matrixWorld)
     const halfFov = MathUtils.degToRad(perspective.fov) / 2
     for (const label of labels) {
       const element = elements.current.get(label.key)
@@ -74,6 +91,9 @@ export function LabelHoles({ labels, elements }: { labels: SceneLabel[]; element
         mesh.visible = false
         continue
       }
+      const holeDepth = Math.max(depth - label.reach, camera.near * 2)
+      holePoint.copy(anchorPoint).sub(cameraPoint).multiplyScalar(holeDepth / depth).add(cameraPoint)
+
       anchorPoint.project(camera)
       const x = ((anchorPoint.x + 1) / 2) * size.width
       const y = ((1 - anchorPoint.y) / 2) * size.height
@@ -82,15 +102,15 @@ export function LabelHoles({ labels, elements }: { labels: SceneLabel[]; element
 
       const width = element.offsetWidth
       const height = element.offsetHeight
-      const worldPerPixel = (2 * depth * Math.tan(halfFov)) / size.height
+      const worldPerPixel = (2 * holeDepth * Math.tan(halfFov)) / size.height
       mesh.visible = true
-      mesh.position.set(label.anchor[0], label.anchor[1], label.anchor[2])
+      mesh.position.copy(holePoint)
       mesh.quaternion.copy(camera.quaternion)
       mesh.scale.set(Math.max(width, 1) * worldPerPixel, Math.max(height, 1) * worldPerPixel, 1)
       const uniforms = (mesh.material as ShaderMaterial).uniforms
       uniforms.uSize.value.set(width, height)
     }
-  })
+  }, LABEL_FRAME_PRIORITY)
 
   return (
     <>

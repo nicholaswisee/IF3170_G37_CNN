@@ -227,6 +227,8 @@ export function FleetScene(props: FleetSceneProps) {
       return {
         key: `truck:${truck.id}`,
         anchor: [offset + truck.width / 2, truck.height + 1.4, truck.length / 2],
+        // Farthest corner of the truck from the anchor, so its own cargo never cuts into the label.
+        reach: Math.hypot(truck.width / 2, truck.length / 2, truck.height + 1.4),
         tag: { kind: 'truck', id: truck.id },
         title: truck.id,
         detail: `${formatWhole(load.weight)} of ${formatWhole(truck.max_capacity)} kg, ${load.count} loaded`,
@@ -239,6 +241,8 @@ export function FleetScene(props: FleetSceneProps) {
     return [...truckLabels, {
       key: 'dock',
       anchor: [dock.originX + dock.width / 2, 0.6, dock.originZ + dock.depth + 1.6],
+      // Reaches the front corners of the pad, which keeps the label above the pad and the floor.
+      reach: Math.hypot(dock.width / 2, 1.6, 0.6),
       tag: { kind: 'dock' },
       title: 'Dock',
       detail: `${outsidePackages(problem, state).length} outside the fleet`,

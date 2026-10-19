@@ -179,7 +179,8 @@ export function CameraRig({ layout, trucks, lockedTruckId, preset, viewShift, co
       current.done?.()
       orbit.update()
     }
-  })
+    // Same priority as the drei controls update, ahead of the labels at 0 (see SceneLabels.tsx).
+  }, -1)
 
   return <OrbitControls ref={controls} makeDefault enableDamping dampingFactor={0.08} screenSpacePanning={false} />
 }
