@@ -1,123 +1,130 @@
 # mejirowise
 
-Truck-loading optimization for IF3170 Artificial Intelligence, Assignment 1, with a 3D result viewer.
-Backend: Python 3.12, FastAPI, Pydantic, and NumPy. Frontend: React, TypeScript, Vite,
-Three.js (React Three F, Zustand, and Recharts.
+Truck-loading optimization for IF3170 Artificial Intelligence, with a 3D result viewer.
 
-## Current status
+<div align="center">
+  <h3>Tech Stacks</h3>
 
-- Genetic Algorithm, Simulated Annealing, and Hill Climbing (steepest ascent, stochastic,
-  sideways, and random restart) run through the API for single or multiple trucks.
-- Batch execution supports the 18-run GA preset, per-configuration statistics, and JSON/CSV output.
-  It is available through the API only; the UI has no batch screen.
-- The UI provides controls for all three algorithms and the Hill Climbing variants, objective
-  charts, result comparison, and manual snapshot replay (Previous/Next).
-- Automatic replay is still pending: the Play/Pause buttons and playback speed selector exist,
-  but nothing advances the iterations on a timer yet.
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-E92063?style=for-the-badge&logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
+[![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)](https://numpy.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vite.dev/)
+[![Three.js](https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=threedotjs&logoColor=white)](https://threejs.org/)
+[![React Three Fiber](https://img.shields.io/badge/React_Three_Fiber-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://r3f.docs.pmnd.rs/)
+[![Recharts](https://img.shields.io/badge/Recharts-22B5BF?style=for-the-badge)](https://recharts.org/)
+[![Zustand](https://img.shields.io/badge/Zustand-443E38?style=for-the-badge)](https://zustand.docs.pmnd.rs/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+
+</div>
+
+## Project structure
+
+```text
+.
+├── src/
+│   ├── backend/
+│   │   ├── app/
+│   │   │   ├── api/            HTTP routes, request limits, and error responses
+│   │   │   ├── domain/         Package, truck, problem, state, and move models
+│   │   │   ├── experiments/    Run execution, presets, metrics, and result recording
+│   │   │   ├── optimization/   Constraints, initialization, neighbors, and scoring
+│   │   │   │   └── algorithms/ Optimization algorithm implementations
+│   │   │   └── schemas/        API request and response validation
+│   │   └── tests/              Backend tests and contract fixtures
+│   └── frontend/
+│       └── src/
+│           ├── api/            Backend client, requests, and validation
+│           ├── charts/         Experiment charts and chart data
+│           ├── copy/           Display text formatting
+│           ├── mocks/          Sample fleet data
+│           ├── modals/         Help, problem editor, and saved-run dialogs
+│           ├── panels/         Setup and results panels
+│           ├── scene/          3D trucks, packages, camera, and scene labels
+│           ├── shell/          Navigation, playback, and viewer controls
+│           ├── stores/         Shared replay state
+│           ├── styles/         Stylesheets and design tokens
+│           ├── testing/        Shared test fixtures
+│           ├── types/          Shared TypeScript types
+│           ├── ui/             Reusable interface components
+│           └── viewer/         Geometry, result normalization, and scene models
+├── data/                       Input data
+└── output/                     Saved experiment JSON and batch JSON/CSV
+```
 
 ## Local development
 
-Start commands from the repository root. Choose one setup; do not run both on the same ports.
-The default setup does not require a database or `.env` file.
-
-| Service                       | URL                                |
-| ----------------------------- | ---------------------------------- |
-| Frontend                      | <http://localhost:5173>            |
-| Backend health check          | <http://localhost:8000/api/health> |
-| Interactive API documentation | <http://localhost:8000/docs>       |
+Choose Docker or a local setup below. Start from the repository root.
+Open <http://localhost:5173> when both servers are running. Stop with `Ctrl+C`.
 
 ### With Docker
 
-Install Docker Desktop, or Docker Engine with the Compose plugin. Make sure Docker is running.
-
-First run:
+Install and start Docker Desktop (or Docker Engine with the Compose plugin), then run:
 
 ```bash
 docker compose up --build
 ```
 
-Compose installs dependencies and starts both servers with reload enabled. Source, `data/`,
-and `output/` are mounted from the host; Python and Node.js are not required on the host.
-
-Subsequent runs:
-
-```bash
-docker compose up
-```
-
-Stop with `Ctrl+C`, then remove the containers with `docker compose down`. Saved results remain
-in the host's `output/` directory.
-
-After changing dependencies, rebuild and refresh the frontend dependency volume:
+This starts both servers with live reload. No local Python or Node.js installation is needed.
+Use `docker compose up` for later runs, or the following after dependency changes:
 
 ```bash
 docker compose up --build --renew-anon-volumes
 ```
 
+Remove containers with `docker compose down`. Saved results stay in `output/`.
+
 ### Without Docker
 
-Requirements: Python **3.12** with `venv` and pip, plus Node.js **22.12+** (or **20.19+**) with npm.
-Python 3.13+ is not supported by the backend configuration.
+Install Python **3.12** (with `venv` and pip) and Node.js **22.12+** (or **20.19+**) with npm.
 
-#### One-time setup
+#### macOS / Linux
 
-Linux/macOS:
-
-```bash
-python3.12 -m venv src/backend/.venv
-src/backend/.venv/bin/python -m pip install -e "./src/backend[dev]"
-npm --prefix src/frontend ci
-```
-
-Windows PowerShell:
-
-```powershell
-py -3.12 -m venv src/backend/.venv
-.\src\backend\.venv\Scripts\python.exe -m pip install -e "./src/backend[dev]"
-npm --prefix src/frontend ci
-```
-
-Keep the venv for later sessions. Repeat the install commands when `pyproject.toml` or
-`package-lock.json` changes.
-
-#### Terminal 1: backend
-
-Linux/macOS:
+**Terminal 1 — backend:**
 
 ```bash
 cd src/backend
-OUTPUT_DIR=../../output DATA_DIR=../../data .venv/bin/python -m uvicorn app.main:app --reload --port 8000
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
-Windows PowerShell:
-
-```powershell
-cd src/backend
-$env:OUTPUT_DIR = "../../output"
-$env:DATA_DIR = "../../data"
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
-```
-
-The directory variables replace Docker's `/workspace/...` defaults. Commands use the venv's
-interpreter directly, so activation is optional.
-
-#### Terminal 2: frontend
-
-Open a new terminal at the repository root:
+**Terminal 2 — frontend** (from the repository root):
 
 ```bash
 cd src/frontend
+npm ci
 npm run dev -- --port 5173 --strictPort
 ```
 
-Open <http://localhost:5173> once both servers are running. Stop each with `Ctrl+C`.
-`--strictPort` reports an occupied port instead of silently switching to another one.
+#### Windows (PowerShell)
 
-For different local addresses, set `VITE_API_URL` when starting Vite and `FRONTEND_ORIGIN` when
-starting Uvicorn. With Docker, change the corresponding environment values and port mappings
-in `docker-compose.yml`.
+**Terminal 1 — backend:**
 
-## Development checks
+```powershell
+cd src/backend
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+python -m uvicorn app.main:app --reload --port 8000
+```
+
+**Terminal 2 — frontend** (from the repository root):
+
+```powershell
+cd src/frontend
+npm ci
+npm run dev -- --port 5173 --strictPort
+```
+
+For later runs, skip venv creation and dependency installation unless dependencies changed.
+If PowerShell blocks activation, use `.\.venv\Scripts\python.exe` instead of `python`
+and skip the activation command.
+
+## Dev Checks
 
 Without Docker, from `src/backend` (use `.\.venv\Scripts\python.exe` on Windows):
 
@@ -143,37 +150,6 @@ docker compose exec backend python -m pytest
 docker compose exec frontend npm test
 ```
 
-## API and saved results
-
-| Method | Endpoint | Purpose |
-| ------ | -------- | ------- |
-| GET | `/api/health` | Backend status |
-| POST | `/api/problems/validate` | Validate a problem definition |
-| GET | `/api/experiments` | Saved individual results |
-| POST | `/api/experiments/run` | Run GA, Simulated Annealing, or Hill Climbing (any variant) |
-| GET | `/api/experiments/presets/genetic_algorithm` | List the 18 GA preset specifications |
-| POST | `/api/experiments/batch` | Execute explicit runs or the `ga_mandatory` preset |
-
-Use `/docs` to inspect request bodies. `persist` defaults to `true` for direct API calls, which
-saves individual results under `output/experiments/` and batch JSON/CSV under `output/batches/`;
-send `persist: false` to skip saving. UI runs send `persist: false` and remain available only
-during the current page session.
-
-## Deployment
-
-The backend runs on Render's free plan and the frontend on Cloudflare Pages, both from this
-repository.
-
-Backend (Render): create a Blueprint from this repository. `render.yaml` builds
-`src/backend/Dockerfile` without dev dependencies or reload. Set `FRONTEND_ORIGIN` to the
-deployed frontend URL without a trailing slash. Free services sleep after 15 idle minutes and
-take about a minute to wake. Saved results under `OUTPUT_DIR` are lost on restart.
-
-Frontend (Cloudflare Pages): connect this repository with root directory `src/frontend`, build
-command `npm run build`, and output directory `dist`. Set the build variables
-`VITE_API_URL=https://<backend>.onrender.com` and `NODE_VERSION=22`. `VITE_API_URL` is embedded
-at build time, so redeploy the frontend after changing it.
-
 ## Team
 
 | Student ID | Name                            | Main responsibilities                                                                  |
@@ -181,13 +157,3 @@ at build time, so redeploy the frontend after changing it.
 | 13524001   | Samuelson Dharmawan Tanuraharja | Hill Climbing, shared neighbor operations, and 3D visualization.                       |
 | 13524037   | Nicholas Wise Saragih Sumbayak  | Shared domain models, Genetic Algorithm, and experiment results/statistics.            |
 | 13524136   | Neswa Eka Anggara               | Simulated Annealing, constraint validation, objective evaluation, and API integration. |
-
-## Repository structure
-
-```text
-src/backend/    FastAPI, domain models, validation, and optimization modules
-src/frontend/   React application, API client, replay store, 3D scene, and charts
-data/           Reserved for input data (currently empty; not read by the code)
-output/         Saved experiment JSON and batch JSON/CSV
-docs/           Report (LaTeX source and PDF), slides, and figures
-```
