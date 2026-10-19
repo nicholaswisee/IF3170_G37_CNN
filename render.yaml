@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: mejirowise-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./src/backend/Dockerfile
+    dockerContext: ./src/backend
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: OUTPUT_DIR
+        value: /tmp/output
+      - key: DATA_DIR
+        value: /tmp/data
+      # Deployed frontend URL without a trailing slash, e.g. https://mejirowise.pages.dev
+      - key: FRONTEND_ORIGIN
+        sync: false

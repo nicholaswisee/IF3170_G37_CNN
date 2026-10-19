@@ -2,14 +2,18 @@
 
 Truck-loading optimization for IF3170 Artificial Intelligence, Assignment 1, with a 3D result viewer.
 Backend: Python 3.12, FastAPI, Pydantic, and NumPy. Frontend: React, TypeScript, Vite,
-React Three Fiber, and Recharts.
+Three.js (React Three F, Zustand, and Recharts.
 
 ## Current status
 
-- Genetic Algorithm and Sideways Hill Climbing run through the API for single or multiple trucks.
+- Genetic Algorithm, Simulated Annealing, and Hill Climbing (steepest ascent, stochastic,
+  sideways, and random restart) run through the API for single or multiple trucks.
 - Batch execution supports the 18-run GA preset, per-configuration statistics, and JSON/CSV output.
-- The UI provides GA controls, max/mean charts, result comparison, and manual snapshot replay.
-- Simulated Annealing, other HC variants, and automatic replay are still pending.
+  It is available through the API only; the UI has no batch screen.
+- The UI provides controls for all three algorithms and the Hill Climbing variants, objective
+  charts, result comparison, and manual snapshot replay (Previous/Next).
+- Automatic replay is still pending: the Play/Pause buttons and playback speed selector exist,
+  but nothing advances the iterations on a timer yet.
 
 ## Local development
 
@@ -144,14 +148,31 @@ docker compose exec frontend npm test
 | Method | Endpoint | Purpose |
 | ------ | -------- | ------- |
 | GET | `/api/health` | Backend status |
+| POST | `/api/problems/validate` | Validate a problem definition |
 | GET | `/api/experiments` | Saved individual results |
-| POST | `/api/experiments/run` | Run GA or Sideways HC |
+| POST | `/api/experiments/run` | Run GA, Simulated Annealing, or Hill Climbing (any variant) |
 | GET | `/api/experiments/presets/genetic_algorithm` | List the 18 GA preset specifications |
 | POST | `/api/experiments/batch` | Execute explicit runs or the `ga_mandatory` preset |
 
-Use `/docs` to inspect request bodies. Set `persist: true` to save individual results under
-`output/experiments/` and batch JSON/CSV under `output/batches/`. UI runs use `persist: false` by
-default and remain available only during the current page session.
+Use `/docs` to inspect request bodies. `persist` defaults to `true` for direct API calls, which
+saves individual results under `output/experiments/` and batch JSON/CSV under `output/batches/`;
+send `persist: false` to skip saving. UI runs send `persist: false` and remain available only
+during the current page session.
+
+## Deployment
+
+The backend runs on Render's free plan and the frontend on Cloudflare Pages, both from this
+repository.
+
+Backend (Render): create a Blueprint from this repository. `render.yaml` builds
+`src/backend/Dockerfile` without dev dependencies or reload. Set `FRONTEND_ORIGIN` to the
+deployed frontend URL without a trailing slash. Free services sleep after 15 idle minutes and
+take about a minute to wake. Saved results under `OUTPUT_DIR` are lost on restart.
+
+Frontend (Cloudflare Pages): connect this repository with root directory `src/frontend`, build
+command `npm run build`, and output directory `dist`. Set the build variables
+`VITE_API_URL=https://<backend>.onrender.com` and `NODE_VERSION=22`. `VITE_API_URL` is embedded
+at build time, so redeploy the frontend after changing it.
 
 ## Team
 
@@ -166,6 +187,7 @@ default and remain available only during the current page session.
 ```text
 src/backend/    FastAPI, domain models, validation, and optimization modules
 src/frontend/   React application, API client, replay store, 3D scene, and charts
-data/           Input data
+data/           Reserved for input data (currently empty; not read by the code)
 output/         Saved experiment JSON and batch JSON/CSV
+docs/           Report (LaTeX source and PDF), slides, and figures
 ```
