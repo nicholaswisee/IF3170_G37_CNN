@@ -109,8 +109,68 @@ Keputusan pemilihan dan penempatan saling berkaitan. Memuat suatu paket menguran
 \subsection{Rumusan Persoalan dan Tujuan}
 Persoalan menerima paket berbentuk balok atau kubus serta peti kemas dengan ukuran dan kapasitas angkut tertentu. Setiap paket dapat dipilih untuk dimuat atau dibiarkan di luar, dan paket yang dimuat perlu ditempatkan dengan posisi serta orientasi yang sesuai. Tujuannya adalah memperoleh susunan yang memenuhi batas ruang, kapasitas berat, dan aturan penopang, dengan total nilai paket termuat sebesar mungkin \cite{spesifikasi}.
 
-\subsection{Ruang Lingkup Persoalan}
-Posisi paket dinyatakan dengan koordinat bilangan bulat dalam ruang tiga dimensi, dan orientasinya dapat diubah melalui rotasi $90^\circ$ terhadap sumbu ruang. Setiap paket yang dimuat harus berada sepenuhnya di dalam peti kemas dan tidak bertumpang tindih dengan paket lain. Paket ditopang oleh lantai atau paket lain, tetapi paket rapuh tidak boleh menjadi penopang. Jumlah berat paket yang dimuat tidak boleh melebihi kapasitas truk, sedangkan paket yang tidak dimuat berada sepenuhnya di luar peti kemas \cite{spesifikasi}.
+\subsection{Entitas dan Atribut}\label{sec:entitas}
+Masukan persoalan terdiri atas paket dan sebuah truk. Tabel~\ref{tab:entitas-atribut} merangkum atribut yang diperlukan; contoh angka hanya ilustrasi, bukan data fixture maupun hasil eksperimen.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{1.55cm}>{\raggedright\arraybackslash}p{2.4cm}>{\raggedright\arraybackslash}p{3.5cm}X@{}}
+        \toprule
+        Entitas & Atribut & Contoh & Keterangan \\
+        \midrule
+        Paket & ID & \texttt{RusdiPackage} & Identitas paket. \\
+        Paket & Dimensions & $\{w:3,l:4,h:1\}$ & Lebar $w$ (\textit{width}), panjang $l$ (\textit{length}), dan tinggi $h$ (\textit{height}) paket. \\
+        Paket & Orientation & $\{w:x,l:y,h:z\}$ & Enam pemetaan sumbu yang sejajar dengan sisi paket. Rotasi $90^\circ$ terhadap $z$ mengubah contoh menjadi $\{w:y,l:x,h:z\}$. \\
+        Paket & Value & 60 & Nilai paket dalam satuan unit. \\
+        Paket & Weight & 5 & Berat dalam satuan berat. \\
+        Paket & IsFragile & \texttt{False} & Boolean; \texttt{False} berarti tidak rapuh. \\
+        Paket & ETA & 3 & Perkiraan sisa hari hingga kedatangan (\textit{Estimated Time of Arrival}). \\
+        Truk & Dimensions & $\{w:10,l:20,h:5\}$ & Lebar $w$, panjang $l$, dan tinggi $h$ peti kemas. \\
+        Truk & MaxCapacity & 500 & Kapasitas maksimum dalam satuan berat. \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Entitas, atribut, dan contoh ilustratif persoalan.}
+    \label{tab:entitas-atribut}
+\end{table}
+
+\subsection{Ketentuan Representasi}\label{sec:representasi}
+Paket dan peti kemas berbentuk balok atau kubus dengan dimensi yang dapat berbeda. Secara konseptual, data dapat dinyatakan sebagai pasangan kunci-nilai seperti JSON, tanpa membatasi struktur data. State mencakup semua paket: paket termuat berada seluruhnya di dalam peti kemas, sedangkan yang tidak termuat berada seluruhnya di luar. Posisi dinyatakan dengan koordinat bilangan bulat tiga dimensi. Orientasi memiliki enam permutasi dimensi, yang diperoleh melalui rotasi $90^\circ$ terhadap sumbu $x$, $y$, atau $z$. State awal dibangkitkan secara acak.
+
+Langkah perubahan (\textit{move}) untuk membentuk tetangga (\textit{neighbor}) pada setiap iterasi meliputi:
+\begin{enumerate}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parsep}{0pt}
+    \item Menukar penempatan dua paket, baik keduanya di dalam, keduanya di luar, maupun satu di dalam dan satu di luar peti kemas.
+    \item Memindahkan paket ke koordinat yang berbeda.
+    \item Merotasi paket $90^\circ$ terhadap sumbu $x$, $y$, atau $z$.
+\end{enumerate}
+Representasi solusi akhir (\textit{final state}) memetakan seluruh paket ke status, posisi, dan orientasinya, serta menentukan keterisian setiap koordinat dalam peti kemas. State dan visualisasi harus menunjukkan:
+\begin{enumerate}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parsep}{0pt}
+    \item Keadaan seluruh paket, baik yang termuat maupun yang berada di luar.
+    \item Keadaan peti kemas pada truk.
+    \item Total nilai paket pada state tersebut.
+\end{enumerate}
+Ketentuan ini tidak menetapkan struktur penyimpanan tertentu untuk pemetaan tersebut \cite{spesifikasi}.
+
+\subsection{Batasan Persoalan}\label{sec:constraint-persoalan}
+Untuk paket termuat $i$, nyatakan sudut kiri-bawah-belakang sebagai $(x_i,y_i,z_i)$ dan dimensi efektif sebagai $(w_i,l_i,h_i)$. Alas setiap paket termuat adalah
+\begin{equation}
+ B_i=\{(x,y,z_i)\mid x_i\leq x<x_i+w_i,\ y_i\leq y<y_i+l_i\}.
+ \label{eq:alas-paket}
+\end{equation}
+Seluruh volume paket termuat harus berada di dalam batas truk. Paket-paket tidak boleh berbagi volume; dua paket boleh bersentuhan pada batas permukaannya. Titik alas memiliki penopang (\textit{support}) apabila $z_i=0$, yaitu berada di lantai truk, atau permukaan atas paket lain berada tepat di bawah titik tersebut. Paket disebut melayang apabila tidak ada satu pun titik alas yang memiliki penopang. Dengan demikian, dukungan parsial cukup; seluruh alas tidak harus ditopang. Paket rapuh tidak boleh menjadi penopang paket lain, dan jumlah berat paket termuat tidak boleh melebihi kapasitas truk \cite{spesifikasi}. Himpunan $\mathcal{F}$ menyatakan seluruh susunan yang memenuhi batasan tersebut.
+
+\subsection{Fungsi Objektif}\label{sec:tujuan-persoalan}
+Untuk satu truk, tujuan persoalan adalah memaksimalkan total nilai paket termuat di antara susunan yang sah:
+\begin{equation}
+ \max_{s\in\mathcal{F}} f(s),\qquad f(s)=\sum_{i\text{ termuat pada }s}\mathrm{Value}_i.
+ \label{eq:problem-objective}
+\end{equation}
+Paket di luar peti kemas tidak berkontribusi terhadap nilai tersebut. ETA merupakan atribut paket, tetapi tidak menjadi bobot pada fungsi objektif utama \cite{spesifikasi}.
 
 \begin{figure}[htbp]
     \centering
@@ -248,7 +308,7 @@ Untuk menampilkan hasil, \textbf{React Three Fiber} dan \textbf{Three.js} mengga
 Pemodelan dimulai dari data paket dan truk. Dari data itu, program membentuk state yang mencatat posisi setiap paket. State lalu melewati pemeriksaan constraint sebelum objective dihitung. Urutan ini dipakai bersama oleh seluruh algoritma, sehingga nilai yang dibandingkan selalu berasal dari \textbf{susunan yang sah}.
 
 \subsubsection{Data Problem}
-Kelas \texttt{Problem} menyimpan dua daftar: \texttt{PackageSpec} dan \texttt{TruckSpec}. Setiap paket memiliki ID, dimensi lebar, panjang, dan tinggi, kemudian \texttt{value}, \texttt{weight}, \texttt{is\_fragile}, serta \texttt{eta}. Truk menyimpan ID, tiga dimensi ruang muat, dan kapasitas maksimum. Karena daftar truk memungkinkan lebih dari satu truk, satu problem dapat memodelkan satu truk maupun armada; setiap paket ditugaskan ke paling banyak satu truk. Cuplikan~\ref{lst:package-spec} hingga~\ref{lst:problem-spec} memperlihatkan hubungan ketiga kelas tersebut.
+Sesuai atribut konseptual pada Subbab~\ref{sec:entitas}, \texttt{Problem} menyimpan daftar \texttt{PackageSpec} dan \texttt{TruckSpec}. Dimensi lebar, panjang, dan tinggi diratakan menjadi field \texttt{width}, \texttt{length}, dan \texttt{height}; \texttt{IsFragile} menjadi \texttt{is\_fragile}, dan \texttt{MaxCapacity} menjadi \texttt{max\_capacity}. Atribut \texttt{Value}, \texttt{Weight}, dan \texttt{ETA} masing-masing disimpan sebagai \texttt{value}, \texttt{weight}, dan \texttt{eta}. Truk memiliki \texttt{id} sebagai identitas implementasi tambahan. Dukungan beberapa truk merupakan perluasan dari persoalan satu truk; setiap paket ditugaskan ke paling banyak satu truk. Cuplikan~\ref{lst:package-spec} hingga~\ref{lst:problem-spec} memperlihatkan hubungan ketiga kelas tersebut.
 
 \lstinputlisting[firstline=15,lastline=25,emph={PackageSpec,Field},caption={Atribut paket pada \texttt{PackageSpec}},label={lst:package-spec}]{src/backend/app/domain/package.py}
 \lstinputlisting[firstline=6,lastline=13,emph={TruckSpec,Field},caption={Atribut truk pada \texttt{TruckSpec}},label={lst:truck-spec}]{src/backend/app/domain/truck.py}
@@ -257,14 +317,14 @@ Kelas \texttt{Problem} menyimpan dua daftar: \texttt{PackageSpec} dan \texttt{Tr
 Validasi masukan dilakukan sejak model dibuat. Dimensi harus berupa bilangan bulat positif, sedangkan nilai, berat, ETA, dan kapasitas tidak boleh negatif maupun tak hingga. \texttt{Problem} menolak ID paket atau truk yang berulang dan mensyaratkan setidaknya satu truk. Karena \texttt{trucks} berupa daftar, struktur yang sama dapat dipakai untuk satu truk maupun beberapa truk. Setelah data ini tersedia, penempatan setiap paket dicatat dalam state.
 
 \subsubsection{Representasi State dan Orientasi}
-Kelas \texttt{State} berisi daftar \texttt{PackagePlacement}. Pada state yang sah, \textbf{setiap paket memiliki tepat satu placement}. Setiap placement memuat ID paket dan truk, \texttt{Position}, serta \texttt{Orientation}. Koordinat \texttt{Position} menunjuk sudut kiri-bawah-belakang paket. Sumbu $x$ mengikuti lebar truk, $y$ mengikuti panjang, dan $z$ mengikuti tinggi. Paket di luar truk memiliki \texttt{truck\_id} dan \texttt{position} bernilai \texttt{None}; untuk paket yang dimuat, keduanya berisi identitas truk dan posisi, sesuai pemeriksaan \path{validate_assignment} pada Cuplikan~\ref{lst:placement}.
+Kelas \texttt{State} berisi daftar \texttt{PackagePlacement}, sesuai Subbab~\ref{sec:representasi}. Pada state yang sah, setiap paket memiliki tepat satu placement berisi ID paket dan truk, \texttt{Position}, serta \texttt{Orientation}. Orientasi disimpan pada placement, bukan \texttt{PackageSpec}. Posisi menunjuk sudut kiri-bawah-belakang ($x$ mengikuti lebar, $y$ panjang, $z$ tinggi). Paket di luar memiliki \texttt{truck\_id} dan \texttt{position} bernilai \texttt{None}. Posisi dan orientasi pada placement, bersama dimensi pada \texttt{PackageSpec}, menentukan pemetaan spasial; grid keterisian dibentuk saat validasi, bukan diserialisasi sebagai bagian terpisah dari \texttt{State}.
 
 \lstinputlisting[firstline=24,lastline=34,emph={PackagePlacement,validate_assignment},caption={Model penempatan paket},label={lst:placement}]{src/backend/app/domain/truck.py}
 
 Enam pilihan \texttt{Orientation} didefinisikan pada \path{app/domain/package.py}. Fungsi \path{get_oriented_dimensions} mengubah orientasi menjadi dimensi efektif $(w_i,l_i,h_i)$ tanpa mengubah dimensi asli paket. Untuk kubus atau balok dengan sisi yang sama, beberapa orientasi menghasilkan dimensi efektif identik. Fungsi \path{get_unique_orientations} menghapus pilihan duplikat tersebut saat orientasi akan diacak. State yang terbentuk kemudian diperiksa sebagai satu kesatuan, bukan per paket saja.
 
 \subsubsection{Validasi Constraint}
-Fungsi \path{validate_state} pada \path{app/optimization/constraints.py} menjadi \textbf{pemeriksa akhir setiap kandidat}. Pemeriksaan dimulai dari kelengkapan assignment. Setiap paket dalam \texttt{Problem} harus muncul sekali dalam \texttt{State}, sedangkan ID paket dan truk yang tidak dikenal ditolak. Paket yang berada di luar tidak memakai ruang maupun kapasitas truk.
+Fungsi \path{validate_state} pada \path{app/optimization/constraints.py} menjadi \textbf{pemeriksa akhir setiap kandidat} terhadap batasan Subbab~\ref{sec:constraint-persoalan}, termasuk alas $B_i$ pada Persamaan~\ref{eq:alas-paket} dan dukungan parsial. Pemeriksaan dimulai dari kelengkapan assignment. Setiap paket dalam \texttt{Problem} harus muncul sekali dalam \texttt{State}, sedangkan ID paket dan truk yang tidak dikenal ditolak. Paket yang berada di luar tidak memakai ruang maupun kapasitas truk.
 
 Validator membuat \textit{occupancy grid} (grid keterisian) NumPy bagi setiap truk. Bentuk grid mengikuti $(W_t,L_t,H_t)$, dengan sel kosong bernilai $-1$ dan sel terisi menyimpan indeks paket. Jika paket $i$ ditempatkan di truk $t$ pada $(x_i,y_i,z_i)$ dengan dimensi efektif $(w_i,l_i,h_i)$, seluruh bagian paket harus memenuhi
 \begin{equation}
@@ -348,12 +408,12 @@ for truck in problem.trucks:
 \end{lstlisting}
 
 \subsubsection{Objective Function}
-Setelah state dinyatakan sah, program menghitung nilainya melalui \texttt{ObjectiveMode} pada \path{app/optimization/objective.py}. \textbf{Mode utama}, \texttt{TOTAL\_VALUE}, menjumlahkan \texttt{value} seluruh paket yang dimuat pada armada:
+Setelah state dinyatakan sah, program menghitung nilainya melalui \texttt{ObjectiveMode} pada \path{app/optimization/objective.py}. \textbf{Mode utama}, \texttt{TOTAL\_VALUE}, mengimplementasikan fungsi objektif pada Persamaan~\ref{eq:problem-objective} di Subbab~\ref{sec:tujuan-persoalan}; agregasi seluruh armada merupakan perluasan atas rumusan konseptual satu truk:
 \begin{equation}
 f_{\mathrm{total}}(s)=\sum_{i:\,\mathrm{truck}_i\ne\mathrm{None}}\mathrm{value}_i.
 \label{eq:total-value}
 \end{equation}
-Mode tambahan, \texttt{ETA\_WEIGHTED\_VALUE}, memberi bobot lebih besar pada paket yang ETA-nya lebih dekat tanpa menambah atribut masukan:
+Mode tambahan, \texttt{ETA\_WEIGHTED\_VALUE}, memberi bobot lebih besar pada paket yang ETA-nya lebih dekat. Ini ekstensi opsional, bukan objektif konseptual utama:
 \begin{equation}
 f_{\mathrm{ETA}}(s)=\sum_{i:\,\mathrm{truck}_i\ne\mathrm{None}}
 \frac{\mathrm{value}_i}{\mathrm{eta}_i+1}.
@@ -365,7 +425,7 @@ Kontribusi setiap paket termuat dihitung oleh \path{objective_contributions}, la
 \subsubsection{Inisialisasi State dan Pembangkitan Neighbor}
 Sebelum pencarian dimulai, \path{runner.py} membuat satu \textit{random number generator} dari \textit{seed} yang diterima. Generator yang sama diteruskan ke inisialisasi dan algoritma agar run dengan input serta seed yang sama dapat diulang. Hill climbing dan simulated annealing menerima satu initial state dari \path{generate_random_feasible_state}. Genetic algorithm memakai fungsi yang sama untuk membentuk anggota populasi awal.
 
-Inisialisasi memulai semua paket di luar truk, lalu mengacak urutan paket dan tujuan penempatannya. Untuk setiap truk yang dicoba, fungsi memilih orientasi dan posisi. Koordinat $x$ dan $y$ diambil dari rentang yang masih muat, sedangkan $z$ diambil dari lantai atau permukaan atas paket lain. Kandidat baru hanya disimpan bila lolos \path{validate_state}. Paket dapat tetap di luar saat target luar terpilih atau ketika percobaan penempatan gagal. Cuplikan~\ref{lst:initial-state} menunjukkan titik awal konstruksi tersebut.
+Untuk memenuhi ketentuan state awal acak pada Subbab~\ref{sec:representasi}, inisialisasi memulai semua paket di luar truk, lalu mengacak urutan paket dan tujuan penempatannya. Untuk setiap truk yang dicoba, fungsi memilih orientasi dan posisi. Koordinat $x$ dan $y$ diambil dari rentang yang masih muat, sedangkan $z$ diambil dari lantai atau permukaan atas paket lain. Kandidat baru hanya disimpan bila lolos \path{validate_state}. Paket dapat tetap di luar saat target luar terpilih atau ketika percobaan penempatan gagal. Cuplikan~\ref{lst:initial-state} menunjukkan titik awal konstruksi tersebut.
 
 \begin{lstlisting}[emph={State,PackagePlacement,shuffle},caption={Pembentukan initial state dalam \texttt{initializer.py}},label={lst:initial-state}]
 state = State(
@@ -375,7 +435,7 @@ indices = list(range(len(problem.packages)))
 rng.shuffle(indices)
 \end{lstlisting}
 
-Setelah initial state tersedia, neighbor dibentuk lewat tiga move pada \path{neighbors.py}. \texttt{RELOCATE} memindahkan paket ke koordinat atau truk lain, termasuk ke luar truk. \texttt{ROTATE} mengubah orientasi paket termuat sambil mempertahankan titik posisinya. \texttt{SWAP} menukar tujuan truk dan posisi dua paket, sementara masing-masing mempertahankan orientasinya. Peluang pemilihan awalnya berturut-turut $0{,}50$, $0{,}25$, dan $0{,}25$. Setiap move bekerja pada salinan state agar state asal tidak berubah.
+Setelah initial state tersedia, neighbor dibentuk melalui tiga operasi pada Subbab~\ref{sec:representasi}. \texttt{RELOCATE} memindahkan paket ke koordinat lain, mengeluarkannya dari truk, atau memuatnya kembali; implementasi multi-truk juga memungkinkan transfer antartruk. \texttt{ROTATE} mengubah orientasi paket termuat sambil mempertahankan titik posisinya. \texttt{SWAP} menukar tujuan truk dan posisi dua paket, termasuk kasus satu paket di luar, sementara masing-masing mempertahankan orientasinya. Peluang pemilihan awalnya berturut-turut $0{,}50$, $0{,}25$, dan $0{,}25$. Setiap move bekerja pada salinan state agar state asal tidak berubah.
 
 Proposal move belum tentu memenuhi constraint. Untuk hill climbing dan simulated annealing, \path{generate_random_neighbor} mengulang proposal sampai menemukan state sah atau mencapai batas percobaan, seperti pada Cuplikan~\ref{lst:valid-neighbor}. Hill climbing dapat meminta beberapa neighbor berbeda melalui \path{sample_valid_neighbors}, sedangkan simulated annealing mengambil satu. Pada genetic algorithm, proposal mutasi yang belum sah boleh masuk ke tahap repair sebelum dinilai.
 
@@ -571,6 +631,7 @@ Pengarsipan melalui API memakai \texttt{POST} \path{/api/experiments/run}; persi
 
 Preset batch \path{ga_mandatory} memuat 18 run GA. Saat persistensi aktif, run individual disimpan di subdirektori \path{experiments/}, sedangkan ringkasan batch disimpan sebagai JSON dan CSV di subdirektori \path{batches/} dari direktori keluaran yang dikonfigurasi. Batch menyimpan state awal, akhir, dan terbaik tanpa snapshot per iterasi, sehingga tidak menyediakan replay spasial. UI juga dapat menyimpan run melalui opsi \textit{Save run}. Ekspor API dan salinan problem menjadi bahan pendukung bagi pencatatan manual, bukan pengganti tangkapan layar.
 \subsection{Hasil Eksperimen dan Visualisasi Program}
+Sesuai keluaran solusi pada Subbab~\ref{sec:representasi}, tampilan hasil memisahkan state awal, akhir, dan terbaik: ringkasan menampilkan skor awal/akhir/terbaik, sedangkan pemilihan state menampilkan susunan paket terkait. Visualisasi memperlihatkan paket termuat dan paket di luar (termasuk daftar paket luar), geometri truk, serta muatan dan kapasitas berat beserta jumlah paket. Grafik menampilkan skor saat ini dan skor terbaik sepanjang iterasi. Tampilan ini menyajikan state dan metrik yang tersedia; pemeriksaan kelayakan geometri dilakukan oleh validator backend, bukan oleh visualisasi. Uraian berikut belum memuat hasil pengukuran dari rancangan eksperimen.
 \subsubsection{Hill Climbing}
 \subsubsection{Simulated Annealing}
 \subsubsection{Genetic Algorithm}
