@@ -282,6 +282,8 @@
  * over the track mid slide and settles back, with no hold afterwards.
  */
 .switch {
+  display: inline-block;
+  vertical-align: middle;
   position: relative;
   flex: none;
   width: 51px;
