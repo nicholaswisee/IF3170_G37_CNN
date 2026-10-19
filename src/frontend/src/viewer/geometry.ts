@@ -20,7 +20,7 @@ export function getOrientedDimensions(pkg: PackageSpec, orientation: Orientation
 }
 
 /*
- * The only backend -> Three.js conversion in the app (Architecture Freeze §63).
+ * The only backend -> Three.js conversion in the app.
  * Backend: x = width, y = depth, z = height, anchor = left-bottom-back corner.
  * Three.js: Y is vertical and meshes are positioned by their center.
  */
@@ -42,7 +42,7 @@ export function truckToThree(truck: TruckSpec, offsetX = 0): { size: Vec3; cente
 }
 
 /*
- * Fleet layout (Architecture Freeze §64). Trucks stand side by side along the
+ * Fleet layout. Trucks stand side by side along the
  * Three.js X axis in problem order with their back walls at depth 0. Outside
  * packages rest on a Dock in front of the fleet, one fixed slot per package.
  * Dock slots are a rendering layout only and never a backend position.

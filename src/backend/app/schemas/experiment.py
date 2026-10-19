@@ -50,7 +50,6 @@ class GeneticAlgorithmParameters(_Parameters):
     generations: int = Field(default=100, ge=1)
     crossover_probability: float = Field(default=0.80, ge=0, le=1)
     mutation_probability: float = Field(default=0.20, ge=0, le=1)
-    # Freeze sections 36 and 41 fix elitism at one; population_size is at least two.
     elite_count: int = Field(default=1, ge=1, le=1)
 
 

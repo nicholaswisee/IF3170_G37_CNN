@@ -1,5 +1,3 @@
-"""Occupancy requirements from architecture freeze section 12."""
-
 import numpy as np
 import pytest
 

@@ -44,7 +44,6 @@ interface ChartsViewProps {
   onExpand?: () => void
 }
 
-/** Every chart the freeze requires for the run's algorithm (§66), drawn with a replay cursor. */
 export function ChartsView({ experiment, cursor, large = false, onExpand }: ChartsViewProps) {
   const objective = useMemo(() => toObjectiveSeries(experiment.history), [experiment])
   const annealing = useMemo(() => toAnnealingSeries(experiment.history), [experiment])

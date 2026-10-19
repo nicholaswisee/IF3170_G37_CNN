@@ -1,5 +1,3 @@
-"""Expected behavior of the shared validator in architecture freeze §§11–15."""
-
 import pytest
 from pydantic import ValidationError
 
