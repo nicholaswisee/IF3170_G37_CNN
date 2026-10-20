@@ -48,8 +48,8 @@ Truck-loading optimization for IF3170 Artificial Intelligence, with a 3D result 
 │           ├── ui/             Reusable interface components
 │           └── viewer/         Geometry, result normalization, and scene models
 ├── data/                       Input data
-├── output/                     Saved experiment JSON and batch JSON/CSV
-└── test/                       Root-level test placeholder
+├── output/                     Explicitly saved run JSON and batch JSON/CSV
+└── test/                       Report dataset, available in the configuration loader
 ```
 
 ## Local development

@@ -25,18 +25,23 @@ router = APIRouter(prefix="/api/experiments", tags=["experiments"])
 
 @router.get("", response_model=ExperimentListResponse)
 def list_experiments() -> ExperimentListResponse:
-    directory = Path(settings.output_dir) / "experiments"
-    try:
-        files = sorted(directory.iterdir())
-    except FileNotFoundError:
-        files = []
-    return ExperimentListResponse(
-        experiments=[
-            ExperimentResult.model_validate_json(path.read_text(encoding="utf-8"))
-            for path in files
-            if path.suffix == ".json"
-        ]
-    )
+    root = Path(settings.output_dir)
+    files = []
+    for directory in (root, root / "experiments"):
+        try:
+            files.extend(sorted(directory.iterdir()))
+        except FileNotFoundError:
+            continue
+    experiments = []
+    seen_ids = set()
+    for path in files:
+        if path.suffix != ".json" or path.name.endswith(".batch.json"):
+            continue
+        result = ExperimentResult.model_validate_json(path.read_text(encoding="utf-8"))
+        if result.id not in seen_ids:
+            seen_ids.add(result.id)
+            experiments.append(result)
+    return ExperimentListResponse(experiments=experiments)
 
 
 @router.post("/run", response_model=ExperimentResult)

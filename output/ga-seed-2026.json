@@ -1,0 +1,2488 @@
+{
+  "id": "fac3e22b-57d1-4202-a0d7-977671e56c18",
+  "problem": {
+    "packages": [
+      {
+        "id": "P01",
+        "width": 4,
+        "length": 3,
+        "height": 2,
+        "value": 40.0,
+        "weight": 20.0,
+        "is_fragile": false,
+        "eta": 2
+      },
+      {
+        "id": "P02",
+        "width": 3,
+        "length": 3,
+        "height": 2,
+        "value": 30.0,
+        "weight": 15.0,
+        "is_fragile": false,
+        "eta": 1
+      },
+      {
+        "id": "P03",
+        "width": 2,
+        "length": 2,
+        "height": 1,
+        "value": 25.0,
+        "weight": 5.0,
+        "is_fragile": true,
+        "eta": 0
+      },
+      {
+        "id": "P04",
+        "width": 2,
+        "length": 4,
+        "height": 3,
+        "value": 35.0,
+        "weight": 18.0,
+        "is_fragile": false,
+        "eta": 3
+      },
+      {
+        "id": "P05",
+        "width": 3,
+        "length": 2,
+        "height": 2,
+        "value": 20.0,
+        "weight": 10.0,
+        "is_fragile": false,
+        "eta": 4
+      },
+      {
+        "id": "P06",
+        "width": 1,
+        "length": 1,
+        "height": 1,
+        "value": 8.0,
+        "weight": 2.0,
+        "is_fragile": true,
+        "eta": 1
+      },
+      {
+        "id": "P07",
+        "width": 5,
+        "length": 4,
+        "height": 3,
+        "value": 50.0,
+        "weight": 30.0,
+        "is_fragile": false,
+        "eta": 2
+      },
+      {
+        "id": "P08",
+        "width": 6,
+        "length": 6,
+        "height": 6,
+        "value": 60.0,
+        "weight": 40.0,
+        "is_fragile": false,
+        "eta": 5
+      },
+      {
+        "id": "P09",
+        "width": 2,
+        "length": 2,
+        "height": 2,
+        "value": 12.0,
+        "weight": 6.0,
+        "is_fragile": false,
+        "eta": 0
+      }
+    ],
+    "trucks": [
+      {
+        "id": "truck-a",
+        "width": 10,
+        "length": 8,
+        "height": 6,
+        "max_capacity": 100.0
+      }
+    ]
+  },
+  "algorithm": "genetic_algorithm",
+  "variant": null,
+  "objective_mode": "total_value",
+  "seed": 2026,
+  "parameters": {
+    "population_size": 50,
+    "generations": 100,
+    "crossover_probability": 1.0,
+    "mutation_probability": 0.2,
+    "elite_count": 0
+  },
+  "initial_state": {
+    "placements": [
+      {
+        "package_id": "P01",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 5,
+          "y": 3,
+          "z": 0
+        },
+        "orientation": 5
+      },
+      {
+        "package_id": "P02",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 5,
+          "y": 1,
+          "z": 0
+        },
+        "orientation": 2
+      },
+      {
+        "package_id": "P03",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 2,
+          "y": 0,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P04",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 3,
+          "y": 0,
+          "z": 3
+        },
+        "orientation": 1
+      },
+      {
+        "package_id": "P05",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P06",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 8,
+          "y": 4,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P07",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 1,
+          "y": 3,
+          "z": 0
+        },
+        "orientation": 4
+      },
+      {
+        "package_id": "P08",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P09",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 0,
+          "y": 1,
+          "z": 0
+        },
+        "orientation": 0
+      }
+    ]
+  },
+  "final_state": {
+    "placements": [
+      {
+        "package_id": "P01",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 2,
+          "y": 6,
+          "z": 0
+        },
+        "orientation": 2
+      },
+      {
+        "package_id": "P02",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 4,
+          "y": 4,
+          "z": 3
+        },
+        "orientation": 3
+      },
+      {
+        "package_id": "P03",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 7,
+          "y": 5,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P04",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 4,
+          "y": 1,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P05",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 2,
+          "y": 3,
+          "z": 0
+        },
+        "orientation": 4
+      },
+      {
+        "package_id": "P06",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 5,
+          "y": 0,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P07",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 1,
+          "z": 0
+        },
+        "orientation": 5
+      },
+      {
+        "package_id": "P08",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P09",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      }
+    ]
+  },
+  "best_state": {
+    "placements": [
+      {
+        "package_id": "P01",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 2,
+          "y": 6,
+          "z": 0
+        },
+        "orientation": 2
+      },
+      {
+        "package_id": "P02",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 5,
+          "z": 0
+        },
+        "orientation": 3
+      },
+      {
+        "package_id": "P03",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 7,
+          "y": 3,
+          "z": 5
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P04",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 0,
+          "y": 1,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P05",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 2,
+          "y": 3,
+          "z": 0
+        },
+        "orientation": 4
+      },
+      {
+        "package_id": "P06",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 5,
+          "y": 0,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P07",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 1,
+          "z": 0
+        },
+        "orientation": 5
+      },
+      {
+        "package_id": "P08",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P09",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      }
+    ]
+  },
+  "initial_score": 200.0,
+  "final_score": 208.0,
+  "best_score": 208.0,
+  "runtime_ms": 898,
+  "iterations": 100,
+  "history": [
+    {
+      "iteration": 0,
+      "current_score": 200.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.4457142857142855,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7142857142857144,
+        "infeasible_count": 0,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 1,
+      "current_score": 187.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.6121488095238096,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6678571428571427,
+        "infeasible_count": 34,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 2,
+      "current_score": 120.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.5318392857142857,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.4285714285714286,
+        "infeasible_count": 36,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 3,
+      "current_score": 153.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.668172619047619,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5464285714285713,
+        "infeasible_count": 29,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 4,
+      "current_score": 153.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.8073571428571428,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5464285714285713,
+        "infeasible_count": 23,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 5,
+      "current_score": 165.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.7295476190476191,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5892857142857144,
+        "infeasible_count": 26,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 6,
+      "current_score": 153.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.9078988095238095,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5464285714285713,
+        "infeasible_count": 17,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 7,
+      "current_score": 153.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.8509702380952381,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5464285714285713,
+        "infeasible_count": 21,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 8,
+      "current_score": 153.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.8509642857142857,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5464285714285713,
+        "infeasible_count": 19,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 9,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.841952380952381,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 20,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 10,
+      "current_score": 118.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.8229107142857143,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.4214285714285715,
+        "infeasible_count": 21,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 11,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.9784166666666667,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 13,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 12,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.8477738095238095,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 19,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 13,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.9374880952380953,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 15,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 14,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.0416309523809524,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 15,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.1831785714285714,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 16,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.9893333333333334,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 14,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 17,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.143595238095238,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 18,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.0896785714285715,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 9,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 19,
+      "current_score": 175.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.9869642857142857,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.625,
+        "infeasible_count": 13,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 20,
+      "current_score": 175.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.9736190476190477,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.625,
+        "infeasible_count": 14,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 21,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.040190476190476,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 11,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 22,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.053642857142857,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 11,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 23,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.0897142857142859,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 24,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.1334285714285715,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 25,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.2349285714285714,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 3,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 26,
+      "current_score": 145.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.0052142857142856,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5178571428571428,
+        "infeasible_count": 13,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 27,
+      "current_score": 148.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.0900357142857144,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5285714285714285,
+        "infeasible_count": 9,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 28,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.0537261904761905,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 11,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 29,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.147702380952381,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 30,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.09825,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 31,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.0333571428571429,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 14,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 32,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.0553690476190476,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 13,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 33,
+      "current_score": 153.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 0.9878333333333333,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.5464285714285713,
+        "infeasible_count": 16,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 34,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.1478214285714285,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 9,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 35,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.1151190476190476,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 11,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 36,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.1562857142857144,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 9,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 37,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.2041071428571428,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 38,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.292095238095238,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 39,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.2731071428571428,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 40,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.2406071428571428,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 41,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.2252142857142858,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 42,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.242690476190476,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 43,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.1571190476190476,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 44,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.206904761904762,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 9,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 45,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.2660297619047618,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 46,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.281238095238095,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 47,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.3876309523809525,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 4,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 48,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.4001309523809524,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 49,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.4535952380952382,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 4,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 50,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.4362857142857144,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 51,
+      "current_score": 183.0,
+      "best_score": 200.0,
+      "candidate_score": null,
+      "mean_score": 1.4057857142857142,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 52,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.369904761904762,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 53,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4818571428571428,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 4,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 54,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4533928571428572,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 55,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3853452380952378,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 56,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.2884166666666668,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 12,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 57,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.2930892857142857,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 12,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 58,
+      "current_score": 188.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3751071428571426,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6714285714285713,
+        "infeasible_count": 9,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 59,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3742500000000002,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 9,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 60,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3950357142857144,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 61,
+      "current_score": 188.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.5035714285714286,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6714285714285713,
+        "infeasible_count": 4,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 62,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4857142857142855,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 63,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3813214285714286,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 64,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4853214285714285,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 4,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 65,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4497857142857142,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 66,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3236666666666668,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 67,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.2710357142857143,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 12,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 68,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.388029761904762,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 69,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4242380952380953,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 70,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4291904761904761,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 71,
+      "current_score": 183.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4671547619047618,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6535714285714285,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 72,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4271190476190474,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 73,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3927619047619046,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 74,
+      "current_score": 188.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4243571428571429,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.6714285714285713,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 75,
+      "current_score": 200.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.347345238095238,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7142857142857144,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 76,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3428690476190477,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 77,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.2997976190476193,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 12,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 78,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4315714285714285,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 79,
+      "current_score": 200.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4765000000000001,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7142857142857144,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 80,
+      "current_score": 200.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4172857142857143,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7142857142857144,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 81,
+      "current_score": 200.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.5611785714285713,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7142857142857144,
+        "infeasible_count": 2,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 82,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4379166666666665,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 83,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.469607142857143,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 84,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4973809523809525,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 85,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4875714285714288,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 86,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3363095238095237,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 87,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.400809523809524,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 88,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3771190476190478,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 89,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4551309523809524,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 4,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 90,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4327380952380953,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 6,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 91,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4213571428571428,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 7,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 92,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3321428571428573,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 93,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.380095238095238,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 94,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4802738095238095,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 5,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 95,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.5181071428571429,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 4,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 96,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.290404761904762,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 13,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 97,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.4202261904761906,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 8,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 98,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3336309523809524,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 99,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.2951904761904762,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 11,
+        "feasible_fallback": false
+      }
+    },
+    {
+      "iteration": 100,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": null,
+      "mean_score": 1.3186023809523808,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": null,
+      "metadata": {
+        "max_fitness": 1.7428571428571429,
+        "infeasible_count": 10,
+        "feasible_fallback": false
+      }
+    }
+  ],
+  "metadata": {
+    "population_size": 50,
+    "generations": 100,
+    "termination_reason": "generation_limit",
+    "initial_state": {
+      "placements": [
+        {
+          "package_id": "P01",
+          "truck_id": "truck-a",
+          "position": {
+            "x": 5,
+            "y": 3,
+            "z": 0
+          },
+          "orientation": 5
+        },
+        {
+          "package_id": "P02",
+          "truck_id": "truck-a",
+          "position": {
+            "x": 5,
+            "y": 1,
+            "z": 0
+          },
+          "orientation": 2
+        },
+        {
+          "package_id": "P03",
+          "truck_id": "truck-a",
+          "position": {
+            "x": 2,
+            "y": 0,
+            "z": 0
+          },
+          "orientation": 0
+        },
+        {
+          "package_id": "P04",
+          "truck_id": "truck-a",
+          "position": {
+            "x": 3,
+            "y": 0,
+            "z": 3
+          },
+          "orientation": 1
+        },
+        {
+          "package_id": "P05",
+          "truck_id": null,
+          "position": null,
+          "orientation": 0
+        },
+        {
+          "package_id": "P06",
+          "truck_id": "truck-a",
+          "position": {
+            "x": 8,
+            "y": 4,
+            "z": 0
+          },
+          "orientation": 0
+        },
+        {
+          "package_id": "P07",
+          "truck_id": "truck-a",
+          "position": {
+            "x": 1,
+            "y": 3,
+            "z": 0
+          },
+          "orientation": 4
+        },
+        {
+          "package_id": "P08",
+          "truck_id": null,
+          "position": null,
+          "orientation": 0
+        },
+        {
+          "package_id": "P09",
+          "truck_id": "truck-a",
+          "position": {
+            "x": 0,
+            "y": 1,
+            "z": 0
+          },
+          "orientation": 0
+        }
+      ]
+    },
+    "initial_score": 200.0,
+    "final_state_fallback": false,
+    "persisted": true,
+    "metrics": {
+      "max_fitness_history": [
+        1.7142857142857144,
+        1.6678571428571427,
+        1.4285714285714286,
+        1.5464285714285713,
+        1.5464285714285713,
+        1.5892857142857144,
+        1.5464285714285713,
+        1.5464285714285713,
+        1.5464285714285713,
+        1.5285714285714285,
+        1.4214285714285715,
+        1.5285714285714285,
+        1.5285714285714285,
+        1.5285714285714285,
+        1.5285714285714285,
+        1.5285714285714285,
+        1.5285714285714285,
+        1.5285714285714285,
+        1.5285714285714285,
+        1.625,
+        1.625,
+        1.5285714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.5178571428571428,
+        1.5285714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.5464285714285713,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.7428571428571429,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6714285714285713,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6714285714285713,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.7428571428571429,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.6535714285714285,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.6714285714285713,
+        1.7142857142857144,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7142857142857144,
+        1.7142857142857144,
+        1.7142857142857144,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429,
+        1.7428571428571429
+      ],
+      "avg_fitness_history": [
+        1.4457142857142855,
+        0.6121488095238096,
+        0.5318392857142857,
+        0.668172619047619,
+        0.8073571428571428,
+        0.7295476190476191,
+        0.9078988095238095,
+        0.8509702380952381,
+        0.8509642857142857,
+        0.841952380952381,
+        0.8229107142857143,
+        0.9784166666666667,
+        0.8477738095238095,
+        0.9374880952380953,
+        1.0416309523809524,
+        1.1831785714285714,
+        0.9893333333333334,
+        1.143595238095238,
+        1.0896785714285715,
+        0.9869642857142857,
+        0.9736190476190477,
+        1.040190476190476,
+        1.053642857142857,
+        1.0897142857142859,
+        1.1334285714285715,
+        1.2349285714285714,
+        1.0052142857142856,
+        1.0900357142857144,
+        1.0537261904761905,
+        1.147702380952381,
+        1.09825,
+        1.0333571428571429,
+        1.0553690476190476,
+        0.9878333333333333,
+        1.1478214285714285,
+        1.1151190476190476,
+        1.1562857142857144,
+        1.2041071428571428,
+        1.292095238095238,
+        1.2731071428571428,
+        1.2406071428571428,
+        1.2252142857142858,
+        1.242690476190476,
+        1.1571190476190476,
+        1.206904761904762,
+        1.2660297619047618,
+        1.281238095238095,
+        1.3876309523809525,
+        1.4001309523809524,
+        1.4535952380952382,
+        1.4362857142857144,
+        1.4057857142857142,
+        1.369904761904762,
+        1.4818571428571428,
+        1.4533928571428572,
+        1.3853452380952378,
+        1.2884166666666668,
+        1.2930892857142857,
+        1.3751071428571426,
+        1.3742500000000002,
+        1.3950357142857144,
+        1.5035714285714286,
+        1.4857142857142855,
+        1.3813214285714286,
+        1.4853214285714285,
+        1.4497857142857142,
+        1.3236666666666668,
+        1.2710357142857143,
+        1.388029761904762,
+        1.4242380952380953,
+        1.4291904761904761,
+        1.4671547619047618,
+        1.4271190476190474,
+        1.3927619047619046,
+        1.4243571428571429,
+        1.347345238095238,
+        1.3428690476190477,
+        1.2997976190476193,
+        1.4315714285714285,
+        1.4765000000000001,
+        1.4172857142857143,
+        1.5611785714285713,
+        1.4379166666666665,
+        1.469607142857143,
+        1.4973809523809525,
+        1.4875714285714288,
+        1.3363095238095237,
+        1.400809523809524,
+        1.3771190476190478,
+        1.4551309523809524,
+        1.4327380952380953,
+        1.4213571428571428,
+        1.3321428571428573,
+        1.380095238095238,
+        1.4802738095238095,
+        1.5181071428571429,
+        1.290404761904762,
+        1.4202261904761906,
+        1.3336309523809524,
+        1.2951904761904762,
+        1.3186023809523808
+      ],
+      "population_size": 50,
+      "generations": 100,
+      "duration_ms": 898,
+      "seed": 2026,
+      "objective_mode": "total_value",
+      "initial_score": 200.0,
+      "final_score": 208.0,
+      "best_score": 208.0,
+      "runtime_ms": 898,
+      "iterations": 100,
+      "loaded_count": 7,
+      "total_weight": 100.0,
+      "state_summaries": {
+        "initial": {
+          "trucks": {
+            "truck-a": {
+              "package_ids": [
+                "P01",
+                "P02",
+                "P03",
+                "P04",
+                "P06",
+                "P07",
+                "P09"
+              ],
+              "count": 7,
+              "loaded_weight": 96.0,
+              "loaded_value": 200.0,
+              "max_capacity": 100.0
+            }
+          },
+          "outside_package_ids": [
+            "P05",
+            "P08"
+          ],
+          "outside_count": 2
+        },
+        "final": {
+          "trucks": {
+            "truck-a": {
+              "package_ids": [
+                "P01",
+                "P02",
+                "P03",
+                "P04",
+                "P05",
+                "P06",
+                "P07"
+              ],
+              "count": 7,
+              "loaded_weight": 100.0,
+              "loaded_value": 208.0,
+              "max_capacity": 100.0
+            }
+          },
+          "outside_package_ids": [
+            "P08",
+            "P09"
+          ],
+          "outside_count": 2
+        },
+        "best": {
+          "trucks": {
+            "truck-a": {
+              "package_ids": [
+                "P01",
+                "P02",
+                "P03",
+                "P04",
+                "P05",
+                "P06",
+                "P07"
+              ],
+              "count": 7,
+              "loaded_weight": 100.0,
+              "loaded_value": 208.0,
+              "max_capacity": 100.0
+            }
+          },
+          "outside_package_ids": [
+            "P08",
+            "P09"
+          ],
+          "outside_count": 2
+        }
+      },
+      "termination_reason": "generation_limit"
+    }
+  }
+}

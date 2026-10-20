@@ -18,6 +18,7 @@ from app.schemas.config import ConfigUpload, SavedConfig
 
 BUILTIN_DIRECTORY = Path(__file__).parent / "builtin"
 BUILTIN_PREFIX = "builtin-"
+TEST_PREFIX = "test-"
 # Uploaded IDs are generated here, so anything else never reaches the filesystem.
 UPLOADED_ID = re.compile(r"[0-9a-f]{32}")
 
@@ -36,6 +37,28 @@ class BuiltinConfigError(ValueError):
 
 def _uploaded_directory() -> Path:
     return Path(settings.data_dir) / "configs"
+
+
+def _test_configs() -> tuple[SavedConfig, ...]:
+    configs = []
+    for path in sorted(Path(settings.test_dir).glob("*.json")):
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", path.stem):
+            continue
+        try:
+            upload = ConfigUpload.model_validate_json(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, ValidationError):
+            continue
+        configs.append(
+            SavedConfig(
+                id=TEST_PREFIX + path.stem,
+                name=upload.name,
+                description=upload.description,
+                builtin=True,
+                created_at=None,
+                problem=upload.problem,
+            )
+        )
+    return tuple(configs)
 
 
 @cache
@@ -75,7 +98,8 @@ def list_configs() -> list[SavedConfig]:
         key=lambda config: config.created_at or datetime.min.replace(tzinfo=UTC),
         reverse=True,
     )
-    return [*builtin_configs(), *uploaded]
+    local = _test_configs() if Path(settings.test_dir).is_dir() else ()
+    return [*builtin_configs(), *local, *uploaded]
 
 
 def get_config(config_id: str) -> SavedConfig:
@@ -83,6 +107,10 @@ def get_config(config_id: str) -> SavedConfig:
         for builtin in builtin_configs():
             if builtin.id == config_id:
                 return builtin
+    elif config_id.startswith(TEST_PREFIX):
+        for config in _test_configs():
+            if config.id == config_id:
+                return config
     elif UPLOADED_ID.fullmatch(config_id):
         uploaded = _read_uploaded(_uploaded_directory() / f"{config_id}.json")
         if uploaded is not None:
@@ -109,7 +137,7 @@ def save_config(upload: ConfigUpload) -> SavedConfig:
 
 
 def delete_config(config_id: str) -> None:
-    if any(config.id == config_id for config in builtin_configs()):
+    if any(config.id == config_id for config in [*builtin_configs(), *_test_configs()]):
         raise BuiltinConfigError("Built-in configurations cannot be deleted.")
     if UPLOADED_ID.fullmatch(config_id):
         try:

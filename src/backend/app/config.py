@@ -12,6 +12,7 @@ class Settings(BaseSettings):
         (Path(__file__).resolve().parent / "../../../output").resolve()
     )
     data_dir: str = str((Path(__file__).resolve().parent / "../../../data").resolve())
+    test_dir: str = str((Path(__file__).resolve().parent / "../../../test").resolve())
 
 
 settings = Settings()

@@ -16,7 +16,7 @@ def _write_persistence_temp(file: IO[str], payload: str) -> None:
 
 
 def record_result(result: ExperimentResult, destination: Path) -> None:
-    _publish(destination, result.model_dump_json())
+    _publish(destination, result.model_dump_json(indent=2) + "\n", mode=0o644)
 
 
 def record_config(config: SavedConfig, destination: Path) -> None:
@@ -25,15 +25,15 @@ def record_config(config: SavedConfig, destination: Path) -> None:
 
 def record_batch(batch: BatchExperimentResult, directory: Path) -> None:
     directory.mkdir(parents=True, exist_ok=True)
-    csv_path = directory / f"{batch.id}.csv"
-    json_path = directory / f"{batch.id}.json"
+    csv_path = directory / f"{batch.id}.batch.csv"
+    json_path = directory / f"{batch.id}.batch.json"
     csv_written = False
     published = False
     try:
-        _publish(csv_path, _csv_payload(batch))
+        _publish(csv_path, _csv_payload(batch), mode=0o644)
         csv_written = True
         # Publish JSON last so its presence means both batch artifacts are complete.
-        _publish(json_path, batch.model_dump_json())
+        _publish(json_path, batch.model_dump_json(indent=2) + "\n", mode=0o644)
         published = True
     finally:
         if not published and csv_written:
@@ -86,7 +86,7 @@ def _csv_safe_label(label: str) -> str:
     return label
 
 
-def _publish(destination: Path, payload: str) -> None:
+def _publish(destination: Path, payload: str, mode: int = 0o600) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary_path = None
     try:
@@ -99,6 +99,7 @@ def _publish(destination: Path, payload: str) -> None:
             delete=False,
         ) as output:
             temporary_path = Path(output.name)
+            temporary_path.chmod(mode)
             _write_persistence_temp(output.file, payload)
         os.link(temporary_path, destination)
     finally:

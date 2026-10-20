@@ -1,5 +1,6 @@
 import asyncio
 import json
+from pathlib import Path
 
 import pytest
 
@@ -62,16 +63,60 @@ def test_builtins_are_listed_and_loadable_without_uploads() -> None:
     status, body = call("GET", "/api/configs")
     assert status == 200
     builtins = [config for config in body["configs"] if config["builtin"]]
-    assert {config["id"] for config in builtins} == {
+    assert {
         "builtin-example-fleet",
         "builtin-tight-capacity",
-    }
+    } <= {config["id"] for config in builtins}
     for summary in builtins:
         status, config = call("GET", f"/api/configs/{summary['id']}")
         assert status == 200
         assert len(config["problem"]["trucks"]) == summary["truck_count"]
         assert len(config["problem"]["packages"]) == summary["package_count"]
         assert config["created_at"] is None
+
+
+def test_root_testing_dataset_is_listed_loadable_and_read_only(monkeypatch) -> None:
+    repository_root = Path(__file__).resolve().parents[3]
+    monkeypatch.setattr(store.settings, "test_dir", str(repository_root / "test"))
+
+    status, body = call("GET", "/api/configs")
+    assert status == 200
+    summary = next(
+        config for config in body["configs"] if config["id"] == "test-testing-dataset"
+    )
+    assert summary["builtin"] is True
+    assert summary["package_count"] == 9
+    assert summary["truck_count"] == 1
+
+    status, loaded = call("GET", "/api/configs/test-testing-dataset")
+    assert status == 200
+    assert len(loaded["problem"]["packages"]) == 9
+    assert len(loaded["problem"]["trucks"]) == 1
+    assert call("DELETE", "/api/configs/test-testing-dataset")[0] == 403
+
+
+def test_root_testing_dataset_matches_shared_fixture() -> None:
+    repository_root = Path(__file__).resolve().parents[3]
+    assert (repository_root / "test/testing-dataset.json").read_bytes() == (
+        repository_root / "data/testing/testing-dataset.json"
+    ).read_bytes()
+
+
+@pytest.mark.parametrize("contents", [b"\xff", b"not JSON", b"{}"])
+def test_invalid_test_configs_do_not_hide_valid_configs(
+    contents: bytes, tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setattr(store.settings, "test_dir", str(tmp_path))
+    source = Path(__file__).resolve().parents[3] / "test/testing-dataset.json"
+    (tmp_path / "valid.json").write_bytes(source.read_bytes())
+    (tmp_path / "invalid.json").write_bytes(contents)
+
+    status, body = call("GET", "/api/configs")
+    assert status == 200
+    ids = {config["id"] for config in body["configs"]}
+    assert "test-valid" in ids
+    assert "test-invalid" not in ids
+    assert call("GET", "/api/configs/test-valid")[0] == 200
 
 
 def test_upload_saves_lists_loads_and_deletes(
@@ -134,7 +179,15 @@ def test_builtins_cannot_be_deleted() -> None:
 
 
 @pytest.mark.parametrize(
-    "config_id", ["..%2F..%2Fsecret", "builtin-missing", "ABC", "0" * 31, "0" * 32]
+    "config_id",
+    [
+        "..%2F..%2Fsecret",
+        "test-..%2F..%2Fsecret",
+        "builtin-missing",
+        "ABC",
+        "0" * 31,
+        "0" * 32,
+    ],
 )
 def test_unknown_or_malformed_ids_are_not_found(config_id: str) -> None:
     assert call("GET", f"/api/configs/{config_id}")[0] == 404
