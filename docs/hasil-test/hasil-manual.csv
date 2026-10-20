@@ -2,9 +2,9 @@ id,method,seed,initial,final,best,runtime_ms,iterations,loaded,weight,reason,stu
 HC-STEEP-S42,Steepest-ascent,42,188,208,208,403,2,7,100,Local optimum,,steep42.png
 HC-STEEP-S123,Steepest-ascent,123,68,170,170,632,5,7,76,Local optimum,,steep123.png
 HC-STEEP-S2026,Steepest-ascent,2026,93,208,208,488,4,7,100,Local optimum,,steep2026.png
-HC-STOCH-S42,Stochastic,42,188,208,208,370,2,7,100,Local optimum,,stochastic42.png
-HC-STOCH-S123,Stochastic,123,68,170,170,653,5,7,76,Local optimum,,stochastic123.png
-HC-STOCH-S2026,Stochastic,2026,93,170,170,607,5,7,76,Local optimum,,stochastic2026.png
+HC-STOCH-S42,Stochastic,42,188,208,208,932,2000,7,100,Max iterations,,stochastic42.png
+HC-STOCH-S123,Stochastic,123,68,170,170,1148,2000,7,76,Max iterations,,stochastic123.png
+HC-STOCH-S2026,Stochastic,2026,93,185,185,1150,2000,7,88,Max iterations,,stochastic2026.png
 HC-SIDE-S42,Sideways,42,188,208,208,16530,102,7,100,Max sideways,,sideways42.png
 HC-SIDE-S123,Sideways,123,68,208,208,16996,108,7,100,Max sideways,,sideways123.png
 HC-SIDE-S2026,Sideways,2026,93,208,208,16100,104,7,100,Max sideways,,sideways2026.png

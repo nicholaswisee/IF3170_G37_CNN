@@ -221,7 +221,7 @@ Seperti terlihat pada Gambar~\ref{fig:search-landscape}, pencarian yang hanya me
 
 Dalam implementasi, seluruh neighborhood tidak diperiksa. Algoritma membangkitkan sampel terbatas neighbor yang sah, lalu memilih kandidat bernilai tertinggi dari sampel tersebut. Karena itu, \textbf{pemeriksaan terbatas pada sampel} berarti tidak ditemukannya peningkatan hanya menunjukkan bahwa sampel saat itu tidak memuat kandidat yang lebih baik; keadaan ini belum memastikan semua neighbor sudah diperiksa. Steepest-ascent menghindari langkah yang menurunkan atau mempertahankan skor, sehingga pencarian dapat berakhir di puncak lokal atau berhenti saat sampelnya tidak menunjukkan kenaikan \cite{russell-norvig,slide-local-search}.
 
-\textit{Stochastic hill climbing} memilih secara acak dari neighbor yang meningkatkan skor. Pemilihan seragam memberi setiap kandidat peningkat peluang yang sama, sedangkan skema berbobot dapat memberi peluang lebih besar kepada kenaikan yang lebih besar. Implementasi menggunakan \textbf{pemilihan seragam}, bukan pembobotan berdasarkan besar kenaikan. Cara ini dapat mengambil langkah yang tidak terbaik pada sampel, tetapi tetap menuntut peningkatan ketat; akibatnya, pencarian berhenti ketika sampel tidak menyediakan peningkat dan tidak bergerak melintasi plateau \cite{russell-norvig,slide-local-search}.
+\textit{Stochastic hill climbing} memilih secara acak dari neighbor yang meningkatkan skor. Pemilihan seragam memberi setiap kandidat peningkat peluang yang sama, sedangkan skema berbobot dapat memberi peluang lebih besar kepada kenaikan yang lebih besar. Implementasi mengambil satu neighbor acak per iterasi dan menerimanya jika skornya meningkat ketat. Jika kandidat tidak meningkatkan skor, state tetap dipertahankan dan pencarian melanjutkan iterasi hingga batas yang ditentukan. Kebijakan ini tidak menerima langkah setara untuk melintasi plateau \cite{russell-norvig,slide-local-search}.
 
 \textit{Hill climbing with sideways move} juga menerima neighbor yang skornya sama, sehingga dapat bergerak di antara state pada plateau dan mungkin mencapai state yang memiliki peningkatan di sisi lain. Langkah setara tidak menaikkan skor, dan tanpa batas dapat membuat pencarian berputar atau bergerak lama tanpa kemajuan. Karena itu, \textbf{jumlah langkah setara berturut-turut dibatasi}. Langkah yang meningkatkan skor mengatur ulang hitungan tersebut; setelah batas tercapai, langkah setara berikutnya ditolak, sementara peningkatan ketat tetap dapat diterima.
 
@@ -644,7 +644,7 @@ Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 20
         Metode & Konfigurasi & Run \\
         \midrule
         HC steepest-ascent & Maksimum 2.000 iterasi, 50 kandidat per iterasi; tanpa sideways atau restart. & 3 \\
-        HC stochastic (tercatat) & 50 kandidat per iterasi, pemilihan peningkat seragam (policy lama); implementasi kini meminta 1 neighbor/iterasi, hingga 2.000 iterasi; pengukuran ulang tertunda. & 3 \\
+        HC stochastic & Maksimum 2.000 iterasi; satu neighbor acak per iterasi, diterima jika skornya meningkat. & 3 \\
         HC sideways & Maksimum 2.000 iterasi, 50 kandidat per iterasi, maksimum 100 sideways berturut-turut. & 3 \\
         HC random-restart & Maksimum 10 restart; 11 climb, masing-masing maksimum 2.000 iterasi dan 50 kandidat per iterasi. & 3 \\
         SA & $T_0=30$, $\alpha=0{,}995$, $T_{\min}=0{,}001$, maksimum 5.000 iterasi, ambang stagnasi 50 iterasi. & 3 \\
@@ -672,9 +672,9 @@ Metode & Seed & Awal & Akhir & Terbaik & ms & Iterasi & kg \\
 Steepest-ascent & 42 & 188 & 208 & 208 & 403 & 2 & 100 \\
 Steepest-ascent & 123 & 68 & 170 & 170 & 632 & 5 & 76 \\
 Steepest-ascent & 2026 & 93 & 208 & 208 & 488 & 4 & 100 \\
-Stochastic (sebelumnya) & 42 & 188 & 208 & 208 & 370 & 2 & 100 \\
-Stochastic (sebelumnya) & 123 & 68 & 170 & 170 & 653 & 5 & 76 \\
-Stochastic (sebelumnya) & 2026 & 93 & 170 & 170 & 607 & 5 & 76 \\
+Stochastic & 42 & 188 & 208 & 208 & 932 & 2000 & 100 \\
+Stochastic & 123 & 68 & 170 & 170 & 1148 & 2000 & 76 \\
+Stochastic & 2026 & 93 & 185 & 185 & 1150 & 2000 & 88 \\
 Sideways & 42 & 188 & 208 & 208 & 16530 & 102 & 100 \\
 Sideways & 123 & 68 & 208 & 208 & 16996 & 108 & 100 \\
 Sideways & 2026 & 93 & 208 & 208 & 16100 & 104 & 100 \\
@@ -683,11 +683,11 @@ Random-restart & 123 & 68 & 190 & 208 & 4135 & 42 & 91 \\
 Random-restart & 2026 & 93 & 208 & 208 & 4794 & 42 & 100 \\
 \bottomrule
 \end{tabular}
-\caption{Hasil pengukuran manual 12 run HC. Tiga baris stochastic merekam policy lama (sampel-improver), bukan implementasi saat ini. Kolom kg adalah berat muatan akhir; seluruh run berakhir dengan tujuh paket termuat.}
+\caption{Hasil pengukuran manual 12 run HC. Kolom kg adalah berat muatan akhir; seluruh run berakhir dengan tujuh paket termuat.}
 \label{tab:hasil-hc}
 \end{table}
 
-Steepest-ascent dan stochastic (policy lama) tercatat berhenti dengan alasan \textit{Local optimum} pada seluruh seed. Steepest-ascent menghasilkan skor akhir 208, 170, dan 208, sedangkan stochastic menghasilkan 208, 170, dan 170. Status tersebut berarti tidak ditemukan peningkatan pada kandidat yang diperiksa saat penghentian, sehingga tidak membuktikan optimum global.
+Steepest-ascent berhenti dengan alasan \textit{Local optimum} pada seluruh seed dan menghasilkan skor akhir 208, 170, dan 208. Status tersebut berarti tidak ditemukan peningkatan pada kandidat yang diperiksa saat penghentian. Stochastic menghasilkan skor akhir sekaligus skor terbaik 208, 170, dan 185, dengan berat akhir 100, 76, dan 88 kg. Ketiga run stochastic menjalankan 2.000 iterasi dan berhenti karena \textit{Max iterations}. Kandidat yang tidak meningkatkan skor ditolak tanpa menghentikan pencarian.
 
 Sideways mencapai skor akhir 208 pada ketiga seed dan berhenti karena \textit{Max sideways}. Jumlah iterasi aktual 102, 108, dan 104 lebih kecil daripada batas 2.000 iterasi. Ringkasan UI mencatat jumlah sideways total 100, 101, dan 100; angka total ini perlu dibedakan dari batas 100 sideways berturut-turut pada konfigurasi.
 
@@ -760,13 +760,13 @@ Seluruh ringkasan dihitung dari tiga seed per metode. Simpangan baku yang diguna
 Metode & $\bar f_{akhir}$ & $\sigma_{akhir}$ & $\bar f_{terbaik}$ & $\bar t$ (s) & $\bar I$ \\
 \midrule
 Steepest-ascent & 195.33 & 17.91 & 195.33 & 0.508 & 3.67 \\
-Stochastic (policy lama) & 182.67 & 17.91 & 182.67 & 0.543 & 4.00 \\
+Stochastic & 187.67 & 15.63 & 187.67 & 1.077 & 2000.00 \\
 Sideways & 208.00 & 0.00 & 208.00 & 16.542 & 104.67 \\
 Random-restart & 196.00 & 8.49 & 208.00 & 4.664 & 44.33 \\
 SA & 208.00 & 0.00 & 208.00 & 1.634 & 1656.67 \\
 \bottomrule
 \end{tabular}
-\caption{Ringkasan deskriptif tiga seed per metode; agregat stochastic memakai tiga pengukuran policy lama: rata-rata skor akhir, simpangan baku populasi skor akhir, rata-rata skor terbaik, runtime, dan iterasi aktual.}
+\caption{Ringkasan deskriptif tiga seed per metode: rata-rata skor akhir, simpangan baku populasi skor akhir, rata-rata skor terbaik, runtime, dan iterasi aktual.}
 \label{tab:ringkasan-manual}
 \end{table}
 
@@ -801,7 +801,7 @@ Total & & & 208 & 100 \\
 \label{tab:sertifikat-optimum}
 \end{table}
 
-Kedekatan hasil pencarian diukur melalui gap relatif $g(f)=100(f^*-f)/f^*$. Skor 208 memiliki gap 0\%, skor 190 memiliki gap 8,65\%, dan skor 170 memiliki gap 18,27\%. Tabel~\ref{tab:gap-optimum} memisahkan gap skor akhir dari gap skor terbaik. Seluruh angka stochastic pada analisis ini berasal dari policy lama yang memilih peningkat secara seragam dari sampel kandidat. Implementasi stochastic saat ini meminta satu neighbor per iterasi, sehingga hasil lamanya tidak mengukur perilaku versi tersebut.
+Kedekatan hasil pencarian diukur melalui gap relatif $g(f)=100(f^*-f)/f^*$. Skor 208 memiliki gap 0\%, skor 190 memiliki gap 8,65\%, skor 185 memiliki gap 11,06\%, dan skor 170 memiliki gap 18,27\%. Tabel~\ref{tab:gap-optimum} memisahkan gap skor akhir dari gap skor terbaik.
 \begin{table}[htbp]
 \centering
 \small
@@ -811,7 +811,7 @@ Kedekatan hasil pencarian diukur melalui gap relatif $g(f)=100(f^*-f)/f^*$. Skor
 Metode & $\bar g_{akhir}$ (\%) & $\bar g_{terbaik}$ (\%) & Akhir optimum & Terbaik optimum \\
 \midrule
 Steepest-ascent & 6,09 & 6,09 & 2/3 & 2/3 \\
-Stochastic (lama) & 12,18 & 12,18 & 1/3 & 1/3 \\
+Stochastic & 9,78 & 9,78 & 1/3 & 1/3 \\
 Sideways & 0,00 & 0,00 & 3/3 & 3/3 \\
 Random-restart & 5,77 & 0,00 & 1/3 & 3/3 \\
 SA & 0,00 & 0,00 & 3/3 & 3/3 \\
@@ -821,34 +821,34 @@ SA & 0,00 & 0,00 & 3/3 & 3/3 \\
 \label{tab:gap-optimum}
 \end{table}
 
-Steepest-ascent dan stochastic lama berhenti ketika sampel kandidat tidak menyediakan peningkatan. Pada seed 123, keduanya berakhir di 170, meskipun solusi global 208 tersedia. Penghentian berlabel \textit{Local optimum} berlaku terhadap kandidat yang diperiksa; sampling tersebut tidak mencakup seluruh neighbor yang mungkin. Stochastic lama juga berakhir di 170 pada seed 2026, sedangkan steepest-ascent mencapai 208. Pemilihan acak di antara kandidat peningkat dapat menghasilkan jalur pencarian berbeda dari pemilihan peningkatan terbesar. Tiga run ini belum cukup untuk menyimpulkan bahwa stochastic selalu lebih buruk.
+Steepest-ascent berhenti ketika sampel kandidat tidak menyediakan peningkatan. Pada seed 123, hasilnya 170, meskipun solusi global 208 tersedia. Penghentian berlabel \textit{Local optimum} berlaku terhadap kandidat yang diperiksa; sampling tersebut tidak mencakup seluruh neighbor yang mungkin. Stochastic tetap mencoba satu neighbor acak sampai batas 2.000 iterasi, tetapi hanya menerima peningkatan ketat. Metode ini mencapai optimum pada seed 42, sedangkan seed 123 dan 2026 berakhir di 170 dan 185. Gap yang tersisa menunjukkan bahwa penambahan percobaan neighbor dalam anggaran ini belum cukup untuk memperoleh optimum pada kedua seed tersebut. Stochastic menolak langkah setara dan menurun, sehingga pilihan perpindahannya terbatas. Ringkasan akhir belum membuktikan bahwa state terakhir adalah optimum lokal untuk semua neighbor.
 
 Sideways menerima langkah bernilai sama sehingga dapat mengubah susunan paket tanpa langsung meningkatkan objektif. Kemampuan tersebut menyediakan jalur untuk melanjutkan pencarian pada plateau dan sesuai dengan hasil akhirnya yang mencapai 208 pada semua seed. Setelah nilai optimum tercapai, langkah setara masih dapat berlanjut sampai batas sideways tercapai. Tanpa riwayat skor per iterasi, bagian lintasan yang melewati plateau tidak dapat ditentukan dari ringkasan akhir saja.
 
 Random-restart memulai climb baru dari state acak sehingga pencarian mencoba lebih dari satu daerah solusi. Skor terbaik 208 pada seluruh seed menunjukkan bahwa mekanisme ini berhasil menemukan optimum dalam setiap run. Pada seed 42 dan 123, climb terakhir berakhir di 190 sehingga skor akhirnya lebih rendah daripada optimum yang sudah ditemukan. Solusi terbaik sepanjang run perlu digunakan ketika memilih susunan untuk diterapkan.
 
-SA dapat menerima langkah yang menurunkan skor dengan probabilitas yang bergantung pada suhu. Mekanisme ini memungkinkan pencarian meninggalkan daerah yang sulit diperbaiki hanya dengan langkah meningkat. Ketiga run SA mencapai 208, termasuk seed 123 yang menghasilkan 170 pada steepest-ascent dan stochastic lama. Hasil ini sesuai dengan kemampuan eksplorasi SA, tetapi ringkasan akhir tidak menunjukkan langkah menurun mana yang berperan dalam mencapai optimum.
+SA dapat menerima langkah yang menurunkan skor dengan probabilitas yang bergantung pada suhu. Mekanisme ini memungkinkan pencarian meninggalkan daerah yang sulit diperbaiki hanya dengan langkah meningkat. Ketiga run SA mencapai 208, termasuk seed 123 yang menghasilkan 170 pada steepest-ascent dan stochastic. Hasil ini sesuai dengan kemampuan eksplorasi SA, tetapi ringkasan akhir tidak menunjukkan langkah menurun mana yang berperan dalam mencapai optimum.
 
 \subsubsection{Perbandingan Hasil Pencarian Antaralgoritma}
-Berdasarkan rata-rata skor akhir, sideways dan SA berada pada urutan tertinggi dengan 208, diikuti random-restart 196,00, steepest-ascent 195,33, dan stochastic lama 182,67. Selisih random-restart terhadap steepest-ascent hanya 0,67 poin pada rata-rata tiga seed, tetapi keduanya berbeda dalam penyimpanan hasil terbaik: random-restart menemukan 208 pada semua run, sedangkan steepest-ascent hanya pada dua run.
+Berdasarkan rata-rata skor akhir, sideways dan SA berada pada urutan tertinggi dengan 208, diikuti random-restart 196,00, steepest-ascent 195,33, dan stochastic 187,67. Selisih random-restart terhadap steepest-ascent hanya 0,67 poin pada rata-rata tiga seed, tetapi keduanya berbeda dalam penyimpanan hasil terbaik: random-restart menemukan 208 pada semua run, sedangkan steepest-ascent hanya pada dua run.
 
-Perbandingan per seed memperlihatkan perbedaan yang tertutup oleh rata-rata. Pada seed 42, steepest-ascent, stochastic lama, sideways, dan SA sama-sama berakhir di 208; random-restart berakhir di 190 dengan skor terbaik 208. Pada seed 123, sideways dan SA meningkatkan skor awal 68 menjadi 208, sedangkan steepest-ascent dan stochastic lama berhenti di 170. Pada seed 2026, hanya stochastic lama yang memiliki skor terbaik 170; metode lainnya mencapai 208.
+Pada seed 42, semua metode mencapai skor akhir 208 kecuali random-restart, yang berakhir di 190 setelah sempat mencapai 208. Pada seed 123, sideways dan SA meningkatkan skor awal 68 menjadi 208. Steepest-ascent dan stochastic berakhir di 170, sedangkan random-restart menemukan skor terbaik 208. Pada seed 2026, skor terbaik stochastic adalah 185; keempat metode lainnya mencapai 208.
 
 Seluruh state akhir memuat tujuh paket. Berat akhirnya berkisar 76 sampai 100 kg, sedangkan nilainya berkisar 170 sampai 208. Karena objektif memaksimalkan total nilai, jumlah paket yang sama tidak menjamin kualitas solusi yang sama. Dua run random-restart juga memiliki nilai akhir 190 dengan berat berbeda, yaitu 96 dan 91 kg. Pemilihan komposisi paket dan susunan yang memungkinkan paket bernilai tinggi masuk lebih menentukan daripada jumlah paket saja.
 
 \subsubsection{Perbandingan Durasi Pencarian}
-Rata-rata runtime steepest-ascent adalah 0,508 detik, stochastic lama 0,543 detik, SA 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Steepest-ascent paling cepat pada rata-rata pengukuran ini, tetapi tidak mencapai optimum pada seed 123. Sideways dan SA sama-sama mencapai skor akhir optimum pada seluruh seed; untuk hasil tersebut, SA membutuhkan sekitar sepersepuluh runtime sideways.
+Rata-rata runtime steepest-ascent adalah 0,508 detik, stochastic 1,077 detik, SA 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Steepest-ascent paling cepat pada rata-rata pengukuran ini, tetapi tidak mencapai optimum pada seed 123. Sideways dan SA sama-sama mencapai skor akhir optimum pada seluruh seed; untuk hasil tersebut, SA membutuhkan sekitar sepersepuluh runtime sideways.
 
-Steepest-ascent dan stochastic lama selesai dalam 2 sampai 5 iterasi karena berhenti ketika tidak menemukan peningkatan pada sampel kandidat. Sideways menjalankan 102 sampai 108 iterasi dan terus memeriksa kandidat pada langkah bernilai sama, sehingga membutuhkan waktu lebih lama. Random-restart mengulang proses climb sampai 10 restart; biaya pengulangan itu menaikkan runtime dibanding satu climb, sekaligus menghasilkan skor terbaik optimum pada seluruh seed.
+Steepest-ascent selesai dalam 2 sampai 5 iterasi karena berhenti ketika tidak menemukan peningkatan pada sampel kandidat. Stochastic menjalankan seluruh 2.000 iterasi dengan runtime 0,932 sampai 1,150 detik. Percobaan yang ditolak tetap dihitung sebagai iterasi, sehingga angka tersebut tidak sama dengan jumlah perpindahan state. Sideways menjalankan 102 sampai 108 iterasi dan terus memeriksa kandidat pada langkah bernilai sama, sehingga membutuhkan waktu lebih lama. Random-restart mengulang proses climb sampai 10 restart; biaya pengulangan itu menaikkan runtime dibanding satu climb, sekaligus menghasilkan skor terbaik optimum pada seluruh seed.
 
-SA menjalankan 856 sampai 2.057 iterasi dengan runtime 0,889 sampai 2,014 detik. Biaya satu iterasi tidak setara antaralgoritma: konfigurasi HC yang tercatat memeriksa hingga 50 kandidat per iterasi, sedangkan SA meminta satu neighbor. Karena itu, jumlah iterasi SA yang lebih besar tetap dapat menghasilkan runtime lebih rendah daripada sideways. Pada seed 42, SA berhenti karena tidak memperoleh neighbor sah; dua seed lainnya berhenti saat suhu mencapai batas minimum. Perbedaan penghentian ini menjelaskan sebagian variasi jumlah iterasi dan durasinya.
+SA menjalankan 856 sampai 2.057 iterasi dengan runtime 0,889 sampai 2,014 detik. Biaya satu iterasi tidak setara antaralgoritma: steepest-ascent, sideways, dan random-restart memeriksa hingga 50 kandidat per iterasi, sedangkan stochastic dan SA meminta satu neighbor. Karena itu, jumlah iterasi SA yang lebih besar tetap dapat menghasilkan runtime lebih rendah daripada sideways. Pada seed 42, SA berhenti karena tidak memperoleh neighbor sah; dua seed lainnya berhenti saat suhu mencapai batas minimum. Perbedaan penghentian ini menjelaskan sebagian variasi jumlah iterasi dan durasinya.
 
 Jika tujuan pemakaian adalah memperoleh skor akhir optimum pada ketiga seed ini, SA memberikan kombinasi kualitas dan durasi yang lebih baik daripada sideways. Jika waktu pencarian lebih diutamakan, steepest-ascent menghasilkan solusi dalam kurang dari satu detik pada ketiga run, dengan risiko skor di bawah optimum. Kesimpulan ini berlaku pada dataset dan konfigurasi yang diuji; runtime yang dibandingkan mencakup inisialisasi dan pencarian.
 
 \subsubsection{Konsistensi Hasil Akhir}
 Skor awal untuk seed 42, 123, dan 2026 adalah 188, 68, dan 93 pada seluruh metode. Dengan demikian, setiap seed menyediakan titik pembandingan skor awal yang sama. Kesamaan skor tersebut tidak membuktikan bahwa koordinat semua paket identik.
 
-Sideways dan SA menghasilkan skor akhir 208 pada tiga dari tiga run dengan simpangan baku nol. Steepest-ascent menghasilkan 208, 170, dan 208, sedangkan stochastic lama menghasilkan 208, 170, dan 170. Keduanya memiliki simpangan baku 17,91 walaupun rata-ratanya berbeda. Oleh sebab itu, penilaian konsistensi perlu menyertakan rata-rata dan frekuensi pencapaian optimum, selain simpangan baku.
+Sideways dan SA menghasilkan skor akhir 208 pada tiga dari tiga run dengan simpangan baku nol. Steepest-ascent menghasilkan 208, 170, dan 208 dengan simpangan baku 17,91, sedangkan stochastic menghasilkan 208, 170, dan 185 dengan simpangan baku 15,63. Stochastic memiliki sebaran skor lebih kecil, tetapi rata-ratanya 187,67 berada di bawah steepest-ascent yang mencapai 195,33. Frekuensi pencapaian optimum stochastic adalah satu dari tiga run, sedangkan steepest-ascent dua dari tiga run. Oleh sebab itu, penilaian konsistensi perlu menyertakan rata-rata dan frekuensi pencapaian optimum, selain simpangan baku.
 
 Random-restart menghasilkan skor akhir 190, 190, dan 208 dengan simpangan baku 8,49. Skor terbaiknya selalu 208 sehingga simpangan baku skor terbaik adalah nol. Metode ini konsisten menemukan optimum, sementara solusi pada akhir climb terakhir masih bervariasi. Perbedaan tersebut menjelaskan mengapa evaluasi yang hanya memakai skor akhir akan melewatkan keberhasilan pencarian sebelumnya.
 
@@ -925,19 +925,19 @@ Tangkapan layar berikut memperlihatkan state akhir, skor objektif, runtime, dan 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.98\textwidth]{hasil-test/stochastic42.png}
-\caption{Bukti Stochastic seed 42: skor akhir 208, skor terbaik 208, runtime 370 ms, dan 2 iterasi.}
+\caption{Bukti Stochastic seed 42: skor akhir 208, skor terbaik 208, runtime 932 ms, dan 2.000 iterasi.}
 \label{fig:bukti-HC-STOCH-S42}
 \end{figure}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.98\textwidth]{hasil-test/stochastic123.png}
-\caption{Bukti Stochastic seed 123: skor akhir 170, skor terbaik 170, runtime 653 ms, dan 5 iterasi.}
+\caption{Bukti Stochastic seed 123: skor akhir 170, skor terbaik 170, runtime 1148 ms, dan 2.000 iterasi.}
 \label{fig:bukti-HC-STOCH-S123}
 \end{figure}
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.98\textwidth]{hasil-test/stochastic2026.png}
-\caption{Bukti Stochastic seed 2026: skor akhir 170, skor terbaik 170, runtime 607 ms, dan 5 iterasi.}
+\caption{Bukti Stochastic seed 2026: skor akhir 185, skor terbaik 185, runtime 1150 ms, dan 2.000 iterasi.}
 \label{fig:bukti-HC-STOCH-S2026}
 \end{figure}
 \begin{figure}[htbp]
