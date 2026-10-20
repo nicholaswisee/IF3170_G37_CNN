@@ -148,8 +148,27 @@ def test_ga_runner_uses_initial_population_handoff_and_persists(
             single_truck_problem, state, request.objective_mode
         ) == pytest.approx(score)
     assert result.metadata["persisted"] is True
-    saved = tmp_path / "experiments" / f"{result.id}.json"
+    saved = tmp_path / f"{result.id}.json"
     assert json.loads(saved.read_text()) == json.loads(result.model_dump_json())
+    assert '\n  "problem"' in saved.read_text()
+    assert saved.stat().st_mode & 0o777 == 0o644
+
+
+def test_output_persistence_does_not_require_unix_only_fchmod(
+    single_truck_problem: Problem, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delattr(recorder.os, "fchmod", raising=False)
+    monkeypatch.setattr(runner.settings, "output_dir", str(tmp_path))
+    request = TypeAdapter(RunExperimentRequest).validate_python(
+        _request(single_truck_problem, persist=True)
+    )
+    result = runner.run_experiment(request)
+    assert (
+        ExperimentResult.model_validate_json(
+            (tmp_path / f"{result.id}.json").read_text()
+        )
+        == result
+    )
 
 
 def test_persist_false_does_not_create_output(
@@ -161,7 +180,140 @@ def test_persist_false_does_not_create_output(
     )
     result = runner.run_experiment(request)
     assert result.metadata["persisted"] is False
-    assert not (tmp_path / "experiments").exists()
+    assert not list(tmp_path.iterdir())
+
+
+def test_omitted_persist_does_not_create_run_or_batch_files(
+    single_truck_problem: Problem, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.api import experiments
+
+    monkeypatch.setattr(runner.settings, "output_dir", str(tmp_path))
+    monkeypatch.setattr(experiments.settings, "output_dir", str(tmp_path))
+    run_request = TypeAdapter(RunExperimentRequest).validate_python(
+        {
+            key: value
+            for key, value in _request(single_truck_problem).items()
+            if key != "persist"
+        }
+    )
+    run_result = runner.run_experiment(run_request)
+    assert run_result.metadata["persisted"] is False
+    assert not list(tmp_path.iterdir())
+
+    status, batch_result = _asgi_post(
+        "/api/experiments/batch",
+        {
+            "problem": single_truck_problem.model_dump(mode="json"),
+            "runs": [
+                {
+                    "label": "one",
+                    "seed": 42,
+                    "parameters": {"population_size": 2, "generations": 1},
+                }
+            ],
+        },
+    )
+    assert status == 200
+    assert batch_result["persisted"] is False
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize(
+    "algorithm", ["genetic_algorithm", "hill_climbing", "simulated_annealing"]
+)
+def test_persisted_run_has_report_metrics_and_per_truck_state_summaries(
+    multi_truck_problem: Problem,
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+    algorithm: str,
+) -> None:
+    monkeypatch.setattr(runner.settings, "output_dir", str(tmp_path))
+    parameters = {
+        "genetic_algorithm": {"population_size": 2, "generations": 1},
+        "hill_climbing": {"max_iterations": 2, "candidates_per_iteration": 2},
+        "simulated_annealing": {"max_iterations": 2},
+    }[algorithm]
+    request = TypeAdapter(RunExperimentRequest).validate_python(
+        _request(
+            multi_truck_problem,
+            algorithm=algorithm,
+            parameters=parameters,
+            persist=True,
+        )
+    )
+    result = runner.run_experiment(request)
+    stored = json.loads((tmp_path / f"{result.id}.json").read_text())
+    metrics = stored["metadata"]["metrics"]
+
+    assert metrics["initial_score"] == result.initial_score
+    assert metrics["final_score"] == result.final_score
+    assert metrics["best_score"] == result.best_score
+    assert metrics["runtime_ms"] == result.runtime_ms
+    assert metrics["iterations"] == result.iterations
+    assert metrics["loaded_count"] == sum(
+        p.truck_id is not None for p in result.final_state.placements
+    )
+    assert metrics["total_weight"] == pytest.approx(
+        sum(
+            p.weight
+            for p in result.problem.packages
+            if any(
+                placement.package_id == p.id and placement.truck_id is not None
+                for placement in result.final_state.placements
+            )
+        )
+    )
+    assert metrics["termination_reason"] == result.metadata["termination_reason"]
+    assert set(metrics["state_summaries"]) == {"initial", "final", "best"}
+    for label, state in (
+        ("initial", result.initial_state),
+        ("final", result.final_state),
+        ("best", result.best_state),
+    ):
+        summary = metrics["state_summaries"][label]
+        assert set(summary["trucks"]) == {truck.id for truck in result.problem.trucks}
+        for truck in result.problem.trucks:
+            actual = [p for p in state.placements if p.truck_id == truck.id]
+            assert summary["trucks"][truck.id] == {
+                "package_ids": [p.package_id for p in actual],
+                "count": len(actual),
+                "loaded_weight": pytest.approx(
+                    sum(
+                        package.weight
+                        for package in result.problem.packages
+                        if package.id in {p.package_id for p in actual}
+                    )
+                ),
+                "loaded_value": pytest.approx(
+                    sum(
+                        package.value
+                        for package in result.problem.packages
+                        if package.id in {p.package_id for p in actual}
+                    )
+                ),
+                "max_capacity": truck.max_capacity,
+            }
+        assert summary["outside_package_ids"] == [
+            p.package_id for p in state.placements if p.truck_id is None
+        ]
+    assert stored["initial_state"] == result.initial_state.model_dump(mode="json")
+    assert stored["final_state"] == result.final_state.model_dump(mode="json")
+    assert stored["best_state"] == result.best_state.model_dump(mode="json")
+
+
+def test_report_aggregate_overflow_remains_json_serializable() -> None:
+    from decimal import Decimal
+
+    from app.experiments.metrics import _report_sum
+
+    maximum = float.fromhex("0x1.fffffffffffffp+1023")
+    total = _report_sum([maximum, maximum])
+    assert isinstance(total, str)
+    assert Decimal(total) > Decimal.from_float(maximum)
+    assert json.loads(json.dumps({"total_weight": total}, allow_nan=False)) == {
+        "total_weight": total
+    }
 
 
 def test_runner_rejects_search_score_that_does_not_match_state(
@@ -210,7 +362,7 @@ def test_persistence_never_overwrites_existing_id(
         _request(single_truck_problem, persist=True)
     )
     first = runner.run_experiment(request)
-    path = tmp_path / "experiments" / f"{first.id}.json"
+    path = tmp_path / f"{first.id}.json"
     original = path.read_bytes()
     monkeypatch.setattr(
         runner, "uuid4", lambda: type("UUID", (), {"__str__": lambda _: first.id})()
@@ -231,6 +383,31 @@ def test_list_endpoint_reads_saved_result(
     )
     result = runner.run_experiment(request)
     assert list_experiments().experiments == [result]
+
+
+def test_list_endpoint_prefers_root_results_and_keeps_legacy_results(
+    single_truck_problem: Problem, tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.api.experiments import list_experiments
+
+    monkeypatch.setattr(runner.settings, "output_dir", str(tmp_path))
+    request = TypeAdapter(RunExperimentRequest).validate_python(
+        _request(single_truck_problem, persist=True)
+    )
+    result = runner.run_experiment(request)
+    legacy = tmp_path / "experiments"
+    legacy.mkdir(exist_ok=True)
+    (legacy / f"{result.id}.json").write_text(
+        result.model_dump_json(), encoding="utf-8"
+    )
+    (legacy / "old.json").write_text(
+        result.model_copy(update={"id": "old"}).model_dump_json(), encoding="utf-8"
+    )
+    (tmp_path / ".gitkeep").write_text("", encoding="utf-8")
+    (tmp_path / "summary.batch.json").write_text("{}", encoding="utf-8")
+
+    listed = list_experiments().experiments
+    assert [item.id for item in listed] == [result.id, "old"]
 
 
 def test_list_endpoint_uses_empty_only_for_missing_directory(
@@ -255,7 +432,7 @@ def test_list_endpoint_reads_utf8_experiment(
         _request(single_truck_problem, persist=True)
     )
     result = runner.run_experiment(request)
-    path = tmp_path / "experiments" / f"{result.id}.json"
+    path = tmp_path / f"{result.id}.json"
     path.write_text(result.model_dump_json().replace("base", "café"), encoding="utf-8")
     assert list_experiments().experiments[0].problem.packages[0].id == "café"
 
@@ -280,10 +457,10 @@ def test_persistence_does_not_publish_json_until_writer_finishes(
     result = runner.run_experiment(request)
     assert observed == [[]]
     assert result.metadata["persisted"] is True
-    assert json.loads(
-        (tmp_path / "experiments" / f"{result.id}.json").read_text()
-    ) == json.loads(result.model_dump_json())
-    assert list((tmp_path / "experiments").glob("*.tmp")) == []
+    assert json.loads((tmp_path / f"{result.id}.json").read_text()) == json.loads(
+        result.model_dump_json()
+    )
+    assert list(tmp_path.glob("*.tmp")) == []
 
 
 def test_persistence_writer_failure_leaves_no_final_or_temp_file(
@@ -301,7 +478,7 @@ def test_persistence_writer_failure_leaves_no_final_or_temp_file(
     )
     with pytest.raises(OSError, match="simulated"):
         runner.run_experiment(request)
-    directory = tmp_path / "experiments"
+    directory = tmp_path
     assert list(directory.glob("*.json")) == []
     assert list(directory.glob(".*.tmp")) == []
 
@@ -329,7 +506,7 @@ def test_persistence_close_failure_leaves_no_final_or_temp_file(
     )
     with pytest.raises(OSError, match="close"):
         runner.run_experiment(request)
-    directory = tmp_path / "experiments"
+    directory = tmp_path
     assert list(directory.glob("*.json")) == []
     assert list(directory.glob(".*.tmp")) == []
 
@@ -679,21 +856,28 @@ def test_batch_api_runs_two_labeled_runs_and_persists_json_csv(
         "same-label",
     ]
     assert len(body["groups"]) == 1
-    directory = tmp_path / "experiments"
-    batch_directory = tmp_path / "batches"
-    assert len(list(directory.glob("*.json"))) == 2
-    assert (batch_directory / f"{body['id']}.csv").exists()
-    saved_batch = json.loads(
-        (batch_directory / f"{body['id']}.json").read_text(encoding="utf-8")
+    directory = tmp_path
+    assert (
+        len([p for p in directory.glob("*.json") if not p.name.endswith(".batch.json")])
+        == 2
     )
+    assert (directory / f"{body['id']}.batch.csv").exists()
+    saved_batch = json.loads(
+        (directory / f"{body['id']}.batch.json").read_text(encoding="utf-8")
+    )
+    assert (
+        '\n  "requested_runs"' in (directory / f"{body['id']}.batch.json").read_text()
+    )
+    assert (directory / f"{body['id']}.batch.json").stat().st_mode & 0o777 == 0o644
+    assert (directory / f"{body['id']}.batch.csv").stat().st_mode & 0o777 == 0o644
     assert len(saved_batch["requested_runs"]) == len(saved_batch["results"]) == 2
     assert saved_batch["groups"] == body["groups"]
-    csv_header = (batch_directory / f"{body['id']}.csv").read_text().splitlines()[0]
+    csv_header = (directory / f"{body['id']}.batch.csv").read_text().splitlines()[0]
     assert "objective_mode" in csv_header and "variant" in csv_header
     csv_rows = list(
         csv.DictReader(
             io.StringIO(
-                (batch_directory / f"{body['id']}.csv").read_text(encoding="utf-8"),
+                (directory / f"{body['id']}.batch.csv").read_text(encoding="utf-8"),
                 newline="",
             )
         )
@@ -723,13 +907,15 @@ def test_batch_csv_escapes_formula_labels_but_json_keeps_original(
         },
     )
     assert status == 200
-    directory = tmp_path / "batches"
-    stored = json.loads((directory / f"{body['id']}.json").read_text(encoding="utf-8"))
+    directory = tmp_path
+    stored = json.loads(
+        (directory / f"{body['id']}.batch.json").read_text(encoding="utf-8")
+    )
     assert stored["requested_runs"][0]["label"] == label
     csv_rows = list(
         csv.DictReader(
             io.StringIO(
-                (directory / f"{body['id']}.csv").read_text(encoding="utf-8"),
+                (directory / f"{body['id']}.batch.csv").read_text(encoding="utf-8"),
                 newline="",
             )
         )
@@ -783,7 +969,7 @@ def test_batch_saved_results_remain_listable_as_individual_runs(
     status, listed = _asgi_post("/api/experiments", {}, method="GET")
     assert status == 200
     assert len(listed["experiments"]) == 2
-    assert (tmp_path / "batches" / f"{batch['id']}.json").exists()
+    assert (tmp_path / f"{batch['id']}.batch.json").exists()
 
 
 def test_batch_preflights_every_run_before_executing(
@@ -862,7 +1048,7 @@ def test_batch_persist_false_creates_no_files(
     }
     status, body = _asgi_post("/api/experiments/batch", payload)
     assert status == 200 and body["persisted"] is False
-    assert not (tmp_path / "experiments").exists()
+    assert not list(tmp_path.iterdir())
 
 
 def test_batch_storage_failure_propagates_as_server_error(
@@ -891,7 +1077,7 @@ def test_batch_storage_failure_propagates_as_server_error(
     }
     with pytest.raises(OSError, match="disk"):
         experiments.run_batch(BatchExperimentRequest.model_validate(payload))
-    assert list((tmp_path / "experiments").glob("*.json")) == []
+    assert list(tmp_path.glob("*.json")) == []
 
 
 def test_mandatory_preset_executes_all_eighteen_runs() -> None:
@@ -929,9 +1115,8 @@ def test_batch_recorder_collision_preserves_existing_data(tmp_path) -> None:
     from app.experiments.recorder import record_batch
     from app.schemas.experiment import BatchExperimentResult, BatchRunSpec
 
-    directory = tmp_path / "experiments"
-    directory.mkdir()
-    marker = directory / "batch.csv"
+    directory = tmp_path
+    marker = directory / "batch.batch.csv"
     marker.write_text("keep", encoding="utf-8")
     batch = BatchExperimentResult(
         id="batch",
@@ -950,9 +1135,8 @@ def test_batch_recorder_json_collision_removes_only_new_csv(tmp_path) -> None:
     from app.experiments.recorder import record_batch
     from app.schemas.experiment import BatchExperimentResult, BatchRunSpec
 
-    directory = tmp_path / "experiments"
-    directory.mkdir()
-    marker = directory / "batch.json"
+    directory = tmp_path
+    marker = directory / "batch.batch.json"
     marker.write_text("keep", encoding="utf-8")
     batch = BatchExperimentResult(
         id="batch",
@@ -965,7 +1149,7 @@ def test_batch_recorder_json_collision_removes_only_new_csv(tmp_path) -> None:
     with pytest.raises(FileExistsError):
         record_batch(batch, directory)
     assert marker.read_text(encoding="utf-8") == "keep"
-    assert not (directory / "batch.csv").exists()
+    assert not (directory / "batch.batch.csv").exists()
 
 
 def test_execution_budget_accepts_ga_limits_and_rejects_next_value(
@@ -1260,11 +1444,17 @@ def test_sa_runner_matches_direct_execution_and_replays_seed(
     assert result.best_score == direct.best_score
     assert result.iterations == direct.iterations
     assert result.history == direct.history
-    assert result.metadata == direct.metadata | {"persisted": False}
+    assert {
+        key: value for key, value in result.metadata.items() if key != "metrics"
+    } == direct.metadata | {"persisted": False}
+    assert result.metadata["metrics"]["best_score"] == result.best_score
     assert result.runtime_ms >= 0
-    assert result.model_dump(exclude={"id", "runtime_ms"}) == replay.model_dump(
-        exclude={"id", "runtime_ms"}
-    )
+    result_dump = result.model_dump(exclude={"id", "runtime_ms"})
+    replay_dump = replay.model_dump(exclude={"id", "runtime_ms"})
+    for dump in (result_dump, replay_dump):
+        dump["metadata"]["metrics"].pop("duration_ms")
+        dump["metadata"]["metrics"].pop("runtime_ms")
+    assert result_dump == replay_dump
     assert parsed.model_dump_json() == original
     assert ExperimentResult.model_validate_json(result.model_dump_json()) == result
 
@@ -1310,7 +1500,7 @@ def test_http_sa_persists_and_lists_valid_multitruck_results(
                 evaluate_objective(multi_truck_problem, event.state_snapshot, mode)
                 == event.current_score
             )
-    saved = tmp_path / "experiments" / f"{result.id}.json"
+    saved = tmp_path / f"{result.id}.json"
     assert ExperimentResult.model_validate_json(saved.read_text()) == result
     list_status, listing = _asgi_post("/api/experiments", {}, method="GET")
     assert list_status == 200
@@ -1424,18 +1614,20 @@ def test_http_sa_batch_runs_seed_set_and_writes_metrics_only_results(
             == result.best_score
         )
         if persist:
-            saved = tmp_path / "experiments" / f"{result.id}.json"
+            saved = tmp_path / f"{result.id}.json"
             assert ExperimentResult.model_validate_json(saved.read_text()) == result
     if persist:
-        directory = tmp_path / "batches"
+        directory = tmp_path
         assert (
             BatchExperimentResult.model_validate_json(
-                (directory / f"{batch.id}.json").read_text()
+                (directory / f"{batch.id}.batch.json").read_text()
             )
             == batch
         )
         rows = list(
-            csv.DictReader(io.StringIO((directory / f"{batch.id}.csv").read_text()))
+            csv.DictReader(
+                io.StringIO((directory / f"{batch.id}.batch.csv").read_text())
+            )
         )
         assert [int(row["seed"]) for row in rows] == seeds
         assert all(row["algorithm"] == "simulated_annealing" for row in rows)

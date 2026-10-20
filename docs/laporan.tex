@@ -272,10 +272,9 @@ Pengguna mengubah paket dan truk melalui formulir web yang dimulai dari fixture 
 
 Konfigurasi diperiksa melalui endpoint \texttt{POST} \path{/api/problems/validate}. Endpoint ini memvalidasi model dan batas masukan, bukan susunan paket. Ketika run dimulai, frontend memeriksa parameter lalu mengirim problem, algoritma, seed, objektif, parameter, dan pilihan riwayat ke \texttt{POST} \path{/api/experiments/run}. Backend memvalidasi skema dan anggaran eksekusi, membangkitkan state awal, menjalankan algoritma, lalu memeriksa kelayakan state awal, akhir, dan terbaik serta kecocokan skornya sebelum membentuk respons.
 
-Run dari UI secara default menyimpan hasil; opsi simpan dapat diubah melalui kontrol pada panel setup. Daftar run tersimpan dimuat dan dapat diperbarui melalui UI, serta tersedia melalui \path|GET /api/experiments|. Endpoint preset GA dan batch tersedia melalui \path|GET /api/experiments/presets/genetic_algorithm| dan \path|POST /api/experiments/batch|. Problem yang sedang diedit untuk run berikutnya terpisah dari problem asli milik run yang sedang ditampilkan.
+Run dari UI tidak menyimpan hasil secara default. Pengguna harus mengaktifkan \textit{Save run} pada panel setup untuk menulis hasil ke direktori keluaran. Request run maupun batch tanpa pilihan simpan juga tidak menulis berkas. Daftar run tersimpan dimuat dan dapat diperbarui melalui UI, serta tersedia melalui \path|GET /api/experiments|. Endpoint preset GA dan batch tersedia melalui \path|GET /api/experiments/presets/genetic_algorithm| dan \path|POST /api/experiments/batch|. Problem yang sedang diedit untuk run berikutnya terpisah dari problem asli milik run yang sedang ditampilkan.
 
 \subsubsection{Struktur Aplikasi}
-Folder utama aplikasi tersusun sebagai berikut. Pohon ini hanya menampilkan direktori yang berperan dalam alur pencarian dan visualisasi.
 
 \begin{lstlisting}[language={},frame=single,basicstyle=\ttfamily\footnotesize]
 .
@@ -301,7 +300,7 @@ Folder utama aplikasi tersusun sebagai berikut. Pohon ini hanya menampilkan dire
             |-- mocks/
 \end{lstlisting}
 
-Di backend, \path{domain} mendefinisikan data, \path{optimization} memuat validator dan algoritma, sedangkan \path{experiments} mengatur eksekusi, ringkasan, dan pencatatan hasil. Di frontend, \path{api} menangani request serta pemeriksaan respons; \path{charts}, \path{modals}, \path{panels}, \path{scene}, dan \path{shell} memisahkan grafik, dialog, panel, visualisasi tiga dimensi, dan kontrol antarmuka. Fixture armada berada di \path{src/frontend/src/mocks}; \path{stores} memuat state eksperimen aktif serta replay, sedangkan daftar run tersimpan dikelola di aplikasi. Dataset pengujian tersedia di \path{data/testing/testing-dataset.json}. Direktori keluaran ditentukan oleh konfigurasi \texttt{output\_dir} (default \path{output/}); run tersimpan berada di subdirektori \path{experiments/}, sementara batch menyimpan run individual di sana serta ringkasan JSON dan CSV di \path{batches/}. Hasil studi terukur pada bagian eksperimen merupakan pengukuran manual yang direkam di laporan, bukan hasil run GA.
+Di backend, \path{domain} mendefinisikan data, \path{optimization} memuat validator dan algoritma, sedangkan \path{experiments} mengatur eksekusi, ringkasan, dan pencatatan hasil. Di frontend, \path{api} menangani request serta pemeriksaan respons; \path{charts}, \path{modals}, \path{panels}, \path{scene}, dan \path{shell} memisahkan grafik, dialog, panel, visualisasi tiga dimensi, dan kontrol antarmuka. Fixture armada berada di \path{src/frontend/src/mocks}; \path{stores} memuat state eksperimen aktif serta replay, sedangkan daftar run tersimpan dikelola di aplikasi. Dataset uji yang dipakai untuk GA berada di \path{test/testing-dataset.json}. Run individual yang sengaja disimpan ditulis sebagai \path{output/<id>.json}; batch sebagai \path{output/<id>.batch.json} dan \path{output/<id>.batch.csv}. Tiga berkas GA untuk laporan diberi nama \path{output/ga-seed-42.json}, \path{output/ga-seed-123.json}, dan \path{output/ga-seed-2026.json}; masing-masing memuat konfigurasi, metrik, serta state awal, akhir, dan terbaik lengkap.
 
 \subsubsection{Tech Stack}
 Backend ditulis dengan \textbf{Python 3.12}. \textbf{FastAPI} menyediakan endpoint untuk memvalidasi problem, menjalankan eksperimen tunggal atau batch, dan membaca hasil yang tersimpan. Model \textbf{Pydantic} memeriksa tipe serta rentang nilai saat request diterima. Sesudah itu, modul optimasi menjalankan aturan yang sama untuk semua algoritma. \textbf{NumPy} digunakan untuk occupancy grid tiga dimensi, sehingga pemeriksaan ruang terisi dapat dilakukan pada irisan sel paket.
@@ -344,7 +343,7 @@ Berkas konfigurasi memakai envelope JSON berversi yang menyimpan nama konfiguras
 \end{itemize}
 
 \subsection{Pemodelan Problem dan Constraint}
-Pemodelan dimulai dari data paket dan truk. Dari data itu, program membentuk state yang mencatat posisi setiap paket. State lalu melewati pemeriksaan constraint sebelum objective dihitung. Urutan ini dipakai bersama oleh seluruh algoritma, sehingga nilai yang dibandingkan selalu berasal dari \textbf{susunan yang sah}.
+Pemodelan dimulai dari data paket dan truk. Dari data itu, program membentuk state yang mencatat posisi setiap paket dan memeriksa constraint-nya. HC/SA hanya menilai neighbor yang sah. Pada GA, offspring tidak sah juga dievaluasi, tetapi penalti fitness memengaruhi seleksi. State awal, akhir, dan terbaik yang dikembalikan tetap feasible; skor hasil merupakan objective mentah.
 
 \subsubsection{Data Problem}
 Sesuai atribut konseptual pada Subbab~\ref{sec:entitas}, \texttt{Problem} menyimpan daftar \texttt{PackageSpec} dan \texttt{TruckSpec}. Dimensi lebar, panjang, dan tinggi diratakan menjadi field \texttt{width}, \texttt{length}, dan \texttt{height}; \texttt{IsFragile} menjadi \texttt{is\_fragile}, dan \texttt{MaxCapacity} menjadi \texttt{max\_capacity}. Atribut \texttt{Value}, \texttt{Weight}, dan \texttt{ETA} masing-masing disimpan sebagai \texttt{value}, \texttt{weight}, dan \texttt{eta}. Truk memiliki \texttt{id} sebagai identitas implementasi tambahan. Dukungan beberapa truk merupakan perluasan dari persoalan satu truk; setiap paket ditugaskan ke paling banyak satu truk. Cuplikan~\ref{lst:package-spec} hingga~\ref{lst:problem-spec} memperlihatkan hubungan ketiga kelas tersebut.
@@ -602,10 +601,10 @@ Default GA adalah populasi 50, 100 generasi, crossover 1,0, mutasi 0,2, dan elit
 \clearpage
 \section{Eksperimen dan Analisis}
 \subsection{Rancangan Eksperimen}
-Bagian ini menyajikan rancangan dan hasil pengujian manual melalui UI. Hasil pengujian mencakup 15 run: 12 run Hill Climbing (HC) dan tiga run Simulated Annealing (SA). Sebanyak 18 run Genetic Algorithm (GA) masih belum memiliki data pengukuran. Satu run merujuk pada satu eksekusi algoritma untuk satu problem dengan satu seed.
+Bagian ini menyajikan 15 pengukuran manual melalui UI (12 run Hill Climbing/HC dan tiga run Simulated Annealing/SA) serta tiga run GA yang dieksekusi secara berurutan melalui backend HTTP. Dengan demikian terdapat 18 catatan eksekusi pada satu dataset. Run GA merupakan pengujian programatik, bukan run manual melalui UI.
 
 \subsubsection{Data Uji dan Lingkungan Eksperimen}
-Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket termuat tanpa pembobotan ETA. Dataset pengujian terdiri atas satu truk \texttt{truck-a} berukuran $10\times8\times6$ dan berkapasitas 100, serta sembilan paket pada Tabel~\ref{tab:data-eksperimen} dengan atribut asli. Dataset yang sama digunakan untuk membandingkan hasil antaralgoritma, seed, dan konfigurasi.
+Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket termuat tanpa pembobotan ETA. Dataset pengujian terdiri atas satu truk \texttt{truck-a} berukuran $10\times8\times6$ dan berkapasitas 100, serta sembilan paket pada Tabel~\ref{tab:data-eksperimen} dengan atribut asli. Dataset yang sama digunakan untuk membandingkan hasil antaralgoritma dan seed. GA memakai satu konfigurasi tetap: populasi 50, 100 generasi, crossover 1,0, mutasi 0,2, elitisme 0, dan arsip solusi feasible eksternal.
 
 \begin{table}[htbp]
     \centering
@@ -633,7 +632,7 @@ Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket t
 Jumlah nilai seluruh paket adalah 280. Dengan batas kapasitas 100 kg dan aturan penempatan yang digunakan, nilai optimum global dataset ini adalah 208; pembuktiannya diberikan pada Subbab~\ref{sec:optimum-eksperimen}. Pengujian difokuskan pada satu truk dengan batas kapasitas 100 kg.
 
 \subsubsection{Konfigurasi Parameter dan Pengulangan Eksperimen}
-Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 2026}. Rancangan utama mencakup empat varian HC masing-masing tiga run, tiga run SA, serta dua kelompok GA masing-masing sembilan run, sehingga jumlahnya \textbf{33 run per dataset}. Konfigurasi GA dengan populasi 50 dan 100 generasi muncul pada kedua kelompok dengan label berbeda; enam run itu tercakup dalam 18 run GA. Konfigurasi parameter setiap metode dirangkum pada Tabel~\ref{tab:konfigurasi-eksperimen}.
+Setiap metode memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 2026}. Rancangan mencakup empat varian HC masing-masing tiga run, tiga run SA, serta satu konfigurasi GA dengan tiga run; keseluruhannya \textbf{18 catatan eksekusi pada satu dataset}. Konfigurasi parameter setiap metode dirangkum pada Tabel~\ref{tab:konfigurasi-eksperimen}.
 
 \begin{table}[htbp]
     \centering
@@ -648,18 +647,17 @@ Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 20
         HC sideways & Maksimum 2.000 iterasi, 50 kandidat per iterasi, maksimum 100 sideways berturut-turut. & 3 \\
         HC random-restart & Maksimum 10 restart; 11 climb, masing-masing maksimum 2.000 iterasi dan 50 kandidat per iterasi. & 3 \\
         SA & $T_0=30$, $\alpha=0{,}995$, $T_{\min}=0{,}001$, maksimum 5.000 iterasi, ambang stagnasi 50 iterasi. & 3 \\
-        GA: variasi generasi & Populasi tetap 50; generasi 50, 100, dan 200. & 9 \\
-        GA: variasi populasi & Generasi tetap 100; populasi 20, 50, dan 100. & 9 \\
+        GA & Populasi 50; 100 generasi; crossover 1,0; mutasi 0,2; elitisme 0. & 3 \\
         \bottomrule
     \end{tabularx}
-    \caption{Kontrol dan jumlah run yang direncanakan.}
+    \caption{Kontrol dan jumlah run per kelompok eksperimen.}
     \label{tab:konfigurasi-eksperimen}
 \end{table}
 
-Metrik pengujian meliputi skor objektif awal, akhir, dan terbaik, runtime, jumlah iterasi aktual, serta berat dan jumlah paket termuat pada state akhir. Skor terbaik dibedakan dari skor akhir karena solusi terakhir tidak selalu menjadi solusi terbaik sepanjang pencarian. Runtime mencakup inisialisasi dan pencarian, sedangkan validasi akhir, penyimpanan hasil, komunikasi HTTP, dan rendering tidak termasuk di dalamnya.
+Metrik pengujian meliputi skor objektif awal, akhir, dan terbaik, runtime, jumlah iterasi aktual, serta berat dan jumlah paket termuat pada state akhir. Skor terbaik dibedakan dari skor akhir karena solusi terakhir tidak selalu menjadi solusi terbaik sepanjang pencarian. Runtime GA mencakup inisialisasi dan pencarian, tidak termasuk serialisasi, validasi akhir, penyimpanan, komunikasi HTTP, atau rendering. Pengukuran manual HC/SA tidak merupakan benchmark terkontrol terhadap GA. Runtime GA dijalankan berurutan pada Docker, CPython 3.12.13/Linux, Intel Core i7-13620H.
 
 \subsection{Hasil Eksperimen dan Visualisasi Program}
-Pengujian mencakup empat varian HC dan SA dengan objektif Total value. Hasil setiap run meliputi skor awal, akhir, dan terbaik. Visualisasi menunjukkan susunan paket pada state akhir beserta jumlah paket dan berat muatannya.
+Pengujian mencakup empat varian HC, SA, dan GA dengan objektif Total value. Hasil setiap run meliputi skor awal, akhir, dan terbaik. Visualisasi HC/SA menunjukkan susunan paket pada state akhir beserta jumlah paket dan berat muatannya. Hasil GA diperoleh melalui backend dan belum dilengkapi tangkapan layar.
 \subsubsection{Hill Climbing}
 \begin{table}[htbp]
 \centering
@@ -728,25 +726,24 @@ Konfigurasi SA menggunakan $T_0=30$, $\alpha=0{,}995$, $T_{\min}=0{,}001$, dan a
 \end{figure}
 
 \subsubsection{Genetic Algorithm}
-Hasil 18 run GA belum tersedia. Subbagian ini dan tabel berikut memuat konfigurasi yang direncanakan; perbandingan hasil GA dengan HC dan SA belum dapat dilakukan.
-\begin{table}[H]
-    \centering
-    \small
-    \begin{tabular}{@{}l r r c@{}}
-        \toprule
-        Label kelompok & Populasi & Generasi & Seed \\
-        \midrule
-        \texttt{generations} & 50 & 50 & 42, 123, 2026 \\
-        \texttt{generations} & 50 & 100 & 42, 123, 2026 \\
-        \texttt{generations} & 50 & 200 & 42, 123, 2026 \\
-        \texttt{population\_size} & 20 & 100 & 42, 123, 2026 \\
-        \texttt{population\_size} & 50 & 100 & 42, 123, 2026 \\
-        \texttt{population\_size} & 100 & 100 & 42, 123, 2026 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Enam konfigurasi GA yang direncanakan, masing-masing dengan tiga pengulangan.}
-    \label{tab:ga-rencana}
+Tiga run GA menggunakan satu konfigurasi tetap (populasi 50, 100 generasi) dan seed 42, 123, serta 2026. Tabel melaporkan objective mentah (total value), runtime backend, jumlah paket, dan berat state akhir. Seluruh state awal/akhir/terbaik lolos validasi; seluruh run mencapai generation limit pada tepat $I=G=100$ generasi dan tidak memakai fallback arsip sebagai state akhir.
+
+\begin{table}[htbp]
+\centering\small\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}r r r r r r r l@{}}
+\toprule
+Seed & Awal & Akhir & Terbaik & ms & Paket & kg & Berkas \\
+\midrule
+42 & 200 & 208 & 208 & 875 & 7 & 100 & \path{ga-seed-42.json} \\
+123 & 208 & 162 & 208 & 787 & 6 & 74 & \path{ga-seed-123.json} \\
+2026 & 200 & 208 & 208 & 898 & 7 & 100 & \path{ga-seed-2026.json} \\
+\bottomrule
+\end{tabular}
+\caption{Hasil GA programatik untuk satu konfigurasi tetap (populasi 50, 100 generasi, crossover 1,0, mutasi 0,2, elitisme 0), tiga seed.}
+\label{tab:hasil-ga}
 \end{table}
+
+Rata-rata skor akhir adalah 192,67 dengan simpangan baku populasi 21,68; rata-rata skor terbaik 208,00 dan runtime backend rata-rata 853 ms. Skor akhir seed 123 sebesar 162 berada di bawah skor terbaik 208 karena reproduksi tidak memakai elitisme. Arsip solusi terbaik disimpan terpisah dan tidak memaksa state akhir sama dengan arsip.
 
 \subsection{Analisis Eksperimen}
 
@@ -830,14 +827,14 @@ Random-restart memulai climb baru dari state acak sehingga pencarian mencoba leb
 SA dapat menerima langkah yang menurunkan skor dengan probabilitas yang bergantung pada suhu. Mekanisme ini memungkinkan pencarian meninggalkan daerah yang sulit diperbaiki hanya dengan langkah meningkat. Ketiga run SA mencapai 208, termasuk seed 123 yang menghasilkan 170 pada steepest-ascent dan stochastic. Hasil ini sesuai dengan kemampuan eksplorasi SA, tetapi ringkasan akhir tidak menunjukkan langkah menurun mana yang berperan dalam mencapai optimum.
 
 \subsubsection{Perbandingan Hasil Pencarian Antaralgoritma}
-Berdasarkan rata-rata skor akhir, sideways dan SA berada pada urutan tertinggi dengan 208, diikuti random-restart 196,00, steepest-ascent 195,33, dan stochastic 187,67. Selisih random-restart terhadap steepest-ascent hanya 0,67 poin pada rata-rata tiga seed, tetapi keduanya berbeda dalam penyimpanan hasil terbaik: random-restart menemukan 208 pada semua run, sedangkan steepest-ascent hanya pada dua run.
+Untuk HC/SA, berdasarkan rata-rata skor akhir, sideways dan SA berada pada urutan tertinggi dengan 208, diikuti random-restart 196,00, steepest-ascent 195,33, dan stochastic 187,67. Selisih random-restart terhadap steepest-ascent hanya 0,67 poin pada rata-rata tiga seed, tetapi keduanya berbeda dalam penyimpanan hasil terbaik: random-restart menemukan 208 pada semua run, sedangkan steepest-ascent hanya pada dua run.
 
 Pada seed 42, semua metode mencapai skor akhir 208 kecuali random-restart, yang berakhir di 190 setelah sempat mencapai 208. Pada seed 123, sideways dan SA meningkatkan skor awal 68 menjadi 208. Steepest-ascent dan stochastic berakhir di 170, sedangkan random-restart menemukan skor terbaik 208. Pada seed 2026, skor terbaik stochastic adalah 185; keempat metode lainnya mencapai 208.
 
-Seluruh state akhir memuat tujuh paket. Berat akhirnya berkisar 76 sampai 100 kg, sedangkan nilainya berkisar 170 sampai 208. Karena objektif memaksimalkan total nilai, jumlah paket yang sama tidak menjamin kualitas solusi yang sama. Dua run random-restart juga memiliki nilai akhir 190 dengan berat berbeda, yaitu 96 dan 91 kg. Pemilihan komposisi paket dan susunan yang memungkinkan paket bernilai tinggi masuk lebih menentukan daripada jumlah paket saja.
+Seluruh state akhir HC/SA memuat tujuh paket; GA memuat enam hingga tujuh paket. Berat akhir HC/SA berkisar 76 sampai 100 kg, sedangkan nilainya berkisar 170 sampai 208. Karena objektif memaksimalkan total nilai, jumlah paket yang sama tidak menjamin kualitas solusi yang sama. Dua run random-restart juga memiliki nilai akhir 190 dengan berat berbeda, yaitu 96 dan 91 kg. Pemilihan komposisi paket dan susunan yang memungkinkan paket bernilai tinggi masuk lebih menentukan daripada jumlah paket saja.
 
 \subsubsection{Perbandingan Durasi Pencarian}
-Rata-rata runtime steepest-ascent adalah 0,508 detik, stochastic 1,077 detik, SA 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Steepest-ascent paling cepat pada rata-rata pengukuran ini, tetapi tidak mencapai optimum pada seed 123. Sideways dan SA sama-sama mencapai skor akhir optimum pada seluruh seed; untuk hasil tersebut, SA membutuhkan sekitar sepersepuluh runtime sideways.
+Durasi HC/SA manual dan GA programatik berasal dari kondisi eksekusi berbeda sehingga tidak membentuk benchmark terkontrol. Perbandingan berikut dibatasi pada hasil HC/SA manual. Rata-rata runtime steepest-ascent adalah 0,508 detik, stochastic 1,077 detik, SA 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Steepest-ascent paling cepat pada rata-rata pengukuran ini, tetapi tidak mencapai optimum pada seed 123. Sideways dan SA sama-sama mencapai skor akhir optimum pada seluruh seed; untuk hasil tersebut, SA membutuhkan sekitar sepersepuluh runtime sideways.
 
 Steepest-ascent selesai dalam 2 sampai 5 iterasi karena berhenti ketika tidak menemukan peningkatan pada sampel kandidat. Stochastic menjalankan seluruh 2.000 iterasi dengan runtime 0,932 sampai 1,150 detik. Percobaan yang ditolak tetap dihitung sebagai iterasi, sehingga angka tersebut tidak sama dengan jumlah perpindahan state. Sideways menjalankan 102 sampai 108 iterasi dan terus memeriksa kandidat pada langkah bernilai sama, sehingga membutuhkan waktu lebih lama. Random-restart mengulang proses climb sampai 10 restart; biaya pengulangan itu menaikkan runtime dibanding satu climb, sekaligus menghasilkan skor terbaik optimum pada seluruh seed.
 
@@ -846,7 +843,7 @@ SA menjalankan 856 sampai 2.057 iterasi dengan runtime 0,889 sampai 2,014 detik.
 Jika tujuan pemakaian adalah memperoleh skor akhir optimum pada ketiga seed ini, SA memberikan kombinasi kualitas dan durasi yang lebih baik daripada sideways. Jika waktu pencarian lebih diutamakan, steepest-ascent menghasilkan solusi dalam kurang dari satu detik pada ketiga run, dengan risiko skor di bawah optimum. Kesimpulan ini berlaku pada dataset dan konfigurasi yang diuji; runtime yang dibandingkan mencakup inisialisasi dan pencarian.
 
 \subsubsection{Konsistensi Hasil Akhir}
-Skor awal untuk seed 42, 123, dan 2026 adalah 188, 68, dan 93 pada seluruh metode. Dengan demikian, setiap seed menyediakan titik pembandingan skor awal yang sama. Kesamaan skor tersebut tidak membuktikan bahwa koordinat semua paket identik.
+Skor awal HC/SA untuk seed 42, 123, dan 2026 adalah 188, 68, dan 93 pada seluruh metode tersebut. Dengan demikian, setiap seed menyediakan titik pembandingan skor awal yang sama. Kesamaan skor tersebut tidak membuktikan bahwa koordinat semua paket identik.
 
 Sideways dan SA menghasilkan skor akhir 208 pada tiga dari tiga run dengan simpangan baku nol. Steepest-ascent menghasilkan 208, 170, dan 208 dengan simpangan baku 17,91, sedangkan stochastic menghasilkan 208, 170, dan 185 dengan simpangan baku 15,63. Stochastic memiliki sebaran skor lebih kecil, tetapi rata-ratanya 187,67 berada di bawah steepest-ascent yang mencapai 195,33. Frekuensi pencapaian optimum stochastic adalah satu dari tiga run, sedangkan steepest-ascent dua dari tiga run. Oleh sebab itu, penilaian konsistensi perlu menyertakan rata-rata dan frekuensi pencapaian optimum, selain simpangan baku.
 
@@ -854,8 +851,12 @@ Random-restart menghasilkan skor akhir 190, 190, dan 208 dengan simpangan baku 8
 
 Konsistensi skor juga perlu dibedakan dari konsistensi runtime. SA memiliki skor akhir tetap, tetapi runtime bervariasi dari 0,889 sampai 2,014 detik akibat perbedaan lama pencarian. Sideways memiliki rentang runtime 16,100 sampai 16,996 detik dengan skor akhir yang sama. Tiga seed ini menunjukkan perilaku pada sampel pengujian dan belum membuktikan tingkat keberhasilan untuk seed lain atau dataset yang lebih besar.
 
-\subsubsection{Pengaruh Generasi dan Populasi Genetic Algorithm}
-Analisis GA menunggu hasil 18 run yang direncanakan. Pengaruh jumlah generasi akan dibandingkan pada populasi tetap 50, sedangkan pengaruh populasi akan dibandingkan pada 100 generasi. Skor akhir, skor terbaik, runtime, dan variasi antarseed akan digunakan untuk menilai apakah tambahan generasi atau anggota populasi memberi peningkatan yang sebanding dengan biaya pencariannya. Kesimpulan pengaruh kedua parameter tersebut belum dapat ditarik dari hasil HC dan SA.
+\subsubsection{Analisis Hasil GA dan Pengaruh Parameternya}
+Dalam tiga run pada konfigurasi tetap, GA menghasilkan skor akhir 208, 162, dan 208; ketiganya memiliki skor terbaik 208. Berdasarkan pembuktian pada Subbab~\ref{sec:optimum-eksperimen}, GA menemukan optimum global pada seluruh seed, termasuk dalam populasi awal seed 123. Karena reproduksi tidak memakai elitisme, skor state akhir dapat lebih rendah daripada arsip solusi feasible terbaik, seperti pada seed 123. Rata-rata skor akhir 192,67 berada di bawah random-restart dan steepest-ascent, serta di atas stochastic; skor terbaiknya setara dengan sideways, random-restart, dan SA. Simpangan baku skor akhir 21,68 menunjukkan variasi, meskipun skor terbaik tetap 208 pada tiga seed.
+
+Skor awal GA adalah 200, 208, dan 200 karena inisialisasinya membentuk populasi, sedangkan HC/SA dimulai dari satu state. Skor awal HC/SA untuk seed yang sama adalah 188, 68, dan 93. Perbandingan peningkatan skor karenanya tidak berangkat dari kondisi awal yang sama. Runtime rata-rata GA adalah 0,853 detik; kondisi pengukuran programatiknya berbeda dari HC/SA manual sehingga angka ini tidak menjadi dasar klaim kecepatan lintas algoritma.
+
+Satu konfigurasi, tiga seed, dan satu dataset belum memungkinkan penilaian pengaruh jumlah generasi atau populasi. Analisis pengaruh kedua parameter tersebut menunggu pengujian pada beberapa nilai generasi dengan populasi tetap, serta beberapa ukuran populasi dengan generasi tetap.
 
 \clearpage
 \section{Kesimpulan dan Saran}

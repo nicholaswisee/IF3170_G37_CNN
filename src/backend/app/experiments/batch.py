@@ -94,13 +94,11 @@ def run_batch(request: BatchExperimentRequest) -> BatchExperimentResult:
             persisted=request.persist,
         )
         if request.persist:
-            record_batch(batch, Path(settings.output_dir) / "batches")
+            record_batch(batch, Path(settings.output_dir))
         return batch
     except Exception:
         for result_id in created_ids:
-            (Path(settings.output_dir) / "experiments" / f"{result_id}.json").unlink(
-                missing_ok=True
-            )
+            (Path(settings.output_dir) / f"{result_id}.json").unlink(missing_ok=True)
         raise
 
 

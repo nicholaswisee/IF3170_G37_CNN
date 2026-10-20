@@ -1,8 +1,16 @@
 import statistics
-from math import isfinite
+from decimal import Decimal
+from math import fsum, isfinite
 
 from app.schemas.common import Metadata
 from app.schemas.experiment import ExperimentResult
+
+
+def _report_sum(values: list[float]) -> float | str:
+    try:
+        return fsum(values)
+    except OverflowError:
+        return str(sum((Decimal.from_float(value) for value in values), Decimal()))
 
 
 def calculate_metrics(result: ExperimentResult) -> Metadata:
@@ -16,7 +24,7 @@ def calculate_metrics(result: ExperimentResult) -> Metadata:
             and isfinite(max_fitness)
             else event.current_score
         )
-    return {
+    metrics: Metadata = {
         "max_fitness_history": max_fitness_history,
         "avg_fitness_history": [event.mean_score for event in result.history],
         "population_size": result.parameters.get("population_size"),
@@ -24,7 +32,69 @@ def calculate_metrics(result: ExperimentResult) -> Metadata:
         "duration_ms": result.runtime_ms,
         "seed": result.seed,
         "objective_mode": result.objective_mode.value,
+        "initial_score": result.initial_score,
+        "final_score": result.final_score,
+        "best_score": result.best_score,
+        "runtime_ms": result.runtime_ms,
+        "iterations": result.iterations,
+        "loaded_count": sum(
+            placement.truck_id is not None
+            for placement in result.final_state.placements
+        ),
+        "total_weight": _report_sum(
+            [
+                package.weight
+                for package in result.problem.packages
+                if any(
+                    placement.package_id == package.id
+                    and placement.truck_id is not None
+                    for placement in result.final_state.placements
+                )
+            ]
+        ),
+        "state_summaries": {},
     }
+    if "termination_reason" in result.metadata:
+        metrics["termination_reason"] = result.metadata["termination_reason"]
+    for key in ("sideways_moves", "restarts_performed", "stuck_events"):
+        if key in result.metadata:
+            metrics[key] = result.metadata[key]
+
+    for name, state in (
+        ("initial", result.initial_state),
+        ("final", result.final_state),
+        ("best", result.best_state),
+    ):
+        trucks = {}
+        for truck in result.problem.trucks:
+            package_ids = [
+                placement.package_id
+                for placement in state.placements
+                if placement.truck_id == truck.id
+            ]
+            loaded = [
+                package
+                for package in result.problem.packages
+                if package.id in package_ids
+            ]
+            trucks[truck.id] = {
+                "package_ids": package_ids,
+                "count": len(package_ids),
+                "loaded_weight": _report_sum([package.weight for package in loaded]),
+                "loaded_value": _report_sum([package.value for package in loaded]),
+                "max_capacity": truck.max_capacity,
+            }
+        outside = [
+            placement.package_id
+            for placement in state.placements
+            if placement.truck_id is None
+        ]
+        metrics["state_summaries"][name] = {
+            "trucks": trucks,
+            "outside_package_ids": outside,
+            "outside_count": len(outside),
+        }
+    return metrics
 
 
 def summarize_results(results: list[ExperimentResult]) -> dict[str, int | float | None]:

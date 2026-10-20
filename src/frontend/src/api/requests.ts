@@ -124,7 +124,7 @@ export function buildRunRequest({
   objectiveMode = 'total_value',
   variant = 'sideways',
   includeStateHistory = true,
-  persist = true,
+  persist = false,
 }: RunRequestOptions): RunExperimentRequest {
   const common = {
     problem,

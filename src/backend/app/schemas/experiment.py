@@ -60,7 +60,7 @@ class _RunRequest(BaseModel):
     objective_mode: ObjectiveMode = ObjectiveMode.TOTAL_VALUE
     seed: int
     include_state_history: bool = True
-    persist: bool = True
+    persist: bool = False
 
     @field_validator("seed")
     @classmethod
@@ -137,7 +137,7 @@ class BatchExperimentRequest(BaseModel):
     runs: list[BatchRunSpec] | None = Field(default=None, min_length=1, max_length=100)
     preset: Literal["ga_mandatory"] | None = None
     objective_mode: ObjectiveMode = ObjectiveMode.TOTAL_VALUE
-    persist: bool = True
+    persist: bool = False
 
     @field_validator("problem", mode="before")
     @classmethod

@@ -105,3 +105,10 @@ test('builds the request shape of the API contract', () => {
   assert.ok(hc.algorithm === 'hill_climbing')
   assert.equal(hc.variant, 'stochastic')
 })
+
+test('single runs are not persisted unless explicitly requested', () => {
+  const options = { algorithm: 'hill_climbing' as const, problem, seed: 42, parameters: {} }
+  assert.equal(buildRunRequest(options).persist, false)
+  assert.equal(buildRunRequest({ ...options, persist: true }).persist, true)
+  assert.equal(buildRunRequest({ ...options, persist: false }).persist, false)
+})

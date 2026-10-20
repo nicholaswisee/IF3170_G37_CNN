@@ -44,7 +44,7 @@ export function SetupPanel({ open, problem, isExampleProblem, configName, viewin
   const [objective, setObjective] = useState<ObjectiveMode>('total_value')
   const [edited, setEdited] = useState<Partial<Record<Algorithm, ParameterDrafts>>>({})
   const [seedText, setSeedText] = useState('42')
-  const [persist, setPersist] = useState(true)
+  const [persist, setPersist] = useState(false)
   const [recordReplay, setRecordReplay] = useState(true)
   const [invalid, setInvalid] = useState<string[]>([])
   // The validation toast stays until the input is fixed or a run starts.
@@ -127,7 +127,7 @@ export function SetupPanel({ open, problem, isExampleProblem, configName, viewin
 
         <section>
           <div className="section-title"><span>Objective</span></div>
-          <Segmented label="Objective" options={OBJECTIVES} value={objective} onChange={setObjective} />
+          <Segmented<ObjectiveMode> label="Objective" options={OBJECTIVES} value={objective} onChange={setObjective} />
           <p className="caption">{OBJECTIVE_HELP[objective]}</p>
         </section>
 
@@ -209,7 +209,7 @@ export function SetupPanel({ open, problem, isExampleProblem, configName, viewin
           <div className="section-title"><span>Run options</span></div>
           <div className="group">
             <div className="row">
-              <div className="row-label"><label htmlFor="opt-persist">Save run</label><small>Writes the result to the output folder</small></div>
+              <div className="row-label"><label htmlFor="opt-persist">Save run</label><small>Off by default; enable to save this run</small></div>
               <GlassSwitch id="opt-persist" checked={persist} onChange={setPersist} />
             </div>
             <div className="row">

@@ -169,10 +169,25 @@ def test_request_dispatch_defaults_and_json_round_trip(
     assert parsed.problem == problem
     assert parsed.objective_mode is ObjectiveMode.TOTAL_VALUE
     assert parsed.include_state_history is True
-    assert parsed.persist is True
+    assert parsed.persist is False
     if isinstance(parsed, HillClimbingRequest):
         assert parsed.variant is HillClimbingVariant.SIDEWAYS
     assert REQUEST.validate_json(parsed.model_dump_json()) == parsed
+
+
+def test_batch_request_persistence_defaults_to_false(
+    single_truck_problem: Problem,
+) -> None:
+    from app.schemas import BatchExperimentRequest
+
+    parsed = BatchExperimentRequest.model_validate(
+        {
+            "problem": single_truck_problem.model_dump(mode="json"),
+            "runs": [{"label": "one", "seed": 42}],
+        }
+    )
+
+    assert parsed.persist is False
 
 
 @pytest.mark.parametrize("variant", list(HillClimbingVariant))

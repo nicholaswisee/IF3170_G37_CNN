@@ -183,10 +183,9 @@ def run_experiment(request: RunExperimentRequest) -> ExperimentResult:
         history=search.history,
         metadata={**search.metadata, "persisted": False},
     )
-    if isinstance(request, GeneticAlgorithmRequest):
-        result.metadata["metrics"] = calculate_metrics(result)
+    result.metadata["metrics"] = calculate_metrics(result)
     if request.persist:
-        destination = Path(settings.output_dir) / "experiments" / f"{result.id}.json"
+        destination = Path(settings.output_dir) / f"{result.id}.json"
         result.metadata["persisted"] = True
         record_result(result, destination)
     return result

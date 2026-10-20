@@ -26,6 +26,8 @@ dist/
 # Generated outputs
 output/*
 !output/.gitkeep
+!output/*.json
+!output/*.csv
 
 # LaTeX build artifacts (keep report sources, images, and final PDFs)
 docs/**/*.aux

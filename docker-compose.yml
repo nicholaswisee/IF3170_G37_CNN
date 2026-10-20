@@ -1,5 +1,6 @@
 services:
   backend:
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
     build:
       context: ./src/backend
       args:
@@ -11,11 +12,13 @@ services:
       - ./src/backend:/app
       - ./output:/workspace/output
       - ./data:/workspace/data
+      - ./test:/workspace/test:ro
     environment:
       APP_ENV: development
       FRONTEND_ORIGIN: http://localhost:5173
       OUTPUT_DIR: /workspace/output
       DATA_DIR: /workspace/data
+      TEST_DIR: /workspace/test
 
   frontend:
     build:
