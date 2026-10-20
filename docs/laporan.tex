@@ -761,9 +761,10 @@ Stochastic & 187.67 & 15.63 & 187.67 & 1.077 & 2000.00 \\
 Sideways & 208.00 & 0.00 & 208.00 & 16.542 & 104.67 \\
 Random-restart & 196.00 & 8.49 & 208.00 & 4.664 & 44.33 \\
 SA & 208.00 & 0.00 & 208.00 & 1.634 & 1656.67 \\
+GA & 192.67 & 21.68 & 208.00 & 0.853 & 100.00 \\
 \bottomrule
 \end{tabular}
-\caption{Ringkasan deskriptif tiga seed per metode: rata-rata skor akhir, simpangan baku populasi skor akhir, rata-rata skor terbaik, runtime, dan iterasi aktual.}
+\caption{Ringkasan deskriptif tiga seed per metode: rata-rata skor akhir, simpangan baku populasi skor akhir, rata-rata skor terbaik, runtime, dan iterasi aktual. Runtime GA berasal dari kondisi eksekusi berbeda dari HC/SA.}
 \label{tab:ringkasan-manual}
 \end{table}
 
@@ -812,6 +813,7 @@ Stochastic & 9,78 & 9,78 & 1/3 & 1/3 \\
 Sideways & 0,00 & 0,00 & 3/3 & 3/3 \\
 Random-restart & 5,77 & 0,00 & 1/3 & 3/3 \\
 SA & 0,00 & 0,00 & 3/3 & 3/3 \\
+GA & 7,37 & 0,00 & 2/3 & 3/3 \\
 \bottomrule
 \end{tabular}
 \caption{Gap rata-rata terhadap optimum 208 serta jumlah run yang mencapai optimum dari tiga seed.}
@@ -851,12 +853,20 @@ Random-restart menghasilkan skor akhir 190, 190, dan 208 dengan simpangan baku 8
 
 Konsistensi skor juga perlu dibedakan dari konsistensi runtime. SA memiliki skor akhir tetap, tetapi runtime bervariasi dari 0,889 sampai 2,014 detik akibat perbedaan lama pencarian. Sideways memiliki rentang runtime 16,100 sampai 16,996 detik dengan skor akhir yang sama. Tiga seed ini menunjukkan perilaku pada sampel pengujian dan belum membuktikan tingkat keberhasilan untuk seed lain atau dataset yang lebih besar.
 
-\subsubsection{Analisis Hasil GA dan Pengaruh Parameternya}
-Dalam tiga run pada konfigurasi tetap, GA menghasilkan skor akhir 208, 162, dan 208; ketiganya memiliki skor terbaik 208. Berdasarkan pembuktian pada Subbab~\ref{sec:optimum-eksperimen}, GA menemukan optimum global pada seluruh seed, termasuk dalam populasi awal seed 123. Karena reproduksi tidak memakai elitisme, skor state akhir dapat lebih rendah daripada arsip solusi feasible terbaik, seperti pada seed 123. Rata-rata skor akhir 192,67 berada di bawah random-restart dan steepest-ascent, serta di atas stochastic; skor terbaiknya setara dengan sideways, random-restart, dan SA. Simpangan baku skor akhir 21,68 menunjukkan variasi, meskipun skor terbaik tetap 208 pada tiga seed.
+\subsubsection{Analisis Genetic Algorithm pada Konfigurasi Tetap}
+Pengujian GA menggunakan populasi 50, 100 generasi, probabilitas crossover 1,0, probabilitas mutasi 0,2, dan tanpa elitisme. Tiga run memakai seed 42, 123, dan 2026. Analisis berikut menilai kualitas hasil dan variasi antarseed pada konfigurasi tersebut.
 
-Skor awal GA adalah 200, 208, dan 200 karena inisialisasinya membentuk populasi, sedangkan HC/SA dimulai dari satu state. Skor awal HC/SA untuk seed yang sama adalah 188, 68, dan 93. Perbandingan peningkatan skor karenanya tidak berangkat dari kondisi awal yang sama. Runtime rata-rata GA adalah 0,853 detik; kondisi pengukuran programatiknya berbeda dari HC/SA manual sehingga angka ini tidak menjadi dasar klaim kecepatan lintas algoritma.
+Skor terbaik ketiga run adalah 208, sama dengan optimum global yang dibuktikan pada Subbab~\ref{sec:optimum-eksperimen}. Riwayat pencarian menunjukkan bahwa seed 42 pertama kali mencapai skor terbaik 208 pada generasi 36, sedangkan seed 2026 pada generasi 52. Pada seed 123, skor 208 sudah tersedia pada populasi awal, yaitu generasi 0. Dengan demikian, dua run memperbaiki skor awal 200 menjadi 208, sementara satu run sudah memiliki solusi optimum sebelum reproduksi dimulai. Untuk ketiga seed ini, anggaran 100 generasi mencakup titik pertama ditemukannya optimum. Hasil tersebut tidak menjamin anggaran yang sama akan cukup untuk semua seed atau dataset lain.
 
-Satu konfigurasi, tiga seed, dan satu dataset belum memungkinkan penilaian pengaruh jumlah generasi atau populasi. Analisis pengaruh kedua parameter tersebut menunggu pengujian pada beberapa nilai generasi dengan populasi tetap, serta beberapa ukuran populasi dengan generasi tetap.
+Skor akhir GA adalah 208, 162, dan 208. Pada seed 123, populasi akhir menghasilkan solusi dengan nilai 162, enam paket termuat, dan berat 74 kg. Skor ini memiliki gap 22,12\% terhadap optimum. Reproduksi tanpa elitisme memungkinkan solusi terbaik hilang dari populasi berikutnya; arsip eksternal tetap menyimpan solusi sah terbaik bernilai 208. Karena itu, perbedaan skor akhir dan terbaik perlu diperhatikan ketika memilih keluaran GA untuk digunakan. Dua seed lainnya berakhir dengan tujuh paket, berat 100 kg, dan gap nol.
+
+Rata-rata skor akhir adalah 192,67, simpangan baku populasi 21,68, dan gap rata-rata 7,37\%. Berdasarkan skor akhir, GA mencapai optimum pada dua dari tiga run. Berdasarkan skor terbaik, GA mencapai optimum pada tiga dari tiga run dengan simpangan baku nol. Variasi skor akhir tersebut menunjukkan bahwa keberhasilan menemukan optimum tidak selalu diikuti keberhasilan mempertahankannya dalam populasi terakhir.
+
+Dibandingkan metode lain, rata-rata skor akhir GA berada di bawah sideways dan SA (208), random-restart (196,00), serta steepest-ascent (195,33), tetapi di atas stochastic (187,67). Jika solusi terbaik sepanjang pencarian yang dipilih, GA setara dengan sideways, random-restart, dan SA karena semuanya mencapai 208 pada setiap seed. Perbandingan peningkatan skor perlu mempertimbangkan inisialisasi: GA dimulai dari populasi dengan skor awal 200, 208, dan 200, sedangkan HC/SA dimulai dari satu state dengan skor awal 188, 68, dan 93.
+
+Runtime GA adalah 875, 787, dan 898 ms, dengan rata-rata 853 ms atau 0,853 detik. Seluruh run menyelesaikan 100 generasi dan berhenti karena batas generasi. Durasi berkisar 0,787 sampai 0,898 detik, meskipun skor akhirnya bervariasi. Kondisi eksekusi GA programatik berbeda dari HC/SA manual sehingga angka tersebut menggambarkan durasi ketiga run GA, tanpa menjadi dasar klaim bahwa GA lebih cepat daripada metode lain.
+
+Jumlah populasi dan generasi tetap pada ketiga run, sehingga perbedaan hasil berkaitan dengan seed pada konfigurasi yang sama. Data ini belum mengukur pengaruh perubahan kedua parameter tersebut. Oleh sebab itu, hasil pengujian hanya mendukung kesimpulan bahwa populasi 50 dan anggaran 100 generasi mampu menghasilkan solusi terbaik optimum pada ketiga seed yang diuji; pengujian ini tidak menetapkan ukuran populasi atau jumlah generasi yang paling efisien.
 
 \clearpage
 \section{Kesimpulan dan Saran}
