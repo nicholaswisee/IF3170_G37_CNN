@@ -871,7 +871,22 @@ Jumlah populasi dan generasi tetap pada ketiga run, sehingga perbedaan hasil ber
 \clearpage
 \section{Kesimpulan dan Saran}
 \subsection{Kesimpulan}
+Persoalan pemuatan paket pada truk peti kemas telah dimodelkan sebagai pencarian lokal dengan objektif \texttt{TOTAL\_VALUE}, dan keenam metode dijalankan di atas validator constraint yang sama sehingga setiap skor berasal dari susunan yang sah. Pada dataset pengujian, optimum global terbukti bernilai 208 (Subbab~\ref{sec:optimum-eksperimen}).
+
+Berdasarkan Tabel~\ref{tab:ringkasan-manual} dan Tabel~\ref{tab:gap-optimum}, \textbf{simulated annealing merupakan metode paling optimal} pada pengujian ini: skor akhirnya mencapai optimum 208 pada ketiga seed dengan rata-rata runtime 1,634 detik. Sideways juga mencapai 208 pada seluruh seed, tetapi membutuhkan sekitar sepuluh kali runtime SA. Random-restart dan GA selalu menemukan 208 sebagai skor terbaik, tetapi skor akhirnya bervariasi, sehingga keluaran yang digunakan harus berupa state terbaik sepanjang pencarian. Steepest-ascent paling cepat, tetapi hanya mencapai optimum pada dua dari tiga run, sedangkan stochastic memiliki rata-rata skor akhir terendah, yaitu 187,67.
+
+Kesimpulan tersebut terbatas pada satu dataset sembilan paket, tiga seed, dan konfigurasi parameter yang diuji. Runtime GA berasal dari kondisi eksekusi berbeda dari HC/SA, sehingga belum dapat dibandingkan secara langsung, dan pengaruh ukuran populasi serta jumlah generasi GA belum diukur.
+
 \subsection{Saran}
+Pengembangan dan pengujian selanjutnya dapat mencakup hal-hal berikut.
+\begin{enumerate}
+    \setlength{\itemsep}{0pt}
+    \setlength{\parsep}{0pt}
+    \item Menambah jumlah seed serta menguji dataset yang lebih besar dan skenario multi-truk agar konsistensi setiap metode dapat dinilai lebih kuat.
+    \item Menjalankan seluruh metode dalam lingkungan eksekusi yang sama agar durasi pencarian GA dapat dibandingkan secara terkontrol dengan HC dan SA.
+    \item Memvariasikan ukuran populasi dan jumlah generasi GA untuk mengukur pengaruh kedua parameter tersebut terhadap kualitas solusi dan durasi.
+    \item Menggunakan mekanisme elitisme pada GA agar solusi terbaik tidak hilang dari populasi akhir, sebagaimana terjadi pada seed 123.
+\end{enumerate}
 
 \section{Pembagian Tugas Tiap Anggota Kelompok}
 \begin{table}[ht]
