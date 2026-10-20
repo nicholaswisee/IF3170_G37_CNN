@@ -1,0 +1,1029 @@
+{
+  "id": "c653e4bd-7e20-4140-a798-19fdc0f3c19f",
+  "problem": {
+    "packages": [
+      {
+        "id": "P01",
+        "width": 4,
+        "length": 3,
+        "height": 2,
+        "value": 40.0,
+        "weight": 20.0,
+        "is_fragile": false,
+        "eta": 2
+      },
+      {
+        "id": "P02",
+        "width": 3,
+        "length": 3,
+        "height": 2,
+        "value": 30.0,
+        "weight": 15.0,
+        "is_fragile": false,
+        "eta": 1
+      },
+      {
+        "id": "P03",
+        "width": 2,
+        "length": 2,
+        "height": 1,
+        "value": 25.0,
+        "weight": 5.0,
+        "is_fragile": true,
+        "eta": 0
+      },
+      {
+        "id": "P04",
+        "width": 2,
+        "length": 4,
+        "height": 3,
+        "value": 35.0,
+        "weight": 18.0,
+        "is_fragile": false,
+        "eta": 3
+      },
+      {
+        "id": "P05",
+        "width": 3,
+        "length": 2,
+        "height": 2,
+        "value": 20.0,
+        "weight": 10.0,
+        "is_fragile": false,
+        "eta": 4
+      },
+      {
+        "id": "P06",
+        "width": 1,
+        "length": 1,
+        "height": 1,
+        "value": 8.0,
+        "weight": 2.0,
+        "is_fragile": true,
+        "eta": 1
+      },
+      {
+        "id": "P07",
+        "width": 5,
+        "length": 4,
+        "height": 3,
+        "value": 50.0,
+        "weight": 30.0,
+        "is_fragile": false,
+        "eta": 2
+      },
+      {
+        "id": "P08",
+        "width": 6,
+        "length": 6,
+        "height": 6,
+        "value": 60.0,
+        "weight": 40.0,
+        "is_fragile": false,
+        "eta": 5
+      },
+      {
+        "id": "P09",
+        "width": 2,
+        "length": 2,
+        "height": 2,
+        "value": 12.0,
+        "weight": 6.0,
+        "is_fragile": false,
+        "eta": 0
+      }
+    ],
+    "trucks": [
+      {
+        "id": "truck-a",
+        "width": 10,
+        "length": 8,
+        "height": 6,
+        "max_capacity": 100.0
+      }
+    ]
+  },
+  "algorithm": "hill_climbing",
+  "variant": "steepest_ascent",
+  "objective_mode": "total_value",
+  "seed": 2026,
+  "parameters": {
+    "max_iterations": 2000,
+    "candidates_per_iteration": 50,
+    "max_sideways": 100,
+    "max_restarts": 10
+  },
+  "initial_state": {
+    "placements": [
+      {
+        "package_id": "P01",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 4,
+          "z": 0
+        },
+        "orientation": 1
+      },
+      {
+        "package_id": "P02",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P03",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 1,
+          "y": 4,
+          "z": 0
+        },
+        "orientation": 2
+      },
+      {
+        "package_id": "P04",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P05",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 5,
+          "y": 3,
+          "z": 2
+        },
+        "orientation": 4
+      },
+      {
+        "package_id": "P06",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 7,
+          "z": 2
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P07",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P08",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P09",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      }
+    ]
+  },
+  "final_state": {
+    "placements": [
+      {
+        "package_id": "P01",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 4,
+          "z": 0
+        },
+        "orientation": 1
+      },
+      {
+        "package_id": "P02",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 0,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P03",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 1,
+          "y": 4,
+          "z": 0
+        },
+        "orientation": 2
+      },
+      {
+        "package_id": "P04",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 3,
+          "y": 1,
+          "z": 3
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P05",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 5,
+          "y": 3,
+          "z": 2
+        },
+        "orientation": 4
+      },
+      {
+        "package_id": "P06",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 7,
+          "z": 2
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P07",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P08",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P09",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      }
+    ]
+  },
+  "best_state": {
+    "placements": [
+      {
+        "package_id": "P01",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 4,
+          "z": 0
+        },
+        "orientation": 1
+      },
+      {
+        "package_id": "P02",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 0,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P03",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 1,
+          "y": 4,
+          "z": 0
+        },
+        "orientation": 2
+      },
+      {
+        "package_id": "P04",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 3,
+          "y": 1,
+          "z": 3
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P05",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 5,
+          "y": 3,
+          "z": 2
+        },
+        "orientation": 4
+      },
+      {
+        "package_id": "P06",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 6,
+          "y": 7,
+          "z": 2
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P07",
+        "truck_id": "truck-a",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "orientation": 0
+      },
+      {
+        "package_id": "P08",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      },
+      {
+        "package_id": "P09",
+        "truck_id": null,
+        "position": null,
+        "orientation": 0
+      }
+    ]
+  },
+  "initial_score": 93.0,
+  "final_score": 208.0,
+  "best_score": 208.0,
+  "runtime_ms": 469,
+  "iterations": 4,
+  "history": [
+    {
+      "iteration": 0,
+      "current_score": 93.0,
+      "best_score": 93.0,
+      "candidate_score": null,
+      "mean_score": null,
+      "accepted": null,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": {
+        "placements": [
+          {
+            "package_id": "P01",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 1
+          },
+          {
+            "package_id": "P02",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P03",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 1,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 2
+          },
+          {
+            "package_id": "P04",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P05",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 5,
+              "y": 3,
+              "z": 2
+            },
+            "orientation": 4
+          },
+          {
+            "package_id": "P06",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 7,
+              "z": 2
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P07",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P08",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P09",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          }
+        ]
+      },
+      "metadata": {}
+    },
+    {
+      "iteration": 1,
+      "current_score": 143.0,
+      "best_score": 143.0,
+      "candidate_score": 143.0,
+      "mean_score": null,
+      "accepted": true,
+      "move": {
+        "type": "RELOCATE",
+        "package_ids": [
+          "P07"
+        ],
+        "before": [
+          {
+            "package_id": "P07",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          }
+        ],
+        "after": [
+          {
+            "package_id": "P07",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "orientation": 0
+          }
+        ],
+        "metadata": {}
+      },
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": {
+        "placements": [
+          {
+            "package_id": "P01",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 1
+          },
+          {
+            "package_id": "P02",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P03",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 1,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 2
+          },
+          {
+            "package_id": "P04",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P05",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 5,
+              "y": 3,
+              "z": 2
+            },
+            "orientation": 4
+          },
+          {
+            "package_id": "P06",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 7,
+              "z": 2
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P07",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P08",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P09",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          }
+        ]
+      },
+      "metadata": {
+        "sampled_neighbors": 50
+      }
+    },
+    {
+      "iteration": 2,
+      "current_score": 178.0,
+      "best_score": 178.0,
+      "candidate_score": 178.0,
+      "mean_score": null,
+      "accepted": true,
+      "move": {
+        "type": "RELOCATE",
+        "package_ids": [
+          "P04"
+        ],
+        "before": [
+          {
+            "package_id": "P04",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          }
+        ],
+        "after": [
+          {
+            "package_id": "P04",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 3,
+              "y": 1,
+              "z": 3
+            },
+            "orientation": 0
+          }
+        ],
+        "metadata": {}
+      },
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": {
+        "placements": [
+          {
+            "package_id": "P01",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 1
+          },
+          {
+            "package_id": "P02",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P03",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 1,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 2
+          },
+          {
+            "package_id": "P04",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 3,
+              "y": 1,
+              "z": 3
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P05",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 5,
+              "y": 3,
+              "z": 2
+            },
+            "orientation": 4
+          },
+          {
+            "package_id": "P06",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 7,
+              "z": 2
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P07",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P08",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P09",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          }
+        ]
+      },
+      "metadata": {
+        "sampled_neighbors": 50
+      }
+    },
+    {
+      "iteration": 3,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": 208.0,
+      "mean_score": null,
+      "accepted": true,
+      "move": {
+        "type": "RELOCATE",
+        "package_ids": [
+          "P02"
+        ],
+        "before": [
+          {
+            "package_id": "P02",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          }
+        ],
+        "after": [
+          {
+            "package_id": "P02",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 0,
+              "z": 0
+            },
+            "orientation": 0
+          }
+        ],
+        "metadata": {}
+      },
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": {
+        "placements": [
+          {
+            "package_id": "P01",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 1
+          },
+          {
+            "package_id": "P02",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 0,
+              "z": 0
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P03",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 1,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 2
+          },
+          {
+            "package_id": "P04",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 3,
+              "y": 1,
+              "z": 3
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P05",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 5,
+              "y": 3,
+              "z": 2
+            },
+            "orientation": 4
+          },
+          {
+            "package_id": "P06",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 7,
+              "z": 2
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P07",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P08",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P09",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          }
+        ]
+      },
+      "metadata": {
+        "sampled_neighbors": 50
+      }
+    },
+    {
+      "iteration": 4,
+      "current_score": 208.0,
+      "best_score": 208.0,
+      "candidate_score": 208.0,
+      "mean_score": null,
+      "accepted": false,
+      "move": null,
+      "temperature": null,
+      "acceptance_probability": null,
+      "state_snapshot": {
+        "placements": [
+          {
+            "package_id": "P01",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 1
+          },
+          {
+            "package_id": "P02",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 0,
+              "z": 0
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P03",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 1,
+              "y": 4,
+              "z": 0
+            },
+            "orientation": 2
+          },
+          {
+            "package_id": "P04",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 3,
+              "y": 1,
+              "z": 3
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P05",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 5,
+              "y": 3,
+              "z": 2
+            },
+            "orientation": 4
+          },
+          {
+            "package_id": "P06",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 6,
+              "y": 7,
+              "z": 2
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P07",
+            "truck_id": "truck-a",
+            "position": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            },
+            "orientation": 0
+          },
+          {
+            "package_id": "P08",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          },
+          {
+            "package_id": "P09",
+            "truck_id": null,
+            "position": null,
+            "orientation": 0
+          }
+        ]
+      },
+      "metadata": {
+        "sampled_neighbors": 50
+      }
+    }
+  ],
+  "metadata": {
+    "termination_reason": "local_optimum",
+    "sampled_neighbors": 50,
+    "persisted": true,
+    "metrics": {
+      "max_fitness_history": [
+        93.0,
+        143.0,
+        178.0,
+        208.0,
+        208.0
+      ],
+      "avg_fitness_history": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "population_size": null,
+      "generations": null,
+      "duration_ms": 469,
+      "seed": 2026,
+      "objective_mode": "total_value",
+      "initial_score": 93.0,
+      "final_score": 208.0,
+      "best_score": 208.0,
+      "runtime_ms": 469,
+      "iterations": 4,
+      "loaded_count": 7,
+      "total_weight": 100.0,
+      "state_summaries": {
+        "initial": {
+          "trucks": {
+            "truck-a": {
+              "package_ids": [
+                "P01",
+                "P03",
+                "P05",
+                "P06"
+              ],
+              "count": 4,
+              "loaded_weight": 37.0,
+              "loaded_value": 93.0,
+              "max_capacity": 100.0
+            }
+          },
+          "outside_package_ids": [
+            "P02",
+            "P04",
+            "P07",
+            "P08",
+            "P09"
+          ],
+          "outside_count": 5
+        },
+        "final": {
+          "trucks": {
+            "truck-a": {
+              "package_ids": [
+                "P01",
+                "P02",
+                "P03",
+                "P04",
+                "P05",
+                "P06",
+                "P07"
+              ],
+              "count": 7,
+              "loaded_weight": 100.0,
+              "loaded_value": 208.0,
+              "max_capacity": 100.0
+            }
+          },
+          "outside_package_ids": [
+            "P08",
+            "P09"
+          ],
+          "outside_count": 2
+        },
+        "best": {
+          "trucks": {
+            "truck-a": {
+              "package_ids": [
+                "P01",
+                "P02",
+                "P03",
+                "P04",
+                "P05",
+                "P06",
+                "P07"
+              ],
+              "count": 7,
+              "loaded_weight": 100.0,
+              "loaded_value": 208.0,
+              "max_capacity": 100.0
+            }
+          },
+          "outside_package_ids": [
+            "P08",
+            "P09"
+          ],
+          "outside_count": 2
+        }
+      },
+      "termination_reason": "local_optimum"
+    }
+  }
+}
