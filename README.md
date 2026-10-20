@@ -48,7 +48,8 @@ Truck-loading optimization for IF3170 Artificial Intelligence, with a 3D result 
 │           ├── ui/             Reusable interface components
 │           └── viewer/         Geometry, result normalization, and scene models
 ├── data/                       Input data
-└── output/                     Saved experiment JSON and batch JSON/CSV
+├── output/                     Saved experiment JSON and batch JSON/CSV
+└── test/                       Root-level test placeholder
 ```
 
 ## Local development
@@ -75,7 +76,7 @@ Remove containers with `docker compose down`. Saved results stay in `output/`.
 
 ### Without Docker
 
-Install Python **3.12** (with `venv` and pip) and Node.js **22.12+** (or **20.19+**) with npm.
+Install `uv`, Python **3.12**, and Node.js **22.12+** (or **20.19+**) with npm.
 
 #### macOS / Linux
 
@@ -83,10 +84,8 @@ Install Python **3.12** (with `venv` and pip) and Node.js **22.12+** (or **20.19
 
 ```bash
 cd src/backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e ".[dev]"
-python -m uvicorn app.main:app --reload --port 8000
+uv sync --extra dev
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 **Terminal 2 — frontend** (from the repository root):
@@ -103,10 +102,8 @@ npm run dev -- --port 5173 --strictPort
 
 ```powershell
 cd src/backend
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-python -m uvicorn app.main:app --reload --port 8000
+uv sync --extra dev
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
 **Terminal 2 — frontend** (from the repository root):
@@ -126,10 +123,10 @@ and skip the activation command.
 Without Docker, from `src/backend` (use `.\.venv\Scripts\python.exe` on Windows):
 
 ```bash
-.venv/bin/python -m pytest
-.venv/bin/python -m ruff check .
-.venv/bin/python -m ruff format --check .
-.venv/bin/python -m mypy app
+uv run pytest
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy app
 ```
 
 From `src/frontend`:

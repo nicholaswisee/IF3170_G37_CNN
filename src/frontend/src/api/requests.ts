@@ -25,7 +25,7 @@ export interface ParameterField {
 export const PARAMETER_FIELDS: Record<Algorithm, ParameterField[]> = {
   hill_climbing: [
     { key: 'max_iterations', label: 'Max iterations' },
-    { key: 'candidates_per_iteration', label: 'Candidates per iteration', hint: 'Neighbors sampled each iteration' },
+    { key: 'candidates_per_iteration', label: 'Candidates per iteration', hint: 'Neighbors sampled each iteration', variants: ['steepest_ascent', 'sideways', 'random_restart'] },
     { key: 'max_sideways', label: 'Max sideways moves', hint: 'Equal score moves allowed in a row', variants: ['sideways'] },
     { key: 'max_restarts', label: 'Max restarts', hint: 'Climbs run this many times plus one', variants: ['random_restart'] },
   ],

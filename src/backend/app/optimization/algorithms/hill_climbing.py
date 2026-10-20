@@ -6,7 +6,11 @@ from app.domain.problem import Problem
 from app.domain.state import State
 from app.optimization.algorithms.base import SearchAlgorithm, SearchResult
 from app.optimization.initializer import generate_random_feasible_state
-from app.optimization.neighbors import NeighborConfig, sample_valid_neighbors
+from app.optimization.neighbors import (
+    NeighborConfig,
+    generate_random_neighbor,
+    sample_valid_neighbors,
+)
 from app.optimization.objective import ObjectiveMode, evaluate_objective
 from app.schemas.experiment import (
     HillClimbingParameters,
@@ -107,8 +111,10 @@ class HillClimbing(SearchAlgorithm):
             iterations=sum(climb.iterations for climb in climbs),
             history=history,
             metadata={
-                "restarts_performed": len(climbs) - 1, # Banyak restart
-                "iterations_per_restart": [climb.iterations for climb in climbs], # Banyak iterasi per restart
+                "restarts_performed": len(climbs) - 1,  # Banyak restart
+                "iterations_per_restart": [
+                    climb.iterations for climb in climbs
+                ],  # Banyak iterasi per restart
                 "best_score_per_restart": [climb.best_score for climb in climbs],
                 "termination_reason": "max_restarts",
             },
@@ -125,22 +131,24 @@ class HillClimbing(SearchAlgorithm):
         config: HillClimbingParameters,
         include_state_history: bool,
     ) -> SearchResult:
-        """One local climb over sampled neighborhoods.
+        """Run one local climb with the selected variant's neighbor policy.
 
         Steepest-Ascent and Sideways move to a random equal-best candidate;
         Sideways also accepts equal-score moves up to ``max_sideways``
-        consecutive times. Stochastic moves to a uniformly random improving
-        candidate.
+        consecutive times. Stochastic evaluates one random neighbor per
+        iteration and accepts it only when its score strictly improves.
         """
         is_sideways = variant is HillClimbingVariant.SIDEWAYS
         is_stochastic = variant is HillClimbingVariant.STOCHASTIC
-        max_sideways = config.max_sideways if is_sideways else 0 # parameter max_sideways
+        max_sideways = (
+            config.max_sideways if is_sideways else 0
+        )  # parameter max_sideways
         current = initial_state.model_copy(deep=True)
         current_score = evaluate_objective(problem, current, objective_mode)
         best_state, best_score = current, current_score
         consecutive_sideways = 0
         sideways_moves = 0
-        iterations = 0 # Banyak iterasi hingga proses pencarian berhenti
+        iterations = 0  # Banyak iterasi hingga proses pencarian berhenti
         termination_reason = "max_iterations"
         history = [
             SearchEvent(
@@ -153,6 +161,51 @@ class HillClimbing(SearchAlgorithm):
 
         for iteration in range(1, config.max_iterations + 1):
             iterations = iteration
+            if is_stochastic:
+                candidate = generate_random_neighbor(
+                    problem, current, rng, self.neighbor_config
+                )
+                if candidate is None:
+                    history.append(
+                        SearchEvent(
+                            iteration=iteration,
+                            current_score=current_score,
+                            best_score=best_score,
+                            accepted=False,
+                            state_snapshot=current if include_state_history else None,
+                            metadata={
+                                "sampled_neighbors": 0,
+                                "improving_candidates": 0,
+                            },
+                        )
+                    )
+                    continue
+
+                candidate_score = evaluate_objective(
+                    problem, candidate.state, objective_mode
+                )
+                accepted = candidate_score > current_score
+                if accepted:
+                    current, current_score = candidate.state, candidate_score
+                    if current_score > best_score:
+                        best_state, best_score = current, current_score
+                history.append(
+                    SearchEvent(
+                        iteration=iteration,
+                        current_score=current_score,
+                        best_score=best_score,
+                        candidate_score=candidate_score,
+                        accepted=accepted,
+                        move=candidate.move,
+                        state_snapshot=current if include_state_history else None,
+                        metadata={
+                            "sampled_neighbors": 1,
+                            "improving_candidates": int(accepted),
+                        },
+                    )
+                )
+                continue
+
             neighbors = sample_valid_neighbors(
                 problem,
                 current,
@@ -179,13 +232,7 @@ class HillClimbing(SearchAlgorithm):
                 for neighbor in neighbors
             ]
             top_score = max(scores)
-            if is_stochastic:
-                pool = [
-                    (n, score)
-                    for n, score in zip(neighbors, scores)
-                    if score > current_score
-                ]
-            elif top_score > current_score or (
+            if top_score > current_score or (
                 top_score == current_score and consecutive_sideways < max_sideways
             ):
                 pool = [
@@ -197,7 +244,7 @@ class HillClimbing(SearchAlgorithm):
                 pool = []
             if not pool:
                 if top_score == current_score and max_sideways > 0:
-                    termination_reason = "max_sideways" # terminasi kalau udah lewat dari jumlah max sideways
+                    termination_reason = "max_sideways"  # terminasi kalau udah lewat dari jumlah max sideways
                 else:
                     termination_reason = "local_optimum"
                 history.append(
@@ -228,8 +275,6 @@ class HillClimbing(SearchAlgorithm):
             if is_sideways:
                 event_metadata["sideways"] = not improved
                 event_metadata["consecutive_sideways"] = consecutive_sideways
-            if is_stochastic:
-                event_metadata["improving_candidates"] = len(pool)
             history.append(
                 SearchEvent(
                     iteration=iteration,
@@ -252,7 +297,9 @@ class HillClimbing(SearchAlgorithm):
         else:
             metadata = {
                 "termination_reason": termination_reason,
-                "sampled_neighbors": config.candidates_per_iteration,
+                "sampled_neighbors": 1
+                if is_stochastic
+                else config.candidates_per_iteration,
             }
         return SearchResult(
             final_state=current.model_copy(deep=True),

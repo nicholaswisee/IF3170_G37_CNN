@@ -1,12 +1,23 @@
 import statistics
+from math import isfinite
 
 from app.schemas.common import Metadata
 from app.schemas.experiment import ExperimentResult
 
 
 def calculate_metrics(result: ExperimentResult) -> Metadata:
+    max_fitness_history = []
+    for event in result.history:
+        max_fitness = event.metadata.get("max_fitness")
+        max_fitness_history.append(
+            max_fitness
+            if isinstance(max_fitness, (int, float))
+            and not isinstance(max_fitness, bool)
+            and isfinite(max_fitness)
+            else event.current_score
+        )
     return {
-        "max_fitness_history": [event.current_score for event in result.history],
+        "max_fitness_history": max_fitness_history,
         "avg_fitness_history": [event.mean_score for event in result.history],
         "population_size": result.parameters.get("population_size"),
         "generations": result.parameters.get("generations"),

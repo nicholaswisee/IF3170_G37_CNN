@@ -30,14 +30,15 @@ test('configured packages and trucks reach every algorithm with the selected obj
   }
 })
 
-test('backend defaults are valid and complete, including fixed GA elitism', () => {
+test('backend defaults are valid and complete, including no-elitism GA defaults', () => {
   for (const algorithm of ['hill_climbing', 'simulated_annealing', 'genetic_algorithm'] as const) {
     const parsed = parseParameters(algorithm, 'random_restart', defaultDrafts(limits, algorithm), limits)
     assert.equal(parsed.error, null, algorithm)
     assert.deepEqual(Object.keys(parsed.parameters).sort(), Object.keys(limits.parameters[algorithm]).sort())
   }
   const ga = parseParameters('genetic_algorithm', 'sideways', defaultDrafts(limits, 'genetic_algorithm'), limits)
-  assert.equal(ga.parameters.elite_count, 1)
+  assert.equal(ga.parameters.elite_count, 0)
+  assert.equal(ga.parameters.crossover_probability, 1)
   assert.equal(ga.parameters.population_size, 50)
   const sa = parseParameters('simulated_annealing', 'sideways', defaultDrafts(limits, 'simulated_annealing'), limits)
   assert.equal(sa.parameters.initial_temperature, null, 'an empty nullable field means automatic temperature')
@@ -48,7 +49,14 @@ test('only the fields a Hill Climbing variant reads are shown, and fixed fields 
   assert.deepEqual(keys('steepest_ascent'), ['max_iterations', 'candidates_per_iteration'])
   assert.deepEqual(keys('sideways'), ['max_iterations', 'candidates_per_iteration', 'max_sideways'])
   assert.deepEqual(keys('random_restart'), ['max_iterations', 'candidates_per_iteration', 'max_restarts'])
+  assert.deepEqual(keys('stochastic'), ['max_iterations'])
   assert.ok(!visibleFields('genetic_algorithm', 'sideways', limits).some((field) => field.key === 'elite_count'))
+})
+
+test('stochastic HC hides candidate count but sends its backend default', () => {
+  const parsed = parseParameters('hill_climbing', 'stochastic', { ...defaultDrafts(limits, 'hill_climbing'), candidates_per_iteration: 'invalid' }, limits)
+  assert.equal(parsed.error, null)
+  assert.equal(parsed.parameters.candidates_per_iteration, limits.parameters.hill_climbing.candidates_per_iteration.default)
 })
 
 test('rejects values outside the backend ranges with the field label and allowed range', () => {

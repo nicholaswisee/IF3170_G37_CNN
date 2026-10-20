@@ -48,9 +48,9 @@ class SimulatedAnnealingParameters(_Parameters):
 class GeneticAlgorithmParameters(_Parameters):
     population_size: int = Field(default=50, ge=2)
     generations: int = Field(default=100, ge=1)
-    crossover_probability: float = Field(default=0.80, ge=0, le=1)
+    crossover_probability: float = Field(default=1.0, ge=0, le=1)
     mutation_probability: float = Field(default=0.20, ge=0, le=1)
-    elite_count: int = Field(default=1, ge=1, le=1)
+    elite_count: int = Field(default=0, ge=0, le=0)
 
 
 class _RunRequest(BaseModel):

@@ -3,7 +3,7 @@ import test from 'node:test'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { readExperimentFixture } from '../testing/fixtures'
 import type { ExperimentResult, Problem, SearchEvent } from '../types/experiment'
-import { OutsideTab, StepTab, SummaryTab } from './ResultsPanel'
+import { OutsideTab, ResultsPanel, StepTab, SummaryTab } from './ResultsPanel'
 import { runMetrics } from './runMetrics'
 
 const fixture = readExperimentFixture()
@@ -85,4 +85,29 @@ test('step tab describes the move of the shown event in plain words', () => {
   assert.match(markup, /To T2 at \(1, 2, 0\), WLH/)
   assert.match(markup, /Acceptance probability/)
   assert.match(markup, /T1 to T2/)
+})
+
+test('fallback notices appear only in their corresponding Replay and Final views', () => {
+  const fallbackEvent: SearchEvent = { ...fixture.history[0], metadata: { feasible_fallback: true } }
+  const run: ExperimentResult = { ...fixture, algorithm: 'genetic_algorithm', history: [fallbackEvent], metadata: { final_state_fallback: true } }
+  const render = (stateView: 'replay' | 'initial' | 'final' | 'best', shownEvent: SearchEvent | null) => renderToStaticMarkup(
+    <ResultsPanel open={true} experiment={run} problem={problem} state={shownEvent?.state_snapshot ?? state} shownEvent={shownEvent} shownIndex={0} stateView={stateView} colorMode="identity" onClose={() => {}} onJump={() => {}} onSelectPackage={() => {}} onExpandCharts={() => {}} />,
+  )
+  const replay = render('replay', fallbackEvent)
+  assert.match(replay, /feasible solution from an earlier generation/)
+  assert.doesNotMatch(replay, /final population/)
+  assert.doesNotMatch(render('initial', null), /earlier generation|final population/)
+  assert.match(render('final', null), /final population had no feasible individual/)
+  assert.doesNotMatch(render('best', null), /earlier generation|final population/)
+})
+
+test('GA step details separate raw current objective from normalized fitness and avoid archive claims', () => {
+  const event: SearchEvent = { ...fixture.history[0], current_score: 42, best_score: 55, mean_score: 0.5, temperature: null, acceptance_probability: null, metadata: { max_fitness: 1.25 } }
+  const run: ExperimentResult = { ...fixture, algorithm: 'genetic_algorithm', history: [event] }
+  const markup = renderToStaticMarkup(<StepTab experiment={run} event={event} index={0} onJump={() => {}} />)
+  assert.match(markup, /Current objective/)
+  assert.match(markup, /Max fitness/)
+  assert.match(markup, /Mean fitness/)
+  assert.match(markup, /Best objective/)
+  assert.doesNotMatch(markup, /Best individual of generation/)
 })

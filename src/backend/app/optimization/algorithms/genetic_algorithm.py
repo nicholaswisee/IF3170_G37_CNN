@@ -3,24 +3,25 @@ from math import fsum
 
 from pydantic import BaseModel
 
-from app.domain.package import (
-    PackageSpec,
-    get_oriented_dimensions,
-    get_unique_orientations,
-)
 from app.domain.problem import Problem
 from app.domain.state import State
-from app.domain.truck import PackagePlacement, Position, TruckSpec
 from app.optimization.algorithms.base import SearchAlgorithm, SearchResult
 from app.optimization.constraints import validate_state
 from app.optimization.initializer import generate_random_feasible_state
-from app.optimization.neighbors import (
-    propose_relocate,
-    propose_rotate,
-    propose_swap,
+from app.optimization.neighbors import propose_relocate
+from app.optimization.objective import (
+    ObjectiveMode,
+    evaluate_objective,
+    objective_upper_bound,
 )
-from app.optimization.objective import ObjectiveMode, evaluate_objective
 from app.schemas.experiment import GeneticAlgorithmParameters, SearchEvent
+
+
+def _penalized_fitness(
+    raw_score: float, upper_bound: float, violation_count: int
+) -> float:
+    q = min(1.0, max(0.0, raw_score / upper_bound)) if upper_bound > 0 else 0.0
+    return 1.0 + q if violation_count == 0 else q / (1 + violation_count)
 
 
 def roulette_select(
@@ -46,112 +47,22 @@ def roulette_select(
     )
 
 
-def uniform_crossover(
+def single_point_crossover(
     problem: Problem, parent_a: State, parent_b: State, rng: random.Random
 ) -> State:
     by_id_a = {placement.package_id: placement for placement in parent_a.placements}
     by_id_b = {placement.package_id: placement for placement in parent_b.placements}
+    count = len(problem.packages)
+    cut = rng.randrange(1, count) if count > 1 else count
+    source_a = rng.random() < 0.5
     return State(
         placements=[
-            (by_id_a if rng.random() < 0.5 else by_id_b)[package.id].model_copy(
+            (by_id_a if (index < cut) == source_a else by_id_b)[package.id].model_copy(
                 deep=True
             )
-            for package in problem.packages
+            for index, package in enumerate(problem.packages)
         ]
     )
-
-
-def repair_state(problem: Problem, candidate: State, rng: random.Random) -> State:
-    repaired = State(
-        placements=[
-            PackagePlacement(package_id=package.id) for package in problem.packages
-        ]
-    )
-    indices = {
-        placement.package_id: i for i, placement in enumerate(repaired.placements)
-    }
-    packages = {package.id: package for package in problem.packages}
-    trucks = {truck.id: truck for truck in problem.trucks}
-    loaded = [
-        placement
-        for placement in candidate.placements
-        if placement.truck_id is not None and placement.position is not None
-    ]
-    loaded.sort(
-        key=lambda placement: (
-            placement.position.z if placement.position is not None else -1,
-            placement.package_id,
-        )
-    )
-
-    for gene in loaded:
-        assert gene.truck_id is not None and gene.position is not None
-        package = packages[gene.package_id]
-        requested_truck = trucks.get(gene.truck_id)
-        if requested_truck is not None:
-            exact = gene.model_copy(deep=True)
-            if _try_placement(problem, repaired, indices[gene.package_id], exact):
-                continue
-
-        other_trucks = [truck for truck in problem.trucks if truck.id != gene.truck_id]
-        rng.shuffle(other_trucks)
-        for truck in ([requested_truck] if requested_truck else []) + other_trucks:
-            if _scan_truck(
-                problem, repaired, indices[gene.package_id], package, gene, truck, rng
-            ):
-                break
-
-    result = validate_state(problem, repaired)
-    if not result.valid:
-        raise RuntimeError(
-            "Repair produced an invalid state: " + "; ".join(result.errors)
-        )
-    return repaired
-
-
-def _try_placement(
-    problem: Problem, state: State, index: int, placement: PackagePlacement
-) -> bool:
-    trial = state.model_copy(deep=True)
-    trial.placements[index] = placement.model_copy(deep=True)
-    if not validate_state(problem, trial).valid:
-        return False
-    state.placements[index] = placement.model_copy(deep=True)
-    return True
-
-
-def _scan_truck(
-    problem: Problem,
-    state: State,
-    index: int,
-    package: PackageSpec,
-    gene: PackagePlacement,
-    truck: TruckSpec,
-    rng: random.Random,
-) -> bool:
-    alternatives = [
-        orientation
-        for orientation in get_unique_orientations(package)
-        if orientation != gene.orientation
-    ]
-    rng.shuffle(alternatives)
-    orientations = [gene.orientation, *alternatives]
-    for orientation in orientations:
-        width, length, height = get_oriented_dimensions(package, orientation)
-        if width > truck.width or length > truck.length or height > truck.height:
-            continue
-        for z in range(truck.height - height + 1):
-            for y in range(truck.length - length + 1):
-                for x in range(truck.width - width + 1):
-                    placement = PackagePlacement(
-                        package_id=gene.package_id,
-                        truck_id=truck.id,
-                        position=Position(x=x, y=y, z=z),
-                        orientation=orientation,
-                    )
-                    if _try_placement(problem, state, index, placement):
-                        return True
-    return False
 
 
 class GeneticAlgorithm(SearchAlgorithm):
@@ -166,6 +77,8 @@ class GeneticAlgorithm(SearchAlgorithm):
         include_state_history: bool,
     ) -> SearchResult:
         config = GeneticAlgorithmParameters.model_validate(parameters.model_dump())
+        if config.elite_count != 0:
+            raise ValueError("elite_count must be 0")
         if (
             initial_state is not None
             and not validate_state(problem, initial_state).valid
@@ -178,70 +91,77 @@ class GeneticAlgorithm(SearchAlgorithm):
             generate_random_feasible_state(problem, rng)
             for _ in range(config.population_size - len(population))
         )
-        fitnesses = [
-            evaluate_objective(problem, state, objective_mode) for state in population
-        ]
-        champion, initial_score = max(
-            zip(population, fitnesses, strict=True), key=lambda pair: pair[1]
-        )
-        initial_champion = champion.model_copy(deep=True)
-        best_state = initial_champion.model_copy(deep=True)
+        upper_bound = objective_upper_bound(problem, objective_mode)
+        best_state = max(
+            population,
+            key=lambda state: evaluate_objective(problem, state, objective_mode),
+        ).model_copy(deep=True)
+        initial_state = best_state.model_copy(deep=True)
+        initial_score = evaluate_objective(problem, initial_state, objective_mode)
         best_score = initial_score
         history: list[SearchEvent] = []
-
+        final_fallback = False
         for generation in range(config.generations + 1):
-            champion, generation_max = max(
-                zip(population, fitnesses, strict=True), key=lambda pair: pair[1]
-            )
-            if generation_max > best_score:
-                best_state = champion.model_copy(deep=True)
-                best_score = generation_max
-            history.append(
-                SearchEvent(
-                    iteration=generation,
-                    current_score=generation_max,
-                    best_score=best_score,
-                    mean_score=(
-                        0.0
-                        if (scale := max(fitnesses, default=0.0)) == 0
-                        else scale
-                        * (
-                            fsum(fitness / scale for fitness in fitnesses)
-                            / len(population)
-                        )
-                    ),
-                    state_snapshot=champion.model_copy(deep=True)
-                    if include_state_history
-                    else None,
-                )
-            )
-            if generation == config.generations:
-                break
-            next_population = [champion.model_copy(deep=True)]
-            while len(next_population) < config.population_size:
-                parent_a = roulette_select(population, fitnesses, rng)
-                parent_b = roulette_select(population, fitnesses, rng)
-                if rng.random() < config.crossover_probability:
-                    child = uniform_crossover(problem, parent_a, parent_b, rng)
-                else:
-                    child = rng.choice((parent_a, parent_b)).model_copy(deep=True)
-                if rng.random() < config.mutation_probability:
-                    proposal = rng.choice(
-                        (propose_relocate, propose_rotate, propose_swap)
-                    )(problem, child, rng)
-                    if proposal is not None:
-                        child = proposal.state
-                next_population.append(repair_state(problem, child, rng))
-            population = next_population
-            fitnesses = [
+            validated = [validate_state(problem, state) for state in population]
+            raw_scores = [
                 evaluate_objective(problem, state, objective_mode)
                 for state in population
             ]
-
+            fitnesses = [
+                _penalized_fitness(score, upper_bound, len(validation.errors))
+                for score, validation in zip(raw_scores, validated, strict=True)
+            ]
+            feasible = [i for i, validation in enumerate(validated) if validation.valid]
+            if feasible:
+                current_index = max(feasible, key=lambda i: raw_scores[i])
+                current_state = population[current_index]
+                current_score = raw_scores[current_index]
+                if current_score > best_score:
+                    best_state = current_state.model_copy(deep=True)
+                    best_score = current_score
+                fallback = False
+            else:
+                current_state, current_score, fallback = best_state, best_score, True
+            history.append(
+                SearchEvent(
+                    iteration=generation,
+                    current_score=current_score,
+                    best_score=best_score,
+                    mean_score=fsum(fitnesses) / len(fitnesses),
+                    state_snapshot=current_state.model_copy(deep=True)
+                    if include_state_history
+                    else None,
+                    metadata={
+                        "max_fitness": max(fitnesses),
+                        "infeasible_count": len(population) - len(feasible),
+                        "feasible_fallback": fallback,
+                    },
+                )
+            )
+            if generation == config.generations:
+                final_fallback = not bool(feasible)
+                final_state = current_state
+                final_score = current_score
+                break
+            next_population: list[State] = []
+            for _ in range(config.population_size):
+                a = roulette_select(population, fitnesses, rng)
+                b = roulette_select(population, fitnesses, rng)
+                child = (
+                    single_point_crossover(problem, a, b, rng)
+                    if rng.random() < config.crossover_probability
+                    else rng.choice((a, b)).model_copy(deep=True)
+                )
+                if rng.random() < config.mutation_probability:
+                    proposal = propose_relocate(problem, child, rng)
+                    if proposal is not None:
+                        child = proposal.state
+                next_population.append(child)
+            population = next_population
         return SearchResult(
-            final_state=champion.model_copy(deep=True),
+            final_state=final_state.model_copy(deep=True),
             best_state=best_state.model_copy(deep=True),
-            final_score=generation_max,
+            final_score=final_score,
             best_score=best_score,
             iterations=config.generations,
             history=history,
@@ -249,7 +169,8 @@ class GeneticAlgorithm(SearchAlgorithm):
                 "population_size": config.population_size,
                 "generations": config.generations,
                 "termination_reason": "generation_limit",
-                "initial_state": initial_champion.model_dump(mode="json"),
+                "initial_state": initial_state.model_dump(mode="json"),
                 "initial_score": initial_score,
+                "final_state_fallback": final_fallback,
             },
         )

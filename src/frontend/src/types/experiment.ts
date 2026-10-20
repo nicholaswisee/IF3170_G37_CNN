@@ -60,6 +60,7 @@ export interface OptimizationState {
 
 export interface HillClimbingParameters {
   max_iterations: number
+  /** Used by non-stochastic variants; stochastic HC requests one neighbor. */
   candidates_per_iteration: number
   max_sideways: number
   max_restarts: number
@@ -111,7 +112,11 @@ export type RunExperimentRequest = HillClimbingRequest | SimulatedAnnealingReque
 
 /**
  * Algorithm-neutral history entry. For GA, iteration is the generation index,
- * current_score the generation max, and mean_score the population mean. Fields
+ * current_score is the raw-objective feasible generation best (archive fallback
+ * when needed); best_score is the best raw objective archived. For GA, mean_score
+ * is normalized mean penalized fitness in [0, 2], and metadata.max_fitness is
+ * normalized maximum penalized fitness in [0, 2]. Older GA records have no max_fitness
+ * and can use current_score for the legacy chart. Fields
  * an algorithm does not use are null; state_snapshot is null in batch runs.
  */
 export interface SearchEvent {

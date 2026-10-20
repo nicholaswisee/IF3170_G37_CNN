@@ -7,17 +7,19 @@ export function progressLabel(algorithm: Algorithm | null | undefined): 'Generat
 
 export interface ObjectivePoint {
   iteration: number
-  current: number
+  current: number | null
   best: number
   /** GA population mean; null for HC and SA. */
   mean: number | null
 }
 
-/** Objective series for every algorithm. For GA, current is the generation maximum. */
-export function toObjectiveSeries(history: SearchEvent[]): ObjectivePoint[] {
+/** Objective series for every algorithm. New GA records chart normalized max fitness. */
+export function toObjectiveSeries(history: SearchEvent[], algorithm?: Algorithm | null): ObjectivePoint[] {
   return history.map((event) => ({
     iteration: event.iteration,
-    current: event.current_score,
+    current: algorithm === 'genetic_algorithm' && 'max_fitness' in event.metadata
+      ? typeof event.metadata.max_fitness === 'number' && Number.isFinite(event.metadata.max_fitness) ? event.metadata.max_fitness : null
+      : event.current_score,
     best: event.best_score,
     mean: event.mean_score,
   }))

@@ -19,6 +19,21 @@ test('every algorithm uses the iteration key for chart data', () => {
   assert.deepEqual(toObjectiveSeries([event(0, 4)])[0].mean, null)
 })
 
+test('GA fitness series uses finite metadata maximum and raw objective remains available for legacy runs', () => {
+  const history = [
+    event(0, 40, { best_score: 40, mean_score: 0, metadata: { max_fitness: 1.25 } }),
+    event(1, 50, { best_score: 50, mean_score: 0.75, metadata: { max_fitness: 0 } }),
+    event(2, 60, { best_score: 60, mean_score: 1.5, metadata: { max_fitness: Number.NaN } }),
+  ]
+  assert.deepEqual(toObjectiveSeries(history, 'genetic_algorithm'), [
+    { iteration: 0, current: 1.25, best: 40, mean: 0 },
+    { iteration: 1, current: 0, best: 50, mean: 0.75 },
+    { iteration: 2, current: null, best: 60, mean: 1.5 },
+  ])
+  assert.deepEqual(toObjectiveSeries([history[0]], 'hill_climbing')[0], { iteration: 0, current: 40, best: 40, mean: 0 })
+  assert.equal(bestEventIndex(history, 50), 1)
+})
+
 test('annealing series keeps temperature and acceptance probability per iteration', () => {
   assert.deepEqual(toAnnealingSeries([event(0, 1, { temperature: 50 }), event(1, 1, { temperature: 49, acceptance_probability: 0.4 })]), [
     { iteration: 0, temperature: 50, probability: null },

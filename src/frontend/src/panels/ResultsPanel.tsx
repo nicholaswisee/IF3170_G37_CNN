@@ -88,9 +88,14 @@ export function StepTab({ experiment, event, index, onJump }: { experiment: Expe
   const isGenetic = experiment.algorithm === 'genetic_algorithm'
   const rows: [string, string][] = []
   if (event.candidate_score !== null) rows.push(['Candidate score', formatNumber(event.candidate_score)])
-  rows.push([isGenetic ? 'Max fitness' : 'Current score', formatNumber(event.current_score)])
+  if (isGenetic) {
+    rows.push(['Current objective', formatNumber(event.current_score)])
+    const maxFitness = event.metadata.max_fitness
+    if (typeof maxFitness === 'number' && Number.isFinite(maxFitness)) rows.push(['Max fitness', formatNumber(maxFitness)])
+    else if (!('max_fitness' in event.metadata)) rows.push(['Max fitness', formatNumber(event.current_score)])
+  } else rows.push(['Current score', formatNumber(event.current_score)])
   if (event.mean_score !== null) rows.push(['Mean fitness', formatNumber(event.mean_score)])
-  rows.push(['Best so far', formatNumber(event.best_score)])
+  rows.push([isGenetic ? 'Best objective' : 'Best so far', formatNumber(event.best_score)])
   if (event.temperature !== null) rows.push(['Temperature', formatCompact(event.temperature)])
   if (event.acceptance_probability !== null) rows.push(['Acceptance probability', formatCompact(event.acceptance_probability)])
   const recent = experiment.history.slice(Math.max(0, index - 7), index + 1)
@@ -98,7 +103,7 @@ export function StepTab({ experiment, event, index, onJump }: { experiment: Expe
     .filter(({ item }) => item.move !== null)
     .reverse()
 
-  let sentence = isGenetic ? `Best individual of generation ${event.iteration}.` : 'Starting state. No move yet.'
+  let sentence = isGenetic ? `Generation ${event.iteration} summary.` : 'Starting state. No move yet.'
   if (event.move) sentence = describeMove(event.move)
   else if (!isGenetic && event.iteration > 0) sentence = event.accepted === false ? 'No candidate was accepted in this step.' : 'No move was recorded for this step.'
 
@@ -197,6 +202,11 @@ export function ResultsPanel({ open, experiment, problem, state, shownEvent, sho
   ]
   const unit = progressLabel(experiment?.algorithm)
   const viewCaption = stateView === 'replay' && shownEvent ? `${unit} ${shownEvent.iteration}` : VIEW_NAMES[stateView]
+  const fallbackNotice = experiment?.algorithm === 'genetic_algorithm' && stateView === 'replay' && shownEvent?.metadata.feasible_fallback === true
+    ? 'No feasible individual was in this generation; showing the best feasible solution from an earlier generation.'
+    : experiment?.algorithm === 'genetic_algorithm' && stateView === 'final' && experiment.metadata.final_state_fallback === true
+      ? 'The final population had no feasible individual; showing the best feasible solution from an earlier generation.'
+      : null
 
   return (
     <aside className="panel panel-right glass" aria-label="Results" inert={!open}>
@@ -214,6 +224,7 @@ export function ResultsPanel({ open, experiment, problem, state, shownEvent, sho
       )}
       <div className="panel-tabs"><Segmented<Tab> label="Result view" options={tabs} value={tab} onChange={setTab} /></div>
       <div className="panel-body">
+        {fallbackNotice && <p className="caption" role="status">{fallbackNotice}</p>}
         {tab === 'summary' && <SummaryTab experiment={experiment} problem={problem} state={state} viewCaption={viewCaption} />}
         {tab === 'charts' && (experiment
           ? <ChartsView experiment={experiment} cursor={shownEvent?.iteration ?? null} onExpand={onExpandCharts} />

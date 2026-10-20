@@ -518,6 +518,9 @@ def test_metrics_and_summary_use_generation_history_and_population_statistics(
     result = runner.run_experiment(request)
     metrics = calculate_metrics(result)
     assert metrics["max_fitness_history"] == [
+        event.metadata["max_fitness"] for event in result.history
+    ]
+    assert metrics["max_fitness_history"] != [
         event.current_score for event in result.history
     ]
     assert "metrics" in result.metadata
@@ -529,6 +532,40 @@ def test_metrics_and_summary_use_generation_history_and_population_statistics(
     assert summary["mean_best_score"] == result.best_score
     assert summary["std_best_score"] == 0
     assert summary["mean_runtime_ms"] == result.runtime_ms
+
+
+def test_metrics_fall_back_to_raw_scores_for_legacy_history(
+    single_truck_problem: Problem,
+) -> None:
+    from app.experiments.metrics import calculate_metrics
+
+    request = TypeAdapter(RunExperimentRequest).validate_python(
+        _request(
+            single_truck_problem, parameters={"population_size": 4, "generations": 1}
+        )
+    )
+    result = runner.run_experiment(request)
+    legacy = result.model_copy(
+        update={
+            "history": [
+                event.model_copy(update={"metadata": {}}) for event in result.history
+            ]
+        }
+    )
+    assert calculate_metrics(legacy)["max_fitness_history"] == [
+        event.current_score for event in legacy.history
+    ]
+    nonfinite = result.model_copy(
+        update={
+            "history": [
+                event.model_copy(update={"metadata": {"max_fitness": float("nan")}})
+                for event in result.history
+            ]
+        }
+    )
+    assert calculate_metrics(nonfinite)["max_fitness_history"] == [
+        event.current_score for event in nonfinite.history
+    ]
 
 
 def test_summary_empty_and_extreme_finite_values() -> None:

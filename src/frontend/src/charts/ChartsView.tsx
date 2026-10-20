@@ -45,7 +45,7 @@ interface ChartsViewProps {
 }
 
 export function ChartsView({ experiment, cursor, large = false, onExpand }: ChartsViewProps) {
-  const objective = useMemo(() => toObjectiveSeries(experiment.history), [experiment])
+  const objective = useMemo(() => toObjectiveSeries(experiment.history, experiment.algorithm), [experiment])
   const annealing = useMemo(() => toAnnealingSeries(experiment.history), [experiment])
   const restarts = useMemo(() => restartStarts(experiment.history), [experiment])
   const perRestart = useMemo(() => bestScorePerRestart(experiment.metadata), [experiment])
@@ -84,7 +84,7 @@ export function ChartsView({ experiment, cursor, large = false, onExpand }: Char
               ? <Line type="monotone" dataKey="mean" name="Mean fitness" stroke={palette.orange} strokeWidth={2} dot={false} isAnimationActive={false} />
               : <Line type="stepAfter" dataKey="best" name="Best" stroke={palette.indigo} strokeWidth={2} strokeDasharray="5 4" dot={false} isAnimationActive={false} />}
             {cursorLine}
-            {cursorPoint && <ReferenceDot x={cursorPoint.iteration} y={cursorPoint.current} r={4} fill="#ffffff" stroke={palette.accent} strokeWidth={2.4} />}
+            {cursorPoint && cursorPoint.current !== null && <ReferenceDot x={cursorPoint.iteration} y={cursorPoint.current} r={4} fill="#ffffff" stroke={palette.accent} strokeWidth={2.4} />}
           </ComposedChart>
         </ResponsiveContainer>
       </ChartCard>

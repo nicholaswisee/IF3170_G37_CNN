@@ -4,8 +4,10 @@ import random
 
 import numpy as np
 import pytest
+from pydantic import TypeAdapter
 
 from app.domain import MoveType, Problem, State
+from app.experiments import runner
 from app.optimization.constraints import build_occupancies, validate_state
 from app.optimization.initializer import generate_random_feasible_state
 from app.optimization.neighbors import (
@@ -16,6 +18,7 @@ from app.optimization.neighbors import (
     state_signature,
 )
 from app.optimization.objective import ObjectiveMode, evaluate_objective
+from app.schemas import ExperimentResult, RunExperimentRequest
 
 # Independently calculated contributions for the shared three-package fixtures.
 CONTRIBUTIONS = {
@@ -179,3 +182,65 @@ def test_no_feasible_loading_produces_zero_scores_and_no_neighbors(
     assert generate_random_neighbor(problem, state, rng, NeighborConfig()) is None
     assert sample_valid_neighbors(problem, state, rng, 3, NeighborConfig()) == []
     assert state.model_dump_json() == original
+
+
+@pytest.mark.parametrize("mode", list(ObjectiveMode))
+def test_ga_invalid_final_generation_returns_feasible_archived_results(
+    single_truck_problem: Problem, mode: ObjectiveMode, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.optimization.algorithms import genetic_algorithm
+
+    def invalid_child(problem: Problem, parent_a: State, parent_b: State, rng) -> State:
+        child = parent_a.model_copy(deep=True)
+        anchor = next(placement for placement in child.placements if placement.position)
+        child.placements = [
+            placement.model_copy(
+                update={
+                    "truck_id": anchor.truck_id,
+                    "position": anchor.position.model_copy(deep=True),
+                    "orientation": anchor.orientation,
+                }
+            )
+            for placement in child.placements
+        ]
+        return child
+
+    monkeypatch.setattr(genetic_algorithm, "single_point_crossover", invalid_child)
+    request = TypeAdapter(RunExperimentRequest).validate_python(
+        {
+            "algorithm": "genetic_algorithm",
+            "problem": single_truck_problem.model_dump(mode="json"),
+            "seed": 42,
+            "persist": False,
+            "include_state_history": True,
+            "objective_mode": mode.value,
+            "parameters": {
+                "population_size": 4,
+                "generations": 1,
+                "mutation_probability": 0,
+            },
+        }
+    )
+    result = runner.run_experiment(request)
+
+    assert ExperimentResult.model_validate_json(result.model_dump_json()) == result
+    assert result.metadata["final_state_fallback"] is True
+    assert result.history[-1].metadata["feasible_fallback"] is True
+    assert result.history[-1].metadata["infeasible_count"] == 4
+    for state, score in (
+        (result.initial_state, result.initial_score),
+        (result.final_state, result.final_score),
+        (result.best_state, result.best_score),
+        *((event.state_snapshot, event.current_score) for event in result.history),
+    ):
+        assert state is not None
+        assert validate_state(single_truck_problem, state).valid
+        assert evaluate_objective(single_truck_problem, state, mode) == score
+
+    from app.experiments.metrics import calculate_metrics
+
+    metrics = calculate_metrics(result)
+    assert (
+        metrics["max_fitness_history"][-1] == result.history[-1].metadata["max_fitness"]
+    )
+    assert metrics["max_fitness_history"][-1] != result.history[-1].current_score

@@ -127,7 +127,7 @@
         "exclusive_minimum": null,
         "maximum": 1.0,
         "exclusive_maximum": null,
-        "default": 0.8
+        "default": 1.0
       },
       "mutation_probability": {
         "integer": false,
@@ -141,11 +141,11 @@
       "elite_count": {
         "integer": true,
         "nullable": false,
-        "minimum": 1.0,
+        "minimum": 0.0,
         "exclusive_minimum": null,
-        "maximum": 1.0,
+        "maximum": 0.0,
         "exclusive_maximum": null,
-        "default": 1.0
+        "default": 0.0
       }
     }
   }

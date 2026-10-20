@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -6,8 +8,10 @@ class Settings(BaseSettings):
 
     app_env: str = "development"
     frontend_origin: str = "http://localhost:5173"
-    output_dir: str = "/workspace/output"
-    data_dir: str = "/workspace/data"
+    output_dir: str = str(
+        (Path(__file__).resolve().parent / "../../../output").resolve()
+    )
+    data_dir: str = str((Path(__file__).resolve().parent / "../../../data").resolve())
 
 
 settings = Settings()

@@ -116,7 +116,7 @@ def test_limits_combine_schema_bounds_with_runner_budgets() -> None:
     ga = body["parameters"]["genetic_algorithm"]
     assert ga["population_size"]["minimum"] == 2
     assert ga["population_size"]["maximum"] == limits.GA_MAX_POPULATION
-    assert ga["elite_count"]["minimum"] == ga["elite_count"]["maximum"] == 1
+    assert ga["elite_count"]["minimum"] == ga["elite_count"]["maximum"] == 0
     assert ga["crossover_probability"]["maximum"] == 1
 
 

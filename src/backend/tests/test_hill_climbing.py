@@ -460,8 +460,10 @@ def test_steepest_and_stochastic_metadata(
     assert result.best_score == 19
     assert result.final_score == result.best_score
     assert result.metadata == {
-        "termination_reason": "local_optimum",
-        "sampled_neighbors": 20,
+        "termination_reason": "max_iterations"
+        if variant is STOCHASTIC
+        else "local_optimum",
+        "sampled_neighbors": 1 if variant is STOCHASTIC else 20,
     }
     assert all("sideways" not in event.metadata for event in result.history)
 
@@ -496,29 +498,126 @@ def test_steepest_terminates_on_plateau(monkeypatch: pytest.MonkeyPatch) -> None
 # --- Stochastic -------------------------------------------------------------
 
 
-def test_stochastic_chooses_only_improving(monkeypatch: pytest.MonkeyPatch) -> None:
-    improving = [loaded("small"), loaded("valuable")]
-    chosen = set()
-    for seed in range(30):
-        script(monkeypatch, [[loaded(), loaded("zero-1"), *improving], []])
-        result = run_scripted(STOCHASTIC, seed=seed)
-        event = result.history[1]
-        assert event.accepted is True
-        assert event.current_score > 0
-        assert event.metadata["improving_candidates"] == 2
-        chosen.add(event.state_snapshot.model_dump_json())  # type: ignore[union-attr]
-    # Uniform choice among improving candidates, not only the steepest one.
-    assert chosen == {candidate.state.model_dump_json() for candidate in improving}
-
-
-def test_stochastic_stops_without_improving_candidate(
+def test_stochastic_uses_one_neighbor_and_continues_after_rejections(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    script(monkeypatch, [[loaded(), loaded("zero-1")]])
-    result = run_scripted(STOCHASTIC, max_sideways=50)
-    assert result.metadata["termination_reason"] == "local_optimum"
-    assert result.final_state == outside(SCRIPTED_PROBLEM)
-    assert result.history[-1].accepted is False
+    problem = Problem(
+        packages=[unit_box(f"p{i}", 10) for i in range(3)],
+        trucks=[TruckSpec(id="t", width=10, length=1, height=1, max_capacity=10)],
+    )
+
+    def candidate(package_count: int) -> NeighborCandidate:
+        state = State(
+            placements=[
+                PackagePlacement(
+                    package_id=package.id,
+                    truck_id="t" if i < package_count else None,
+                    position=Position(x=i, y=0, z=0) if i < package_count else None,
+                )
+                for i, package in enumerate(problem.packages)
+            ]
+        )
+        return NeighborCandidate(
+            state=state,
+            move=Move(type=MoveType.RELOCATE, package_ids=[], before=[], after=[]),
+        )
+
+    initial = candidate(1).state
+    proposed = [candidate(0), candidate(1), candidate(2), None, candidate(3)]
+    calls = 0
+
+    def fake_random_neighbor(
+        problem_: Problem, state: State, rng: random.Random, config: NeighborConfig
+    ) -> NeighborCandidate | None:
+        nonlocal calls
+        result = proposed[calls]
+        calls += 1
+        return result
+
+    def unexpected_sample(*args: object, **kwargs: object) -> list[NeighborCandidate]:
+        pytest.fail("stochastic HC must request one random neighbor")
+
+    monkeypatch.setattr(
+        hc_module, "generate_random_neighbor", fake_random_neighbor, raising=False
+    )
+    monkeypatch.setattr(hc_module, "sample_valid_neighbors", unexpected_sample)
+
+    result = run_hc(
+        problem,
+        initial,
+        variant=STOCHASTIC,
+        max_iterations=5,
+        candidates_per_iteration=99,
+    )
+
+    assert calls == 5
+    assert [event.current_score for event in result.history] == [10, 10, 10, 20, 20, 30]
+    assert [event.accepted for event in result.history[1:]] == [
+        False,
+        False,
+        True,
+        False,
+        True,
+    ]
+    assert [event.candidate_score for event in result.history[1:]] == [
+        0,
+        10,
+        20,
+        None,
+        30,
+    ]
+    assert [event.move is not None for event in result.history[1:]] == [
+        True,
+        True,
+        True,
+        False,
+        True,
+    ]
+    assert [event.state_snapshot for event in result.history[1:]] == [
+        initial,
+        initial,
+        candidate(2).state,
+        candidate(2).state,
+        candidate(3).state,
+    ]
+    assert [event.metadata for event in result.history[1:]] == [
+        {"sampled_neighbors": 1, "improving_candidates": 0},
+        {"sampled_neighbors": 1, "improving_candidates": 0},
+        {"sampled_neighbors": 1, "improving_candidates": 1},
+        {"sampled_neighbors": 0, "improving_candidates": 0},
+        {"sampled_neighbors": 1, "improving_candidates": 1},
+    ]
+    assert result.iterations == 5
+    assert len(result.history) == 6
+    assert result.metadata == {
+        "termination_reason": "max_iterations",
+        "sampled_neighbors": 1,
+    }
+
+
+def test_stochastic_all_none_attempts_consume_iteration_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = 0
+
+    def no_neighbor(
+        problem: Problem, state: State, rng: random.Random, config: NeighborConfig
+    ) -> None:
+        nonlocal calls
+        calls += 1
+
+    monkeypatch.setattr(
+        hc_module, "generate_random_neighbor", no_neighbor, raising=False
+    )
+    result = run_scripted(STOCHASTIC, max_iterations=4)
+
+    assert calls == 4
+    assert result.iterations == 4
+    assert result.metadata["termination_reason"] == "max_iterations"
+    assert [event.metadata for event in result.history[1:]] == [
+        {"sampled_neighbors": 0, "improving_candidates": 0}
+    ] * 4
+    assert all(event.accepted is False for event in result.history[1:])
 
 
 # --- Random restart ---------------------------------------------------------

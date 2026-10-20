@@ -57,9 +57,9 @@ MODELS_AND_DEFAULTS = [
         {
             "population_size": 50,
             "generations": 100,
-            "crossover_probability": 0.8,
+            "crossover_probability": 1.0,
             "mutation_probability": 0.2,
-            "elite_count": 1,
+            "elite_count": 0,
         },
     ),
 ]
@@ -71,6 +71,11 @@ def payload(problem: Problem, algorithm: str) -> dict:
         "algorithm": algorithm,
         "seed": 42,
     }
+
+
+def test_ga_rejects_nonzero_elite_count() -> None:
+    with pytest.raises(ValidationError):
+        GeneticAlgorithmParameters(elite_count=1)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -251,7 +256,6 @@ def test_valid_parameter_overrides(
         ("genetic_algorithm", "crossover_probability", 1.1),
         ("genetic_algorithm", "mutation_probability", -0.1),
         ("genetic_algorithm", "mutation_probability", 1.1),
-        ("genetic_algorithm", "elite_count", 0),
         ("genetic_algorithm", "elite_count", 2),
         ("genetic_algorithm", "elite_count", 50),
         ("genetic_algorithm", "max_iterations", 10),
