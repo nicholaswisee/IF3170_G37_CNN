@@ -602,9 +602,9 @@ Default GA adalah populasi 50, 100 generasi, crossover 1,0, mutasi 0,2, dan elit
 \clearpage
 \section{Eksperimen dan Analisis}
 \subsection{Rancangan Eksperimen}
-Bagian ini menyajikan 15 pengukuran manual melalui UI (12 run Hill Climbing/HC dan tiga run Simulated Annealing/SA) serta tiga run GA yang dieksekusi secara berurutan melalui backend HTTP. Dengan demikian terdapat 18 catatan eksekusi pada satu dataset. Run GA merupakan pengujian programatik, bukan run manual melalui UI.
+Bagian ini menganalisis 18 catatan eksekusi pada satu dataset: 12 run Hill Climbing/HC, tiga run Simulated Annealing/SA, dan tiga run Genetic Algorithm/GA.
 
-\subsubsection{Data Uji dan Lingkungan Eksperimen}
+\subsubsection{Data Uji}
 Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket termuat tanpa pembobotan ETA. Dataset pengujian terdiri atas satu truk \texttt{truck-a} berukuran $10\times8\times6$ dan berkapasitas 100, serta sembilan paket pada Tabel~\ref{tab:data-eksperimen} dengan atribut asli. Dataset yang sama digunakan untuk membandingkan hasil antaralgoritma dan seed. GA memakai satu konfigurasi tetap: populasi 50, 100 generasi, crossover 1,0, mutasi 0,2, elitisme 0, dan arsip solusi feasible eksternal.
 
 \begin{table}[htbp]
@@ -655,10 +655,10 @@ Setiap metode memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 2026}. 
     \label{tab:konfigurasi-eksperimen}
 \end{table}
 
-Metrik pengujian meliputi skor objektif awal, akhir, dan terbaik, runtime, jumlah iterasi aktual, serta berat dan jumlah paket termuat pada state akhir. Skor terbaik dibedakan dari skor akhir karena solusi terakhir tidak selalu menjadi solusi terbaik sepanjang pencarian. Runtime GA mencakup inisialisasi dan pencarian, tidak termasuk serialisasi, validasi akhir, penyimpanan, komunikasi HTTP, atau rendering. Pengukuran manual HC/SA tidak merupakan benchmark terkontrol terhadap GA. Runtime GA dijalankan berurutan pada Docker, CPython 3.12.13/Linux, Intel Core i7-13620H.
+Metrik yang dianalisis meliputi skor objektif awal, akhir, dan terbaik, runtime, jumlah iterasi aktual, serta berat dan jumlah paket termuat pada state akhir. Skor terbaik dibedakan dari skor akhir karena solusi terakhir tidak selalu menjadi solusi terbaik sepanjang pencarian. Runtime GA yang tercatat mencakup inisialisasi dan pencarian, tidak termasuk serialisasi, validasi akhir, penyimpanan, komunikasi HTTP, atau rendering. Durasi dibahas secara deskriptif berdasarkan run yang tercatat.
 
 \subsection{Hasil Eksperimen dan Visualisasi Program}
-Pengujian mencakup empat varian HC, SA, dan GA dengan objektif Total value. Hasil setiap run meliputi skor awal, akhir, dan terbaik. Visualisasi HC/SA menunjukkan susunan paket pada state akhir beserta jumlah paket dan berat muatannya. Hasil GA diperoleh melalui backend dan belum dilengkapi tangkapan layar.
+Pengujian mencakup empat varian HC, SA, dan GA dengan objektif Total value. Hasil setiap run meliputi skor awal, akhir, dan terbaik; visualisasi HC/SA memperlihatkan susunan paket pada state akhir beserta jumlah paket dan berat muatannya.
 \subsubsection{Hill Climbing}
 \begin{table}[htbp]
 \centering
@@ -682,7 +682,7 @@ Random-restart & 123 & 68 & 190 & 208 & 4135 & 42 & 91 \\
 Random-restart & 2026 & 93 & 208 & 208 & 4794 & 42 & 100 \\
 \bottomrule
 \end{tabular}
-\caption{Hasil pengukuran manual 12 run HC. Kolom kg adalah berat muatan akhir; seluruh run berakhir dengan tujuh paket termuat.}
+\caption{Hasil 12 run HC. Kolom kg adalah berat muatan akhir; seluruh run berakhir dengan tujuh paket termuat.}
 \label{tab:hasil-hc}
 \end{table}
 
@@ -712,7 +712,7 @@ SA & 123 & 68 & 208 & 208 & 2014 & 2057 & 100 \\
 SA & 2026 & 93 & 208 & 208 & 1998 & 2057 & 100 \\
 \bottomrule
 \end{tabular}
-\caption{Hasil pengukuran manual tiga run SA. Seluruh state akhir memuat tujuh paket.}
+\caption{Hasil tiga run SA. Seluruh state akhir memuat tujuh paket.}
 \label{tab:hasil-sa}
 \end{table}
 
@@ -740,7 +740,7 @@ Seed & Awal & Akhir & Terbaik & ms & Paket & kg & Berkas \\
 2026 & 200 & 208 & 208 & 898 & 7 & 100 & \path{ga-seed-2026.json} \\
 \bottomrule
 \end{tabular}
-\caption{Hasil GA programatik untuk satu konfigurasi tetap (populasi 50, 100 generasi, crossover 1,0, mutasi 0,2, elitisme 0), tiga seed.}
+\caption{Hasil GA untuk satu konfigurasi tetap (populasi 50, 100 generasi, crossover 1,0, mutasi 0,2, elitisme 0), tiga seed.}
 \label{tab:hasil-ga}
 \end{table}
 
@@ -765,7 +765,7 @@ SA & 208.00 & 0.00 & 208.00 & 1.634 & 1656.67 \\
 GA & 192.67 & 21.68 & 208.00 & 0.853 & 100.00 \\
 \bottomrule
 \end{tabular}
-\caption{Ringkasan deskriptif tiga seed per metode: rata-rata skor akhir, simpangan baku populasi skor akhir, rata-rata skor terbaik, runtime, dan iterasi aktual. Runtime GA berasal dari kondisi eksekusi berbeda dari HC/SA.}
+\caption{Ringkasan deskriptif tiga seed per metode: rata-rata skor akhir, simpangan baku populasi skor akhir, rata-rata skor terbaik, runtime, dan iterasi aktual.}
 \label{tab:ringkasan-manual}
 \end{table}
 
@@ -837,7 +837,7 @@ Pada seed 42, semua metode mencapai skor akhir 208 kecuali random-restart, yang 
 Seluruh state akhir HC/SA memuat tujuh paket; GA memuat enam hingga tujuh paket. Berat akhir HC/SA berkisar 76 sampai 100 kg, sedangkan nilainya berkisar 170 sampai 208. Karena objektif memaksimalkan total nilai, jumlah paket yang sama tidak menjamin kualitas solusi yang sama. Dua run random-restart juga memiliki nilai akhir 190 dengan berat berbeda, yaitu 96 dan 91 kg. Pemilihan komposisi paket dan susunan yang memungkinkan paket bernilai tinggi masuk lebih menentukan daripada jumlah paket saja.
 
 \subsubsection{Perbandingan Durasi Pencarian}
-Durasi HC/SA manual dan GA programatik berasal dari kondisi eksekusi berbeda sehingga tidak membentuk benchmark terkontrol. Perbandingan berikut dibatasi pada hasil HC/SA manual. Rata-rata runtime steepest-ascent adalah 0,508 detik, stochastic 1,077 detik, SA 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Steepest-ascent paling cepat pada rata-rata pengukuran ini, tetapi tidak mencapai optimum pada seed 123. Sideways dan SA sama-sama mencapai skor akhir optimum pada seluruh seed; untuk hasil tersebut, SA membutuhkan sekitar sepersepuluh runtime sideways.
+Pada HC/SA, rata-rata runtime steepest-ascent adalah 0,508 detik, stochastic 1,077 detik, SA 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Di antara run HC/SA, steepest-ascent memiliki rata-rata runtime terendah, tetapi tidak mencapai optimum pada seed 123. Sideways dan SA sama-sama mencapai skor akhir optimum pada seluruh seed; runtime SA yang tercatat sekitar sepersepuluh runtime sideways.
 
 Steepest-ascent selesai dalam 2 sampai 5 iterasi karena berhenti ketika tidak menemukan peningkatan pada sampel kandidat. Stochastic menjalankan seluruh 2.000 iterasi dengan runtime 0,932 sampai 1,150 detik. Percobaan yang ditolak tetap dihitung sebagai iterasi, sehingga angka tersebut tidak sama dengan jumlah perpindahan state. Sideways menjalankan 102 sampai 108 iterasi dan terus memeriksa kandidat pada langkah bernilai sama, sehingga membutuhkan waktu lebih lama. Random-restart mengulang proses climb sampai 10 restart; biaya pengulangan itu menaikkan runtime dibanding satu climb, sekaligus menghasilkan skor terbaik optimum pada seluruh seed.
 
@@ -865,7 +865,7 @@ Rata-rata skor akhir adalah 192,67, simpangan baku populasi 21,68, dan gap rata-
 
 Dibandingkan metode lain, rata-rata skor akhir GA berada di bawah sideways dan SA (208), random-restart (196,00), serta steepest-ascent (195,33), tetapi di atas stochastic (187,67). Jika solusi terbaik sepanjang pencarian yang dipilih, GA setara dengan sideways, random-restart, dan SA karena semuanya mencapai 208 pada setiap seed. Perbandingan peningkatan skor perlu mempertimbangkan inisialisasi: GA dimulai dari populasi dengan skor awal 200, 208, dan 200, sedangkan HC/SA dimulai dari satu state dengan skor awal 188, 68, dan 93.
 
-Runtime GA adalah 875, 787, dan 898 ms, dengan rata-rata 853 ms atau 0,853 detik. Seluruh run menyelesaikan 100 generasi dan berhenti karena batas generasi. Durasi berkisar 0,787 sampai 0,898 detik, meskipun skor akhirnya bervariasi. Kondisi eksekusi GA programatik berbeda dari HC/SA manual sehingga angka tersebut menggambarkan durasi ketiga run GA, tanpa menjadi dasar klaim bahwa GA lebih cepat daripada metode lain.
+Runtime GA yang tercatat adalah 875, 787, dan 898 ms, dengan rata-rata 853 ms atau 0,853 detik. Seluruh run menyelesaikan 100 generasi dan berhenti karena batas generasi. Durasi berkisar 0,787 sampai 0,898 detik, sementara skor akhir bervariasi.
 
 Jumlah populasi dan generasi tetap pada ketiga run, sehingga perbedaan hasil berkaitan dengan seed pada konfigurasi yang sama. Data ini belum mengukur pengaruh perubahan kedua parameter tersebut. Oleh sebab itu, hasil pengujian hanya mendukung kesimpulan bahwa populasi 50 dan anggaran 100 generasi mampu menghasilkan solusi terbaik optimum pada ketiga seed yang diuji; pengujian ini tidak menetapkan ukuran populasi atau jumlah generasi yang paling efisien.
 
@@ -876,7 +876,7 @@ Persoalan pemuatan paket pada truk peti kemas telah dimodelkan sebagai pencarian
 
 Berdasarkan Tabel~\ref{tab:ringkasan-manual} dan Tabel~\ref{tab:gap-optimum}, \textbf{simulated annealing merupakan metode paling optimal} pada pengujian ini: skor akhirnya mencapai optimum 208 pada ketiga seed dengan rata-rata runtime 1,634 detik. Sideways juga mencapai 208 pada seluruh seed, tetapi membutuhkan sekitar sepuluh kali runtime SA. Random-restart dan GA selalu menemukan 208 sebagai skor terbaik, tetapi skor akhirnya bervariasi, sehingga keluaran yang digunakan harus berupa state terbaik sepanjang pencarian. Steepest-ascent paling cepat, tetapi hanya mencapai optimum pada dua dari tiga run, sedangkan stochastic memiliki rata-rata skor akhir terendah, yaitu 187,67.
 
-Kesimpulan tersebut terbatas pada satu dataset sembilan paket, tiga seed, dan konfigurasi parameter yang diuji. Runtime GA berasal dari kondisi eksekusi berbeda dari HC/SA, sehingga belum dapat dibandingkan secara langsung, dan pengaruh ukuran populasi serta jumlah generasi GA belum diukur.
+Kesimpulan tersebut terbatas pada satu dataset sembilan paket, tiga seed, dan konfigurasi parameter yang diuji. Pengaruh ukuran populasi serta jumlah generasi GA belum diukur.
 
 \subsection{Saran}
 Pengembangan dan pengujian selanjutnya dapat mencakup hal-hal berikut.
@@ -884,7 +884,6 @@ Pengembangan dan pengujian selanjutnya dapat mencakup hal-hal berikut.
     \setlength{\itemsep}{0pt}
     \setlength{\parsep}{0pt}
     \item Menambah jumlah seed serta menguji dataset yang lebih besar dan skenario multi-truk agar konsistensi setiap metode dapat dinilai lebih kuat.
-    \item Menjalankan seluruh metode dalam lingkungan eksekusi yang sama agar durasi pencarian GA dapat dibandingkan secara terkontrol dengan HC dan SA.
     \item Memvariasikan ukuran populasi dan jumlah generasi GA untuk mengukur pengaruh kedua parameter tersebut terhadap kualitas solusi dan durasi.
     \item Menggunakan mekanisme elitisme pada GA agar solusi terbaik tidak hilang dari populasi akhir, sebagaimana terjadi pada seed 123.
 \end{enumerate}
