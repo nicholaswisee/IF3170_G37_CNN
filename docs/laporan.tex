@@ -630,7 +630,7 @@ Objektif utama adalah \textbf{\texttt{TOTAL\_VALUE}}, yaitu jumlah nilai paket t
     \label{tab:data-eksperimen}
 \end{table}
 
-Jumlah nilai seluruh paket adalah 280, sehingga menjadi \textbf{batas atas objektif yang diketahui}, bukan nilai optimum yang telah dicapai. Pengujian difokuskan pada satu truk dengan batas kapasitas 100 kg.
+Jumlah nilai seluruh paket adalah 280. Dengan batas kapasitas 100 kg dan aturan penempatan yang digunakan, nilai optimum global dataset ini adalah 208; pembuktiannya diberikan pada Subbab~\ref{sec:optimum-eksperimen}. Pengujian difokuskan pada satu truk dengan batas kapasitas 100 kg.
 
 \subsubsection{Konfigurasi Parameter dan Pengulangan Eksperimen}
 Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 2026}. Rancangan utama mencakup empat varian HC masing-masing tiga run, tiga run SA, serta dua kelompok GA masing-masing sembilan run, sehingga jumlahnya \textbf{33 run per dataset}. Konfigurasi GA dengan populasi 50 dan 100 generasi muncul pada kedua kelompok dengan label berbeda; enam run itu tercakup dalam 18 run GA. Konfigurasi parameter setiap metode dirangkum pada Tabel~\ref{tab:konfigurasi-eksperimen}.
@@ -659,7 +659,7 @@ Setiap konfigurasi memiliki \textbf{tiga pengulangan dengan seed 42, 123, dan 20
 Metrik pengujian meliputi skor objektif awal, akhir, dan terbaik, runtime, jumlah iterasi aktual, serta berat dan jumlah paket termuat pada state akhir. Skor terbaik dibedakan dari skor akhir karena solusi terakhir tidak selalu menjadi solusi terbaik sepanjang pencarian. Runtime mencakup inisialisasi dan pencarian, sedangkan validasi akhir, penyimpanan hasil, komunikasi HTTP, dan rendering tidak termasuk di dalamnya.
 
 \subsection{Hasil Eksperimen dan Visualisasi Program}
-Pengujian mencakup empat varian HC dan SA dengan objektif Total value. Hasil setiap run meliputi skor awal, akhir, dan terbaik. Visualisasi menunjukkan susunan paket pada state akhir beserta jumlah paket dan berat muatannya. Grafik membandingkan skor dan runtime antaralgoritma.
+Pengujian mencakup empat varian HC dan SA dengan objektif Total value. Hasil setiap run meliputi skor awal, akhir, dan terbaik. Visualisasi menunjukkan susunan paket pada state akhir beserta jumlah paket dan berat muatannya.
 \subsubsection{Hill Climbing}
 \begin{table}[htbp]
 \centering
@@ -770,35 +770,92 @@ SA & 208.00 & 0.00 & 208.00 & 1.634 & 1656.67 \\
 \label{tab:ringkasan-manual}
 \end{table}
 
-\subsubsection{Perbandingan Kualitas Solusi}
-Untuk hasil yang tercatat (termasuk stochastic policy lama), sideways dan SA memiliki rata-rata skor akhir tertinggi, yaitu 208. Steepest-ascent memiliki rata-rata 195,33, random-restart 196,00, dan stochastic 182,67. Jika yang dibandingkan adalah skor terbaik sepanjang pencarian, random-restart juga mencapai 208 pada seluruh seed. Selisih rata-rata skor terbaik dan akhir random-restart sebesar 12 poin berasal dari dua run yang berakhir pada skor 190.
+\subsubsection{Kedekatan terhadap Optimum Global}
+\label{sec:optimum-eksperimen}
+Nilai optimum global dapat ditentukan untuk dataset sembilan paket ini. Jika batas ruang, support, dan fragile diabaikan sementara, setiap solusi tetap harus memenuhi batas berat. Dengan $x_i\in\{0,1\}$ sebagai penanda paket termuat, diperoleh batas atas
+\[
+ U=\max\left\{\sum_{i=1}^{9}v_i x_i\;\middle|\;\sum_{i=1}^{9}w_i x_i\leq100\right\}.
+\]
+Pemeriksaan seluruh $2^9=512$ subset menghasilkan $U=208$. Subset yang mencapai nilai tersebut adalah P01, P02, P03, P04, P05, P06, dan P07 dengan berat total 100 kg. Karena pemeriksaan ini melonggarkan kendala penempatan, nilai solusi sah pada persoalan asli tidak dapat melebihi 208.
 
-Skor maksimum teramati 208 setara dengan 74,29\% dari jumlah nilai seluruh paket (280). Angka 280 adalah batas atas longgar yang mengabaikan kapasitas dan geometri, sehingga rasio tersebut tidak boleh ditafsirkan sebagai rasio terhadap optimum yang terbukti. Jumlah paket akhir sama-sama tujuh pada seluruh run, tetapi nilai dan berat akhir berbeda; jumlah paket saja tidak cukup untuk membandingkan kualitas objektif Total value.
-\begin{figure}[htbp]
+Batas tersebut dapat dicapai dengan susunan pada Tabel~\ref{tab:sertifikat-optimum}. Semua paket memakai orientasi dimensi asli dan berada di lantai truk; P08 dan P09 berada di luar. Susunan ini berada dalam ukuran truk $10\times8\times6$, tanpa overlap, dan tidak menempatkan paket di atas paket fragile. Pemeriksaan dengan validator menghasilkan state sah tanpa pelanggaran. Adanya solusi sah bernilai 208 dan batas atas 208 membuktikan bahwa $f^*=208$ untuk dataset dan aturan kendala ini. Susunan tersebut menjadi sertifikat kelayakan untuk pembuktian, bukan rekonstruksi posisi paket dari run yang tercatat.
+\begin{table}[htbp]
 \centering
-\includegraphics[width=0.98\textwidth]{hasil-test/perbandingan-skor.pdf}
-\caption{Perbandingan rata-rata skor akhir dan terbaik berdasarkan tiga seed. Grafik ini merupakan agregasi hasil akhir, bukan grafik lintasan per iterasi.}
-\label{fig:skor-manual}
-\end{figure}
+\small
+\begin{tabular}{@{}l c c r r@{}}
+\toprule
+Paket & Dimensi $(w,l,h)$ & Posisi $(x,y,z)$ & Nilai & Berat (kg) \\
+\midrule
+P01 & $(4,3,2)$ & $(5,0,0)$ & 40 & 20 \\
+P02 & $(3,3,2)$ & $(5,3,0)$ & 30 & 15 \\
+P03 & $(2,2,1)$ & $(2,6,0)$ & 25 & 5 \\
+P04 & $(2,4,3)$ & $(0,4,0)$ & 35 & 18 \\
+P05 & $(3,2,2)$ & $(2,4,0)$ & 20 & 10 \\
+P06 & $(1,1,1)$ & $(4,6,0)$ & 8 & 2 \\
+P07 & $(5,4,3)$ & $(0,0,0)$ & 50 & 30 \\
+\midrule
+Total & & & 208 & 100 \\
+\bottomrule
+\end{tabular}
+\caption{Satu susunan sah yang mencapai batas atas nilai 208. Posisi menyatakan sudut bawah paket menurut sumbu lebar, panjang, dan tinggi.}
+\label{tab:sertifikat-optimum}
+\end{table}
+
+Kedekatan hasil pencarian diukur melalui gap relatif $g(f)=100(f^*-f)/f^*$. Skor 208 memiliki gap 0\%, skor 190 memiliki gap 8,65\%, dan skor 170 memiliki gap 18,27\%. Tabel~\ref{tab:gap-optimum} memisahkan gap skor akhir dari gap skor terbaik. Seluruh angka stochastic pada analisis ini berasal dari policy lama yang memilih peningkat secara seragam dari sampel kandidat. Implementasi stochastic saat ini meminta satu neighbor per iterasi, sehingga hasil lamanya tidak mengukur perilaku versi tersebut.
+\begin{table}[htbp]
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l r r c c@{}}
+\toprule
+Metode & $\bar g_{akhir}$ (\%) & $\bar g_{terbaik}$ (\%) & Akhir optimum & Terbaik optimum \\
+\midrule
+Steepest-ascent & 6,09 & 6,09 & 2/3 & 2/3 \\
+Stochastic (lama) & 12,18 & 12,18 & 1/3 & 1/3 \\
+Sideways & 0,00 & 0,00 & 3/3 & 3/3 \\
+Random-restart & 5,77 & 0,00 & 1/3 & 3/3 \\
+SA & 0,00 & 0,00 & 3/3 & 3/3 \\
+\bottomrule
+\end{tabular}
+\caption{Gap rata-rata terhadap optimum 208 serta jumlah run yang mencapai optimum dari tiga seed.}
+\label{tab:gap-optimum}
+\end{table}
+
+Steepest-ascent dan stochastic lama berhenti ketika sampel kandidat tidak menyediakan peningkatan. Pada seed 123, keduanya berakhir di 170, meskipun solusi global 208 tersedia. Penghentian berlabel \textit{Local optimum} berlaku terhadap kandidat yang diperiksa; sampling tersebut tidak mencakup seluruh neighbor yang mungkin. Stochastic lama juga berakhir di 170 pada seed 2026, sedangkan steepest-ascent mencapai 208. Pemilihan acak di antara kandidat peningkat dapat menghasilkan jalur pencarian berbeda dari pemilihan peningkatan terbesar. Tiga run ini belum cukup untuk menyimpulkan bahwa stochastic selalu lebih buruk.
+
+Sideways menerima langkah bernilai sama sehingga dapat mengubah susunan paket tanpa langsung meningkatkan objektif. Kemampuan tersebut menyediakan jalur untuk melanjutkan pencarian pada plateau dan sesuai dengan hasil akhirnya yang mencapai 208 pada semua seed. Setelah nilai optimum tercapai, langkah setara masih dapat berlanjut sampai batas sideways tercapai. Tanpa riwayat skor per iterasi, bagian lintasan yang melewati plateau tidak dapat ditentukan dari ringkasan akhir saja.
+
+Random-restart memulai climb baru dari state acak sehingga pencarian mencoba lebih dari satu daerah solusi. Skor terbaik 208 pada seluruh seed menunjukkan bahwa mekanisme ini berhasil menemukan optimum dalam setiap run. Pada seed 42 dan 123, climb terakhir berakhir di 190 sehingga skor akhirnya lebih rendah daripada optimum yang sudah ditemukan. Solusi terbaik sepanjang run perlu digunakan ketika memilih susunan untuk diterapkan.
+
+SA dapat menerima langkah yang menurunkan skor dengan probabilitas yang bergantung pada suhu. Mekanisme ini memungkinkan pencarian meninggalkan daerah yang sulit diperbaiki hanya dengan langkah meningkat. Ketiga run SA mencapai 208, termasuk seed 123 yang menghasilkan 170 pada steepest-ascent dan stochastic lama. Hasil ini sesuai dengan kemampuan eksplorasi SA, tetapi ringkasan akhir tidak menunjukkan langkah menurun mana yang berperan dalam mencapai optimum.
+
+\subsubsection{Perbandingan Hasil Pencarian Antaralgoritma}
+Berdasarkan rata-rata skor akhir, sideways dan SA berada pada urutan tertinggi dengan 208, diikuti random-restart 196,00, steepest-ascent 195,33, dan stochastic lama 182,67. Selisih random-restart terhadap steepest-ascent hanya 0,67 poin pada rata-rata tiga seed, tetapi keduanya berbeda dalam penyimpanan hasil terbaik: random-restart menemukan 208 pada semua run, sedangkan steepest-ascent hanya pada dua run.
+
+Perbandingan per seed memperlihatkan perbedaan yang tertutup oleh rata-rata. Pada seed 42, steepest-ascent, stochastic lama, sideways, dan SA sama-sama berakhir di 208; random-restart berakhir di 190 dengan skor terbaik 208. Pada seed 123, sideways dan SA meningkatkan skor awal 68 menjadi 208, sedangkan steepest-ascent dan stochastic lama berhenti di 170. Pada seed 2026, hanya stochastic lama yang memiliki skor terbaik 170; metode lainnya mencapai 208.
+
+Seluruh state akhir memuat tujuh paket. Berat akhirnya berkisar 76 sampai 100 kg, sedangkan nilainya berkisar 170 sampai 208. Karena objektif memaksimalkan total nilai, jumlah paket yang sama tidak menjamin kualitas solusi yang sama. Dua run random-restart juga memiliki nilai akhir 190 dengan berat berbeda, yaitu 96 dan 91 kg. Pemilihan komposisi paket dan susunan yang memungkinkan paket bernilai tinggi masuk lebih menentukan daripada jumlah paket saja.
 
 \subsubsection{Perbandingan Durasi Pencarian}
-Rata-rata runtime steepest-ascent dan stochastic policy lama masing-masing 0,508 detik dan 0,543 detik. SA membutuhkan rata-rata 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Sideways mencapai skor akhir 208 pada semua seed, tetapi membutuhkan waktu lebih lama daripada SA pada pengukuran ini.
+Rata-rata runtime steepest-ascent adalah 0,508 detik, stochastic lama 0,543 detik, SA 1,634 detik, random-restart 4,664 detik, dan sideways 16,542 detik. Steepest-ascent paling cepat pada rata-rata pengukuran ini, tetapi tidak mencapai optimum pada seed 123. Sideways dan SA sama-sama mencapai skor akhir optimum pada seluruh seed; untuk hasil tersebut, SA membutuhkan sekitar sepersepuluh runtime sideways.
 
-Jumlah iterasi antaralgoritma tidak langsung menunjukkan biaya komputasi yang setara. HC menggunakan hingga 50 kandidat per iterasi pada konfigurasi pengujian, sedangkan satu langkah SA memiliki mekanisme sampling yang berbeda. Dengan demikian, 2.057 iterasi SA tidak otomatis lebih mahal daripada sekitar 100 iterasi sideways. Durasi yang dibandingkan adalah waktu komputasi aplikasi untuk inisialisasi dan pencarian.
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.98\textwidth]{hasil-test/perbandingan-durasi.pdf}
-\caption{Runtime tercatat untuk setiap seed dan metode, dikonversi dari milidetik ke detik.}
-\label{fig:durasi-manual}
-\end{figure}
+Steepest-ascent dan stochastic lama selesai dalam 2 sampai 5 iterasi karena berhenti ketika tidak menemukan peningkatan pada sampel kandidat. Sideways menjalankan 102 sampai 108 iterasi dan terus memeriksa kandidat pada langkah bernilai sama, sehingga membutuhkan waktu lebih lama. Random-restart mengulang proses climb sampai 10 restart; biaya pengulangan itu menaikkan runtime dibanding satu climb, sekaligus menghasilkan skor terbaik optimum pada seluruh seed.
 
-\subsubsection{Konsistensi Hasil Eksperimen}
-Skor awal pada seed 42, 123, dan 2026 adalah 188, 68, dan 93 untuk seluruh metode yang diuji. Dengan skor awal yang sama pada setiap seed, perbedaan peningkatan skor dapat dibandingkan antaralgoritma. Kesamaan skor awal tidak dengan sendirinya menunjukkan kesamaan susunan paket.
+SA menjalankan 856 sampai 2.057 iterasi dengan runtime 0,889 sampai 2,014 detik. Biaya satu iterasi tidak setara antaralgoritma: konfigurasi HC yang tercatat memeriksa hingga 50 kandidat per iterasi, sedangkan SA meminta satu neighbor. Karena itu, jumlah iterasi SA yang lebih besar tetap dapat menghasilkan runtime lebih rendah daripada sideways. Pada seed 42, SA berhenti karena tidak memperoleh neighbor sah; dua seed lainnya berhenti saat suhu mencapai batas minimum. Perbedaan penghentian ini menjelaskan sebagian variasi jumlah iterasi dan durasinya.
 
-Sideways dan SA memiliki simpangan baku skor akhir nol pada tiga seed ini. Steepest-ascent dan stochastic policy lama memiliki simpangan baku 17,91, sedangkan random-restart memiliki simpangan baku skor akhir 8,49. Jika yang dinilai skor terbaik, random-restart juga memiliki simpangan baku nol. Hasil tersebut menunjukkan konsistensi pada sampel yang diamati dan tidak menjamin perilaku yang sama untuk seed atau dataset lain.
+Jika tujuan pemakaian adalah memperoleh skor akhir optimum pada ketiga seed ini, SA memberikan kombinasi kualitas dan durasi yang lebih baik daripada sideways. Jika waktu pencarian lebih diutamakan, steepest-ascent menghasilkan solusi dalam kurang dari satu detik pada ketiga run, dengan risiko skor di bawah optimum. Kesimpulan ini berlaku pada dataset dan konfigurasi yang diuji; runtime yang dibandingkan mencakup inisialisasi dan pencarian.
 
-\subsubsection{Pengaruh Parameter Genetic Algorithm}
-Pengaruh variasi generasi dan populasi belum dapat dianalisis karena hasil 18 run GA belum tersedia. Tabel konfigurasi GA tetap menjadi acuan pengujian lanjutan. Analisis perlu membedakan kelompok variasi generasi dan variasi populasi, termasuk konfigurasi populasi 50 dan generasi 100 yang muncul di kedua kelompok.
+\subsubsection{Konsistensi Hasil Akhir}
+Skor awal untuk seed 42, 123, dan 2026 adalah 188, 68, dan 93 pada seluruh metode. Dengan demikian, setiap seed menyediakan titik pembandingan skor awal yang sama. Kesamaan skor tersebut tidak membuktikan bahwa koordinat semua paket identik.
+
+Sideways dan SA menghasilkan skor akhir 208 pada tiga dari tiga run dengan simpangan baku nol. Steepest-ascent menghasilkan 208, 170, dan 208, sedangkan stochastic lama menghasilkan 208, 170, dan 170. Keduanya memiliki simpangan baku 17,91 walaupun rata-ratanya berbeda. Oleh sebab itu, penilaian konsistensi perlu menyertakan rata-rata dan frekuensi pencapaian optimum, selain simpangan baku.
+
+Random-restart menghasilkan skor akhir 190, 190, dan 208 dengan simpangan baku 8,49. Skor terbaiknya selalu 208 sehingga simpangan baku skor terbaik adalah nol. Metode ini konsisten menemukan optimum, sementara solusi pada akhir climb terakhir masih bervariasi. Perbedaan tersebut menjelaskan mengapa evaluasi yang hanya memakai skor akhir akan melewatkan keberhasilan pencarian sebelumnya.
+
+Konsistensi skor juga perlu dibedakan dari konsistensi runtime. SA memiliki skor akhir tetap, tetapi runtime bervariasi dari 0,889 sampai 2,014 detik akibat perbedaan lama pencarian. Sideways memiliki rentang runtime 16,100 sampai 16,996 detik dengan skor akhir yang sama. Tiga seed ini menunjukkan perilaku pada sampel pengujian dan belum membuktikan tingkat keberhasilan untuk seed lain atau dataset yang lebih besar.
+
+\subsubsection{Pengaruh Generasi dan Populasi Genetic Algorithm}
+Analisis GA menunggu hasil 18 run yang direncanakan. Pengaruh jumlah generasi akan dibandingkan pada populasi tetap 50, sedangkan pengaruh populasi akan dibandingkan pada 100 generasi. Skor akhir, skor terbaik, runtime, dan variasi antarseed akan digunakan untuk menilai apakah tambahan generasi atau anggota populasi memberi peningkatan yang sebanding dengan biaya pencariannya. Kesimpulan pengaruh kedua parameter tersebut belum dapat ditarik dari hasil HC dan SA.
 
 \clearpage
 \section{Kesimpulan dan Saran}
