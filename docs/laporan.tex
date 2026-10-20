@@ -14,6 +14,7 @@
 \usepackage[section]{placeins}
 \usepackage{needspace}
 \usepackage{float}
+\usepackage[normalem]{ulem}
 \usepackage[hidelinks]{hyperref}
 \graphicspath{{docs/}{./}}
 
@@ -888,6 +889,7 @@ Pengembangan dan pengujian selanjutnya dapat mencakup hal-hal berikut.
     \item Menggunakan mekanisme elitisme pada GA agar solusi terbaik tidak hilang dari populasi akhir, sebagaimana terjadi pada seed 123.
 \end{enumerate}
 
+\pagebreak
 \section{Pembagian Tugas Tiap Anggota Kelompok}
 \begin{table}[ht]
     \centering
@@ -896,9 +898,9 @@ Pengembangan dan pengujian selanjutnya dapat mencakup hal-hal berikut.
         \toprule
         \textbf{Nama Lengkap} & \textbf{NIM} & \textbf{Tugas/Kontribusi} \\
         \midrule
-        Samuelson Dharmawan Tanuraharja & 13524001 & \\
-        Nicholas Wise Saragih Sumbayak & 13524037 & \\
-        Neswa Eka Anggara & 13524136 & \\
+        Samuelson Dharmawan Tanuraharja & 13524001 & Pembangkit neighbor (\textit{relocate}, \textit{rotate}, \textit{swap}); seluruh varian \textit{hill climbing}; kontrol \textit{hill climbing}; visualisasi tiga dimensi dengan \textit{Three.js}, termasuk tampilan multi-truk. \\
+        Nicholas Wise Saragih Sumbayak & 13524037 & Model domain (problem, state, orientasi); \textit{genetic algorithm} beserta \textit{repair}; \textit{experiment runner} dan metrik ringkasan; komponen hasil dan grafik umum. \\
+        Neswa Eka Anggara & 13524136 & Occupancy grid dan validator constraint; fungsi objektif; inisialisasi state; \textit{simulated annealing}; skema dan rute FastAPI; kontrol problem dan armada. \\
         \bottomrule
     \end{tabularx}
     \caption{Pembagian tugas anggota kelompok}
@@ -917,18 +919,66 @@ S. J. Russell and P. Norvig, \emph{Artificial Intelligence: A Modern Approach}, 
 Tim Pengajar IF3170 Inteligensi Artifisial, ``Beyond Classical Search,'' lecture slides, Institut Teknologi Bandung, Bandung, Indonesia, 2026.
 \end{thebibliography}
 
-\appendix
-\section{Form Penggunaan Generative AI}
-% Lampirkan formulir resmi dari halaman 19 Panduan AI ITB.
-% Belum diisi: setiap anggota harus mencatat penggunaan AI yang sebenarnya.
-% Penggunaan AI dalam penyusunan kerangka laporan ini juga perlu dicatat.
-% Jangan membuat pernyataan, persetujuan, atau tanda tangan atas nama anggota.
+\clearpage
+\section{Lampiran}
+\subsection{Form Penggunaan \textit{Generative} AI}
+\begin{center}
+    {\large\bfseries SURAT PERNYATAAN PENGGUNAAN AI\par}
+\end{center}
+\vspace{-0.3em}
+\noindent Dengan ini, \sout{saya}/kami*:
 
-\section{Lampiran Lainnya (Bila Ada)}
+\begin{tabular}{@{}l@{\hspace{1.2em}}l@{\hspace{0.8em}}p{0.62\textwidth}@{}}
+    Nama/NIM & : & Samuelson D.T./13524001, Neswa E.K./13524136, Nicholas W.S.S./13524037 \\
+    Fakultas/Sekolah & : & STEI-K \\
+    Kode Mata Kuliah & : & IF3170 \\
+    Nama Mata Kuliah & : & Artificial Intelligence \\
+    Judul Tugas/Proposal & : & Tugas Besar 1 \\
+\end{tabular}
 
+\vspace{0.6em}
+\noindent Menyatakan bahwa \sout{saya}/kami* menggunakan/\sout{tidak menggunakan}* AI dalam pengerjaan maupun penyusunan luaran tugas pada mata kuliah yang tertulis di atas.
+
+\vspace{0.4em}
+\noindent Jika Ya, maka alat AI/kecerdasan buatan yang digunakan adalah:
+
+\vspace{0.4em}
+\begin{table}[H]
+    \centering
+    \small
+    \renewcommand{\arraystretch}{1.15}
+    \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}X|c|>{\centering\arraybackslash}p{2.6cm}|}
+        \hline
+        \multicolumn{1}{|c|}{\textbf{Lingkup Pekerjaan}} & \textbf{Digunakan?} & \textbf{Tingkat Penggunaan} \\
+        \hline
+        \textbf{Pemeriksaan Ejaan:} menggunakan tools seperti Grammarly, Paperpal, Deepl, Quillbot, Grammarbot, LanguageTool, ProWritingAid, ChatGPT, Google Gemini, atau sejenisnya. & \sout{Ya}/Tidak* & No AI \\
+        \hline
+        \textbf{Pembuatan Teks:} menggunakan tools seperti ChatGPT, Gemini, Paperpal, Copilot, GrammarlyGO, WordAI, WriteSonic, Jasper, Jenni AI, atau sejenisnya. & Ya/\sout{Tidak}* & AI-assisted idea generation and structuring \\
+        \hline
+        \textbf{Bantuan Diskusi dalam Penyusunan Konten:} menggunakan tools seperti ChatGPT, Gemini, Copilot, Perplexity, Jenni AI, Zoom-Companion, atau sejenisnya. & Ya/\sout{Tidak}* & AI task completion-Human evaluation (using agentic AI) \\
+        \hline
+        \textbf{Pembuatan Gambar, Video, dan/atau Grafik:} menggunakan tools seperti Craiyon, DALL-E, Midjourney, Stable Diffusion, Microsoft Designer, Gemini, Canva AI, atau sejenisnya. & \sout{Ya}/Tidak* & No AI \\
+        \hline
+        \textbf{Lainnya, Jelaskan:}\vspace{1.6em} & & \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\noindent \sout{Saya}/Kami* juga menyatakan bahwa setiap penggunaan AI/kecerdasan buatan yang dilakukan pada mata kuliah tersebut telah dinyatakan di dalam surat ini.
+
+\vspace{0.5em}
+\hfill\begin{minipage}{6.5cm}
+    \raggedleft
+    Bandung, 20 Oktober 2026\par
+    \vspace{0.2em}
+    \centerline{\includegraphics[width=3.6cm,trim=46bp 55bp 37bp 52bp,clip]{ttd_son.png}}
+    \vspace{0.2em}
+    a.n. Samuelson D.\ T.\\
+    13524001\par
+\end{minipage}
 
 \clearpage
-\section{Bukti Pengujian Manual}
+\subsection{Bukti Pengujian Manual}
 Tangkapan layar berikut memperlihatkan state akhir, skor objektif, runtime, dan jumlah iterasi setiap run, melengkapi Gambar~\ref{fig:rr-manual} dan Gambar~\ref{fig:sa-manual}.
 \begin{figure}[htbp]
 \centering
